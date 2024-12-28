@@ -1,0 +1,61 @@
+services:
+  # Service pour le serveur Node.js
+  server:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.server
+    container_name: matcha-server
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    volumes:
+      - ./Server:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@database:5432/matcha
+      - JWT_SECRET=your_jwt_secret_key
+    depends_on:
+      - database
+    networks:
+      - matcha-network
+
+  # Service pour le client React
+  client:
+    build:
+      context: .
+      dockerfile: Docker/Dockerfile.client
+    container_name: matcha-client
+    ports:
+      - "${CLIENT_PORT}:${CLIENT_PORT}"
+    volumes:
+      - ./Client:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:3000
+    depends_on:
+      - server
+    networks:
+      - matcha-network
+
+  # Service pour la base de données PostgreSQL
+  database:
+    image: postgres:15
+    container_name: matcha-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./Server/src/config:/docker-entrypoint-initdb.d
+    networks:
+      - matcha-network
+
+volumes:
+  postgres_data:
+
+networks:
+  matcha-network:
+    driver: bridge

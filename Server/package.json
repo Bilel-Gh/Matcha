@@ -1,0 +1,28 @@
+{
+  "name": "matcha-server",
+  "version": "1.0.0",
+  "scripts": {
+    "db:reset": "docker compose down -v && docker compose up -d database",
+    "db:status": "docker compose exec database psql -U matcha_user -d matcha -c 'SELECT * FROM schema_migrations ORDER BY applied_at;'",
+    "db:create-migration": "node scripts/create-migration.js",
+    "db:migrate": "docker compose exec database psql -U matcha_user -d matcha -f /docker-entrypoint-initdb.d/init.sql",
+    "db:seed": "docker compose exec database psql -U matcha_user -d matcha -f /docker-entrypoint-initdb.d/seeds/development_seeds.sql",    "start": "node dist/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nodemon": "^3.1.9",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.7.2"
+  }
+}

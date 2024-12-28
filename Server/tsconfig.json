@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    // Spécifie la version de JavaScript à générer
+    "target": "ES2020",
+    // Utilise les modules CommonJS (standard pour Node.js)
+    "module": "commonjs",
+    // Active les fonctionnalités strictes de TypeScript
+    "strict": true,
+    // Permet d'utiliser les imports/exports ES6 avec CommonJS
+    "esModuleInterop": true,
+    // Dossier où TypeScript va compiler le code
+    "outDir": "./dist",
+    // Dossier racine de nos fichiers source
+    "rootDir": "./src",
+    // Inclut les types de base
+    "lib": ["ES2020"],
+    // Génère les fichiers source map pour le debugging
+    "sourceMap": true,
+    // Vérifie que la casse des imports correspond exactement
+    "forceConsistentCasingInFileNames": true,
+    // Active la décoration pour les classes (utile avec certains frameworks)
+    "experimentalDecorators": true,
+    // Améliore la vérification des types null/undefined
+    "strictNullChecks": true,
+    // Types à inclure
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

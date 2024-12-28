@@ -1,115 +1,155 @@
-# ✨ Matcha - A Modern Dating Web Application
+# Matcha - Modern Dating Application
 
-![Matcha Banner](path_to_your_banner_image)
+## About The Project
+Matcha is a modern dating application developed with TypeScript and Node.js, offering a personalized dating experience based on geolocation and shared interests. Our application emphasizes user safety and matching relevance.
 
-## Overview
+## 🚀 Key Features
 
-Matcha is a sophisticated dating web application that connects people based on their interests, location, and preferences. Using advanced matching algorithms and real-time features, it provides a seamless and engaging experience for users looking for meaningful connections.
+- Secure authentication with email verification
+- Geolocation system for local matches
+- Sophisticated matching algorithm based on common interests
+- Real-time chat between connected users
+- Fame Rating system
+- Profile likes and views management
+- Real-time notifications
 
-## ✨ Key Features
+## 🛠️ Tech Stack
 
-- **Smart Matching Algorithm**: Connects users based on common interests, location, and compatibility scores
-- **Real-time Chat**: Instant messaging with connected users
-- **Geolocation Services**: Location-based matching and user discovery
-- **Advanced Search & Filters**: Find matches based on specific criteria
-- **Real-time Notifications**: Stay updated with likes, visits, and messages
-- **Interactive Profiles**: Rich user profiles with multiple photos and detailed information
+- **Backend**: Node.js with TypeScript
+- **Frontend**: React Typescript and Redux
+- **Database**: PostgreSQL
+- **Containerization**: Docker & Docker Compose
+- **Testing**: Jest & Supertest & Playwright & React Testing Library
+- **API Documentation**: Swagger
+- **Migration Management**: Custom SQL Scripts
 
-## 🛠 Tech Stack
+## 📦 Prerequisites
 
-### Backend
-- Node.js with Express
-- TypeScript for type safety
-- PostgreSQL for reliable data storage
-- Socket.IO for real-time features
-
-### Frontend
-- React with TypeScript
-- Redux for state management
-- Tailwind CSS for modern styling
-- Socket.IO client for real-time updates
-
-### Testing
-- Jest for unit and integration testing
-- Playwright for end-to-end testing
-- React Testing Library for component testing
-
-## 📋 Prerequisites
-
-- Node.js (v18 or later)
-- PostgreSQL (v14 or later)
+- Node.js (v18 or higher)
+- Docker and Docker Compose
 - npm or yarn
 
-## 🚀 Getting Started
+## 🔧 Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/matcha.git
-   cd matcha
-   ```
-
-2. **Install dependencies**
-   ```bash
-   # Install backend dependencies
-   cd backend
-   npm install
-
-   # Install frontend dependencies
-   cd ../frontend
-   npm install
-   ```
-
-3. **Environment Setup**
-   ```bash
-   # Backend configuration
-   cp .env.example .env
-   # Edit .env with your credentials
-   ```
-
-4. **Database Setup**
-   ```bash
-   # Run database migrations
-   cd backend
-   npm run migrate
-   ```
-
-5. **Start Development Servers**
-   ```bash
-   # Start backend server
-   cd backend
-   npm run dev
-
-   # Start frontend server
-   cd frontend
-   npm run dev
-   ```
-
-## 🧪 Testing
-
-This project implements comprehensive testing at multiple levels:
-
+1. Clone the repository:
 ```bash
-# Run backend tests
-cd backend
-npm test
-
-# Run frontend tests
-cd frontend
-npm test
-
-# Run E2E tests
-npm run test:e2e
+git clone https://github.com/Bilel-Gh/Matcha.git
+cd matcha
 ```
 
-## 🔒 Security Features
+2. Create a `.env` file in the project root:
+```env
+DB_NAME=matcha
+DB_USER=matcha_user
+DB_PASSWORD=your_password
+NODE_ENV=development
+SERVER_PORT=3000
+```
 
-- Password hashing with bcrypt
-- JWT authentication
-- XSS protection
+3. Launch the application with Docker:
+```bash
+docker-compose up --build
+```
+
+## 🗄️ Database Structure
+
+Our database is managed through a migration system. The main structure includes:
+
+- `users`: User information
+- `interests`: Available interests
+- `likes`: Like management between users
+- `messages`: Messaging system
+- `visits`: Profile visit tracking
+- And more...
+
+![Matcha MLD](Server/docs/mcd.png)
+I used [mocodo online](https://www.mocodo.net/) to create this MCD
+
+![Matcha MLD](Server/docs/mld.png)
+  I used [DBLM](https://dbml.dbdiagram.io/home/) to create this MLD
+
+## 📝 Available Scripts
+
+```bash
+# Development
+npm run dev         # Start server in development mode
+npm run build      # Compile TypeScript project
+npm run start      # Start server in production mode
+
+# Database
+npm run db:reset   # Reset database
+npm run db:seed    # Add test data
+npm run db:migrate # Run migrations
+
+# Testing
+npm run test       # Run tests
+npm run test:watch # Run tests in watch mode
+```
+
+## 🌐 API Documentation
+
+The Swagger API documentation is available at:
+```
+http://localhost:3000/api-docs
+```
+
+## 📁 Project Structure
+
+```
+├── Client
+│   ├── src
+│   │   ├── assets
+│   │   ├── components
+│   │   ├── hooks
+│   │   ├── pages
+│   │   ├── services
+│   │   ├── store
+│   │   ├── utils
+│   │   └── App.tsx
+│   ├── tests
+│   │   ├── e2e
+│   │   └── unit
+│   ├── package.json
+│   └── tsconfig.json
+├── Docker
+│   ├── Dockerfile.client
+│   └── Dockerfile.server
+├── Server
+│   ├── docs
+│   │   └── swagger
+│   ├── src
+│   │   ├── config
+│   │   ├── controllers
+│   │   ├── middlewares
+│   │   ├── models
+│   │   ├── routes
+│   │   ├── scripts
+│   │   ├── services
+│   │   ├── utils
+│   │   └── app.ts
+│   ├── tests
+│   ├── package.json
+│   └── tsconfig.json
+├── README.md
+├── database.dbml
+└── docker-compose.yml
+
+```
+
+## 🔐 Security
+
+The application implements several security measures:
+- Passwords hashed with bcrypt
+- Protection against SQL injections
+- User input validation
+- Secure session management
 - CSRF protection
-- Input sanitization
-- Rate limiting
-- Secure file upload handling
+- Email verification
+
+## 📫 Contact
+
+Bilel Ghandri - bilelghandri@outlook.fr
 
 ---
-Made with ❤️ by Bilel Ghandri (bghandri)
+
+Developed with ❤️ by bghandri from 42 paris school
