@@ -1,30 +1,23 @@
 {
   "compilerOptions": {
-    // Spécifie la version de JavaScript à générer
-    "target": "ES2020",
-    // Utilise les modules CommonJS (standard pour Node.js)
-    "module": "commonjs",
-    // Active les fonctionnalités strictes de TypeScript
-    "strict": true,
-    // Permet d'utiliser les imports/exports ES6 avec CommonJS
-    "esModuleInterop": true,
-    // Dossier où TypeScript va compiler le code
-    "outDir": "./dist",
-    // Dossier racine de nos fichiers source
-    "rootDir": "./src",
-    // Inclut les types de base
-    "lib": ["ES2020"],
-    // Génère les fichiers source map pour le debugging
-    "sourceMap": true,
-    // Vérifie que la casse des imports correspond exactement
+    "target": "ES2020",                    // Version de JavaScript cible
+    "module": "NodeNext",                  // Système de modules
+    "moduleResolution": "NodeNext",        // Résolution des modules
+    "baseUrl": "./src",                    // Dossier racine pour les imports
+    "outDir": "./dist",                    // Dossier de sortie pour le code compilé
+    "rootDir": "./src",                    // Dossier source
+    "strict": true,                        // Active toutes les vérifications strictes
+    "esModuleInterop": true,              // Meilleure interopérabilité des modules
+    "skipLibCheck": true,                  // Accélère la compilation
     "forceConsistentCasingInFileNames": true,
-    // Active la décoration pour les classes (utile avec certains frameworks)
-    "experimentalDecorators": true,
-    // Améliore la vérification des types null/undefined
-    "strictNullChecks": true,
-    // Types à inclure
-    "types": ["node"]
+    "allowJs": true,                       // Permet l'utilisation de fichiers JavaScript
+    "checkJs": true,                       // Type-check les fichiers JavaScript
+    "resolveJsonModule": true,             // Permet d'importer des fichiers JSON
+    "sourceMap": true,                     // Génère des source maps pour le debugging
+    "paths": {                             // Configuration des alias de chemins
+      "@/*": ["*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"],                 // Fichiers à inclure
+  "exclude": ["node_modules", "dist"]      // Fichiers à exclure
 }

@@ -1,6 +1,8 @@
 # Utilisation d'une image Node.js officielle comme base
 FROM node:20-alpine
 
+RUN npm install -g pnpm
+
 # Création et définition du répertoire de travail
 WORKDIR /app
 
@@ -8,7 +10,7 @@ WORKDIR /app
 COPY Server/package*.json ./
 
 # Installation des dépendances
-RUN npm install
+RUN pnpm install
 
 # Copie du reste des fichiers du projet
 COPY Server .
@@ -17,4 +19,4 @@ COPY Server .
 EXPOSE 3000
 
 # Commande pour démarrer l'application en développement
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "run", "dev"]

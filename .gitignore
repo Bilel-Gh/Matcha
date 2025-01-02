@@ -4,3 +4,5 @@ node_modules/
 package-lock.json
 .idea/
 database.dbml
+dist/
+.DS_Store
