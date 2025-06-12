@@ -1,5 +1,5 @@
 CREATE TABLE "interests" (
- "id" integer PRIMARY KEY,
+ "id" SERIAL PRIMARY KEY,
  "name" varchar UNIQUE NOT NULL,
  "tag" varchar UNIQUE NOT NULL
 );

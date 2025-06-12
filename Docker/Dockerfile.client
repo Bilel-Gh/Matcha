@@ -1,12 +1,14 @@
 # Utilisation d'une image Node.js officielle comme base
 FROM node:20-alpine
 
+# Mise à jour de npm et installation de pnpm
+RUN npm update -g npm
 RUN npm install -g pnpm
 
 # Création et définition du répertoire de travail
 WORKDIR /app
 
-# Copie des fichiers de dépendancesdok
+# Copie des fichiers de dépendances
 COPY Client/package*.json ./
 
 # Installation des dépendances
@@ -19,4 +21,4 @@ COPY Client .
 EXPOSE 8080
 
 # Commande pour démarrer l'application en développement
-CMD ["pnpm", "run", "dev", "--host"]
+CMD ["pnpm", "run", "dev", "--host", "--port", "8080"]

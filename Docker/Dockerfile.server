@@ -1,22 +1,24 @@
 # Utilisation d'une image Node.js officielle comme base
 FROM node:20-alpine
 
-RUN npm install -g pnpm
+# Installation des outils de build nécessaires pour compiler les modules natifs
+RUN apk add --no-cache python3 make g++
 
 # Création et définition du répertoire de travail
 WORKDIR /app
 
-# Copie des fichiers de dépendances
-COPY Server/package*.json ./
+# On copie d'abord les fichiers de dépendances pour profiter du cache Docker
+# On copie le package-lock.json depuis le dossier Server où il a dû être généré
+COPY Server/package.json Server/package-lock.json ./
 
-# Installation des dépendances
-RUN pnpm install
+# Installation des dépendances avec npm en utilisant le lock file
+RUN npm ci
 
 # Copie du reste des fichiers du projet
 COPY Server .
 
 # Exposition du port utilisé par l'application
-EXPOSE 3000
+EXPOSE 3001
 
 # Commande pour démarrer l'application en développement
-CMD ["pnpm", "run", "dev"]
+CMD ["npm", "run", "dev"]

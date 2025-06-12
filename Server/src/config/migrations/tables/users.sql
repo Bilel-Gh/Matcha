@@ -1,5 +1,5 @@
 CREATE TABLE "users" (
- "id" integer PRIMARY KEY,
+ "id" SERIAL PRIMARY KEY,
  "email" varchar UNIQUE NOT NULL,
  "username" varchar UNIQUE NOT NULL,
  "firstname" varchar NOT NULL,
@@ -14,6 +14,9 @@ CREATE TABLE "users" (
  "last_connection" timestamp,
  "is_online" boolean DEFAULT false,
  "email_verified" boolean DEFAULT false,
+ "verification_token" varchar,
+ "password_reset_token" varchar,
+ "password_reset_expires" timestamp,
  "birth_date" date NOT NULL,
  "created_at" timestamp DEFAULT (now())
 );

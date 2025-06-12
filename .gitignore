@@ -6,3 +6,7 @@ package-lock.json
 database.dbml
 dist/
 .DS_Store
+package-lock.json
+pnpm-lock.yaml
+Server/pnpm-lock.yaml
+Client/pnpm-lock.yaml

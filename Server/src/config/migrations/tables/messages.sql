@@ -1,5 +1,5 @@
 CREATE TABLE "messages" (
-"id" integer PRIMARY KEY,
+"id" SERIAL PRIMARY KEY,
 "sender_id" integer NOT NULL,
 "receiver_id" integer NOT NULL,
 "content" text NOT NULL,

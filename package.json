@@ -1,0 +1,15 @@
+{
+	"dependencies": {
+		"bcrypt": "^6.0.0",
+		"jsonwebtoken": "^9.0.2",
+		"uuid": "^11.1.0",
+		"zod": "^3.25.62"
+	},
+	"devDependencies": {
+		"@types/bcrypt": "^5.0.2",
+		"@types/cors": "^2.8.19",
+		"@types/jsonwebtoken": "^9.0.9",
+		"@types/pg": "^8.15.4",
+		"@types/uuid": "^10.0.0"
+	}
+}

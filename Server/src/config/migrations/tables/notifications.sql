@@ -1,5 +1,5 @@
 CREATE TABLE "notifications" (
- "id" integer PRIMARY KEY,
+ "id" SERIAL PRIMARY KEY,
  "user_id" integer NOT NULL,
  "type" varchar,
  "content" text NOT NULL,
