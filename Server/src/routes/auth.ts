@@ -22,6 +22,8 @@ const router = Router();
  *               - password
  *               - firstName
  *               - lastName
+ *               - username
+ *               - birthDate
  *             properties:
  *               email:
  *                 type: string
@@ -33,6 +35,11 @@ const router = Router();
  *                 type: string
  *               lastName:
  *                 type: string
+ *               username:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *                 format: date
  *     responses:
  *       201:
  *         description: User registered successfully

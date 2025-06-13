@@ -1,12 +1,17 @@
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
+  public readonly details?: string[];
 
-  constructor(message: string, statusCode: number = 500, isOperational: boolean = true) {
-    super(message);
+  constructor(message: string | string[], statusCode: number = 500, isOperational: boolean = true) {
+    const mainMessage = Array.isArray(message) ? 'Validation Error' : message;
+    super(mainMessage);
 
     this.statusCode = statusCode;
     this.isOperational = isOperational;
+    if (Array.isArray(message)) {
+      this.details = message;
+    }
 
     // Maintain proper stack trace
     Error.captureStackTrace(this, this.constructor);
@@ -14,7 +19,7 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string) {
+  constructor(message: string | string[]) {
     super(message, 400);
   }
 }

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/AppError';
+import logger from '../utils/logger';
 
 interface ErrorResponse {
   message: string;
@@ -19,11 +20,15 @@ export const errorHandler = (
   // Default error values
   let statusCode = 500;
   let status = 'error';
+  let responseMessage: any = err.message;
 
   // If it's an AppError, use its properties
   if (err instanceof AppError) {
     statusCode = err.statusCode;
     status = err.statusCode < 500 ? 'fail' : 'error';
+    if (err.details) {
+      responseMessage = err.details;
+    }
   }
 
   // Database errors
@@ -46,7 +51,7 @@ export const errorHandler = (
   }
 
   const errorResponse: ErrorResponse = {
-    message: error.message || 'Something went wrong',
+    message: responseMessage || 'Something went wrong',
     status,
   };
 

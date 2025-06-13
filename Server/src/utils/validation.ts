@@ -32,7 +32,7 @@ export const registerSchema = z.object({
   lastName: nameSchema,
   password: passwordSchema,
   birthDate: z
-    .string()
+    .string({ required_error: 'Birth date is required' })
     .refine(
       (date) => {
       const birthDate = new Date(date);
