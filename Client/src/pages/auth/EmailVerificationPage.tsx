@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import authService from '../../services/authService';
+import axios from 'axios';
 
 const EmailVerificationPage: React.FC = () => {
   const [message, setMessage] = useState('Verifying your email...');
@@ -19,8 +20,12 @@ const EmailVerificationPage: React.FC = () => {
         await authService.verify(token);
         setMessage('Email verified successfully! You can now log in.');
         setError(false);
-      } catch (err: any) {
-        setMessage(err.response?.data?.message || 'Email verification failed.');
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+            setMessage(err.response?.data?.message || 'Email verification failed.');
+        } else {
+            setMessage('An unexpected error occurred.');
+        }
         setError(true);
       }
     };

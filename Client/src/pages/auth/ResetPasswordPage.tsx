@@ -1,79 +1,88 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import authService from '../../services/authService';
-import axios from 'axios';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { FaLock, FaKey } from 'react-icons/fa';
 
 const ResetPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { token } = useParams<{ token: string }>();
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { token } = useParams<{ token: string }>();
+  const { resetPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-    setSuccess('');
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
-      setLoading(false);
       return;
     }
+
     if (!token) {
-        setError('Invalid or missing token.');
-        setLoading(false);
-        return
+      setError('Invalid reset token');
+      return;
     }
 
+    setIsLoading(true);
+
     try {
-      await authService.resetPassword(password, token);
-      setSuccess('Password has been reset successfully. You can now login.');
-      setTimeout(() => navigate('/login'), 3000);
+      await resetPassword(token, password);
+      navigate('/login');
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to reset password.');
-      } else {
-        setError('An unexpected error occurred');
-      }
+      setError('Failed to reset password. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="auth-container">
-      <h2>Reset Password</h2>
+      <h2>Set New Password</h2>
+      {error && <div className="error-message">{error}</div>}
+
       <form onSubmit={handleSubmit}>
-        {error && <p className="error-message">{error}</p>}
-        {success && <p className="success-message">{success}</p>}
         <div className="form-group">
-          <label htmlFor="password">New Password</label>
+          <label htmlFor="password">
+            <FaLock style={{ marginRight: '8px' }} />
+            New Password
+          </label>
           <input
             id="password"
             type="password"
-            placeholder="New Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter new password"
             required
           />
         </div>
+
         <div className="form-group">
-          <label htmlFor="confirmPassword">Confirm New Password</label>
+          <label htmlFor="confirmPassword">
+            <FaLock style={{ marginRight: '8px' }} />
+            Confirm Password
+          </label>
           <input
             id="confirmPassword"
             type="password"
-            placeholder="Confirm New Password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm new password"
             required
           />
         </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Resetting...' : 'Reset Password'}
+
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? (
+            'Resetting...'
+          ) : (
+            <>
+              <FaKey style={{ marginRight: '8px' }} />
+              Reset Password
+            </>
+          )}
         </button>
       </form>
     </div>

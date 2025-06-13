@@ -1,59 +1,63 @@
 import React, { useState } from 'react';
-import authService from '../../services/authService';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
+import { FaEnvelope, FaArrowLeft } from 'react-icons/fa';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { forgotPassword } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setSuccess('');
+    setIsLoading(true);
 
     try {
-      await authService.forgotPassword(email);
-      setSuccess('Password reset link has been sent to your email.');
+      await forgotPassword(email);
+      setSuccess('Password reset instructions have been sent to your email.');
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || 'Failed to send reset link.');
-      } else {
-        setError('An unexpected error occurred');
-      }
+      setError('Failed to send reset instructions. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="auth-container">
-      <h2>Forgot Password</h2>
-      <p>Enter your email and we'll send you a link to reset your password.</p>
+      <h2>Reset Password</h2>
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
+
       <form onSubmit={handleSubmit}>
-        {error && <p className="error-message">{error}</p>}
-        {success && <p className="success-message">{success}</p>}
         <div className="form-group">
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email">
+            <FaEnvelope style={{ marginRight: '8px' }} />
+            Email
+          </label>
           <input
             id="email"
             type="email"
-            name="email"
-            placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
             required
           />
         </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Sending...' : 'Send Reset Link'}
+
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Sending...' : 'Send Reset Instructions'}
         </button>
       </form>
+
       <p>
-        <Link to="/login">Back to Login</Link>
+        <Link to="/login">
+          <FaArrowLeft style={{ marginRight: '8px' }} />
+          Back to Login
+        </Link>
       </p>
     </div>
   );

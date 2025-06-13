@@ -1,104 +1,175 @@
 import React, { useState } from 'react';
-import authService from '../../services/authService';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaUserTie, FaCalendarAlt } from 'react-icons/fa';
 
 const RegisterPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    email: '',
-    username: '',
-    firstName: '',
-    lastName: '',
-    password: '',
-    birthDate: '',
-  });
-  const [error, setError] = useState<string | string[]>('');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setSuccess('');
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      setLoading(false);
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      await authService.register(formData);
+      await register(username, email, password, firstName, lastName, birthDate);
       setSuccess('Registration successful! Please check your email to verify your account.');
-      setTimeout(() => navigate('/login'), 3000);
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        const errorData = err.response.data;
-        if (Array.isArray(errorData.message)) {
-          setError(errorData.message);
-        } else {
-          setError(errorData.message || 'Registration failed');
-        }
-      } else {
-        setError('An unexpected error occurred');
-      }
+      setError('Registration failed. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="auth-container">
-      <h2>Register</h2>
+      <h2>Create Account</h2>
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
+
       <form onSubmit={handleSubmit}>
-        {error && (
-            <div className="error-message">
-                {Array.isArray(error) ? (
-                    <ul>
-                        {error.map((e, i) => <li key={i}>{e}</li>)}
-                    </ul>
-                ) : (
-                    error
-                )}
-            </div>
-        )}
-        {success && <p className="success-message">{success}</p>}
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input id="email" type="email" name="email" placeholder="Email" onChange={handleChange} required />
+        <div className="form-grid">
+          <div className="form-group">
+            <label htmlFor="username">
+              <FaUser style={{ marginRight: '8px' }} />
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">
+              <FaEnvelope style={{ marginRight: '8px' }} />
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="firstName">
+              <FaUserTie style={{ marginRight: '8px' }} />
+              First Name
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Enter your first name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="lastName">
+              <FaUserTie style={{ marginRight: '8px' }} />
+              Last Name
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Enter your last name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="birthDate">
+              <FaCalendarAlt style={{ marginRight: '8px' }} />
+              Birth Date
+            </label>
+            <input
+              id="birthDate"
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">
+              <FaLock style={{ marginRight: '8px' }} />
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword">
+              <FaLock style={{ marginRight: '8px' }} />
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+              required
+            />
+          </div>
         </div>
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input id="username" type="text" name="username" placeholder="Username" onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="firstName">First Name</label>
-          <input id="firstName" type="text" name="firstName" placeholder="First Name" onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="lastName">Last Name</label>
-          <input id="lastName" type="text" name="lastName" placeholder="Last Name" onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input id="password" type="password" name="password" placeholder="Password" onChange={handleChange} required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="birthDate">Birth Date</label>
-          <input id="birthDate" type="date" name="birthDate" onChange={handleChange} required />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Registering...' : 'Register'}
+
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? (
+            'Creating account...'
+          ) : (
+            <>
+              <FaUserPlus style={{ marginRight: '8px' }} />
+              Create Account
+            </>
+          )}
         </button>
       </form>
+
       <p>
-        Already have an account? <Link to="/login">Login</Link>
+        Already have an account?{' '}
+        <Link to="/login">Sign in here</Link>
       </p>
     </div>
   );

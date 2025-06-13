@@ -40,3 +40,45 @@
 .read-the-docs {
   color: #888;
 }
+
+.auth-header {
+  margin-bottom: 2rem;
+}
+
+.auth-header h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+.auth-container h2 {
+  color: var(--text-color);
+  text-align: left;
+}
+
+.form-group .input-wrapper {
+  position: relative;
+}
+
+.form-group .input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+}
+
+.auth-container input {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+  padding-left: 45px; /* Make space for icon */
+}
+
+.auth-container input:focus {
+  outline: none;
+}
