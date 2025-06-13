@@ -5,12 +5,14 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
   const bearer = req.headers.authorization;
 
   if (!bearer || !bearer.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 
   const token = bearer.split(' ')[1];
   if (!token) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 
   try {
@@ -19,6 +21,7 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
     next();
   } catch (error) {
     console.error(error);
-    return res.status(401).json({ message: 'Unauthorized' });
+    res.status(401).json({ message: 'Unauthorized' });
+    return;
   }
 };
