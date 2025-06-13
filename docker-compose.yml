@@ -11,10 +11,10 @@ services:
       - ./Server:/app
       - server_node_modules:/app/node_modules
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres@database:5432/matcha
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@database:5432/${DB_NAME}
       - JWT_SECRET=${JWT_SECRET}
-      - SERVER_PORT=3001
+      - SERVER_PORT=${SERVER_PORT}
     depends_on:
       - database
     networks:
@@ -32,8 +32,8 @@ services:
       - ./Client:/app
       - client_node_modules:/app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:3001
-      - CLIENT_PORT=8080
+      - VITE_API_URL=http://localhost:${SERVER_PORT}
+      - CLIENT_PORT=${CLIENT_PORT}
     depends_on:
       - server
     networks:
