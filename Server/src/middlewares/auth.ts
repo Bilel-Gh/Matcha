@@ -1,27 +1,37 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { UserRepository } from '../repositories/UserRepository';
+import { AppError } from '../utils/AppError';
+import { asyncHandler } from './errorHandler';
+import config from '../config/config';
 
-export const protect = (req: Request, res: Response, next: NextFunction) => {
+interface JwtPayload {
+  id: number;
+}
+
+export const protect = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const bearer = req.headers.authorization;
 
   if (!bearer || !bearer.startsWith('Bearer ')) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
+    throw new AppError('Access token required', 401);
   }
 
   const token = bearer.split(' ')[1];
   if (!token) {
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
+    throw new AppError('Access token required', 401);
   }
 
-  try {
-    const user = jwt.verify(token, process.env.JWT_SECRET as string);
-    req.user = user as { id: number };
-    next();
-  } catch (error) {
-    console.error(error);
-    res.status(401).json({ message: 'Unauthorized' });
-    return;
+  const decoded = jwt.verify(token, config.JWT_SECRET) as JwtPayload;
+  const user = await UserRepository.findById(decoded.id);
+
+  if (!user) {
+    throw new AppError('User not found', 401);
   }
-};
+
+  if (!user.email_verified) {
+    throw new AppError('Email not verified', 403);
+  }
+
+  req.user = user;
+  next();
+});

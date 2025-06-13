@@ -1,40 +1,73 @@
 import { z } from 'zod';
 
+// Common validation rules
+const passwordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters long')
+  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    'Password must contain at least one lowercase letter, one uppercase letter, and one number');
+
+const emailSchema = z
+  .string()
+  .email('Please provide a valid email address')
+  .min(1, 'Email is required');
+
+const usernameSchema = z
+  .string()
+  .min(3, 'Username must be at least 3 characters long')
+  .max(20, 'Username must not exceed 20 characters')
+  .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
+
+const nameSchema = z
+  .string()
+  .min(2, 'Name must be at least 2 characters long')
+  .max(50, 'Name must not exceed 50 characters')
+  .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Name can only contain letters, spaces, hyphens, and apostrophes');
+
+// Registration schema
 export const registerSchema = z.object({
-  body: z.object({
-    email: z.string().email('Invalid email address'),
-    username: z.string().min(3, 'Username must be at least 3 characters long'),
-    firstName: z.string().min(2, 'First name must be at least 2 characters long'),
-    lastName: z.string().min(2, 'Last name must be at least 2 characters long'),
-    password: z.string().min(8, 'Password must be at least 8 characters long'),
-    birthDate: z.string().refine((date) => {
+  email: emailSchema,
+  username: usernameSchema,
+  firstName: nameSchema,
+  lastName: nameSchema,
+  password: passwordSchema,
+  birthDate: z
+    .string()
+    .refine(
+      (date) => {
       const birthDate = new Date(date);
-      const age = new Date().getFullYear() - birthDate.getFullYear();
-      const m = new Date().getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && new Date().getDate() < birthDate.getDate())) {
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         return age - 1 >= 18;
       }
       return age >= 18;
-    }, { message: 'You must be at least 18 years old' }),
-  }),
+      },
+      'You must be at least 18 years old to register'
+    ),
 });
 
+// Login schema
 export const loginSchema = z.object({
-  body: z.object({
-    username: z.string(),
-    password: z.string(),
-  }),
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(1, 'Password is required'),
 });
 
+// Forgot password schema
 export const forgotPasswordSchema = z.object({
-  body: z.object({
-    email: z.string().email('Invalid email address'),
-  }),
+  email: emailSchema,
 });
 
+// Reset password schema
 export const resetPasswordSchema = z.object({
-  body: z.object({
-    token: z.string(),
-    new_password: z.string().min(8, 'Password must be at least 8 characters long'),
-  }),
+  token: z.string().min(1, 'Reset token is required'),
+  new_password: passwordSchema,
 });
+
+// Export types
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

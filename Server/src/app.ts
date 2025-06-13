@@ -1,34 +1,64 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import authRoutes from './routes/auth';
 import { protect } from './middlewares/auth';
+import { errorHandler } from './middlewares/errorHandler';
 import { swaggerOptions } from './config/swagger';
-
-dotenv.config();
+import config from './config/config';
 
 const app = express();
-const port = process.env.SERVER_PORT || 3001;
 
 // Swagger setup
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.use(cors());
-app.use(express.json());
+// CORS configuration
+app.use(cors({
+  origin: config.CORS_ORIGIN,
+  credentials: true,
+}));
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Matcha API is running!' });
+// Body parsing middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'success',
+    message: 'Matcha API is running!',
+    timestamp: new Date().toISOString(),
+    environment: config.NODE_ENV
+  });
 });
 
+// API routes
 app.use('/api/auth', authRoutes);
 
+// Protected test route
 app.get('/api/protected', protect, (req, res) => {
-    res.json({ message: `Hello user ${req.user?.id}` });
+  res.json({
+    status: 'success',
+    message: `Hello ${req.user?.username}!`,
+    user: {
+      id: req.user?.id,
+      username: req.user?.username,
+      email: req.user?.email,
+    }
+  });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+// Handle 404 errors
+app.all('*', (req, res) => {
+  res.status(404).json({
+    status: 'fail',
+    message: `Route ${req.originalUrl} not found`
+  });
 });
+
+// Global error handler (must be last middleware)
+app.use(errorHandler);
+
+export default app;
