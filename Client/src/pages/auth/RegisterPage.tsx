@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaUserTie, FaCalendarAlt } from 'react-icons/fa';
+import axios from 'axios';
 
 const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -36,7 +37,13 @@ const RegisterPage: React.FC = () => {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      console.log('Registration error:', err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage = err.response?.data?.message || err.response?.data?.details || 'Registration failed. Please try again.';
+        setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

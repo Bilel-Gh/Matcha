@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaUser, FaLock, FaSignInAlt } from 'react-icons/fa';
+import axios from 'axios';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -20,7 +21,13 @@ const LoginPage: React.FC = () => {
       await login(username, password);
       navigate('/profile');
     } catch (err) {
-      setError('Invalid username or password');
+      console.log('Login error:', err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage = err.response?.data?.message || 'Invalid username or password';
+        setError(errorMessage);
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
