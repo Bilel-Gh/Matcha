@@ -5,6 +5,7 @@ import { UserRepository } from '../repositories/UserRepository';
 import { User } from '../types/user';
 import { AppError } from '../utils/AppError';
 import config from '../config/config';
+import emailService from './EmailService';
 
 export interface RegisterUserData {
   email: string;
@@ -32,37 +33,61 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  static async registerUser(userData: RegisterUserData): Promise<void> {
-    const { email, username, firstName, lastName, password, birthDate } = userData;
+  static async registerUser(data: RegisterUserData): Promise<AuthResponse> {
+    const { email, username, firstName, lastName, password, birthDate } = data;
 
     // Check if user already exists
-    const existingUser = await UserRepository.findByEmail(email) ||
-                        await UserRepository.findByUsername(username);
-
+    const existingUser = await UserRepository.findByEmail(email);
     if (existingUser) {
       throw new AppError('User already exists', 409);
     }
 
-    // Hash password and generate verification token
-    const hashedPassword = await bcrypt.hash(password, config.BCRYPT_SALT_ROUNDS);
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Generate verification token
     const verificationToken = uuidv4();
 
     // Create user
-    await UserRepository.create({
+    const user = await UserRepository.create({
       email,
       username,
       firstname: firstName,
       lastname: lastName,
       password: hashedPassword,
-      verification_token: verificationToken,
       birth_date: new Date(birthDate),
+      verification_token: verificationToken,
+      email_verified: false,
     });
 
-    // TODO: Send verification email
-    console.log(`Verification token for ${email}: ${verificationToken}`);
+    // Send verification email
+    try {
+      await emailService.sendVerificationEmail(email, verificationToken);
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+      // Continue with registration even if email fails
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user.id },
+      config.JWT_SECRET,
+      { expiresIn: config.JWT_EXPIRES_IN }
+    );
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        first_name: user.firstname,
+        last_name: user.lastname,
+      },
+    };
   }
 
-    static async loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
+  static async loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
     const { username, password } = credentials;
 
     // Find user
@@ -104,13 +129,18 @@ export class AuthService {
     };
   }
 
-    static async verifyEmail(token: string): Promise<void> {
+  static async verifyEmail(token: string): Promise<void> {
+    console.log('Verifying email with token:', token);
     const user = await UserRepository.findByVerificationToken(token);
+    console.log('Found user:', user ? 'yes' : 'no');
+
     if (!user) {
-      throw new AppError('Invalid verification token', 404);
+      throw new AppError('Invalid or expired token', 400);
     }
 
+    console.log('Marking user as verified:', user.id);
     await UserRepository.markAsVerified(user.id);
+    console.log('User marked as verified successfully');
   }
 
   static async requestPasswordReset(email: string): Promise<void> {

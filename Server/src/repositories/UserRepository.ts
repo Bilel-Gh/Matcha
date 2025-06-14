@@ -47,12 +47,15 @@ export class UserRepository {
   }
 
   static async findByVerificationToken(token: string): Promise<User | null> {
+    console.log('Searching for user with verification token:', token);
     const query = 'SELECT * FROM users WHERE verification_token = $1';
     const result = await pool.query(query, [token]);
+    console.log('Query result:', result.rows[0] ? 'User found' : 'No user found');
     return result.rows[0] || null;
   }
 
   static async markAsVerified(id: number): Promise<User | null> {
+    console.log('Marking user as verified:', id);
     const query = `
       UPDATE users
       SET email_verified = true, verification_token = null
@@ -60,6 +63,7 @@ export class UserRepository {
       RETURNING *
     `;
     const result = await pool.query(query, [id]);
+    console.log('Update result:', result.rows[0] ? 'Success' : 'Failed');
     return result.rows[0] || null;
   }
 

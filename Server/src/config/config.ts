@@ -18,14 +18,18 @@ interface Config {
   EMAIL_PORT?: number;
   EMAIL_USER?: string;
   EMAIL_PASS?: string;
+  SMTP_HOST: string;
+  SMTP_PORT: number;
+  SMTP_USER?: string;
+  SMTP_PASS?: string;
 }
 
 const config: Config = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   SERVER_PORT: parseInt(process.env.SERVER_PORT || '3001', 10),
   DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/matcha',
-  JWT_SECRET: process.env.JWT_SECRET || 'your_jwt_secret_key_here',
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '1d',
+  JWT_SECRET: process.env.JWT_SECRET || 'your-secret-key',
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '24h',
   BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10),
   PASSWORD_RESET_EXPIRES_HOURS: parseInt(process.env.PASSWORD_RESET_EXPIRES_HOURS || '1', 10),
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:8080',
@@ -35,6 +39,10 @@ const config: Config = {
   EMAIL_PORT: process.env.EMAIL_PORT ? parseInt(process.env.EMAIL_PORT, 10) : undefined,
   EMAIL_USER: process.env.EMAIL_USER,
   EMAIL_PASS: process.env.EMAIL_PASS,
+  SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
+  SMTP_PORT: parseInt(process.env.SMTP_PORT || '587'),
+  SMTP_USER: process.env.SMTP_USER,
+  SMTP_PASS: process.env.SMTP_PASS,
 };
 
 // Validate required environment variables
