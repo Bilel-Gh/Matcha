@@ -9,6 +9,7 @@ import photoRoutes from './routes/photos';
 import interestRoutes from './routes/interests';
 import userInterestRoutes from './routes/userInterests';
 import locationRoutes from './routes/location';
+import fameRatingRoutes from './routes/fameRating';
 import { protect } from './middlewares/auth';
 import { errorHandler } from './middlewares/errorHandler';
 import { swaggerOptions } from './config/swagger';
@@ -50,6 +51,7 @@ app.use('/api/profile/photos', photoRoutes);
 app.use('/api/interests', interestRoutes);
 app.use('/api/profile/interests', userInterestRoutes);
 app.use('/api', locationRoutes);
+app.use('/api/profile/fame-rating', fameRatingRoutes);
 
 // Protected test route
 app.get('/api/protected', protect, (req, res) => {

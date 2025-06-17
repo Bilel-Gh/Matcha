@@ -4,6 +4,7 @@ import { PhotoRepository } from '../repositories/PhotoRepository';
 import { User } from '../types/user';
 import { AppError } from '../utils/AppError';
 import config from '../config/config';
+import { FameRatingService } from './FameRatingService';
 
 export interface ProfileResponse {
   id: number;
@@ -27,6 +28,7 @@ export interface ProfileResponse {
     source?: string;
     updated_at?: string;
   };
+  fame_rating: number;
   created_at: string;
 }
 
@@ -86,6 +88,7 @@ export class ProfileService {
         source: user.location_source || undefined,
         updated_at: user.location_updated_at?.toISOString(),
       } : undefined,
+      fame_rating: user.fame_rating,
       created_at: user.created_at.toISOString(),
     };
   }
@@ -149,6 +152,14 @@ export class ProfileService {
 
     if (!updatedUser) {
       throw new AppError('Failed to update profile', 500);
+    }
+
+    // Auto-update fame rating when profile is updated
+    try {
+      await FameRatingService.updateUserFameRating(userId);
+    } catch (error) {
+      console.error('Failed to update fame rating after profile update:', error);
+      // Continue even if fame rating update fails
     }
 
     return this.formatProfileResponse(updatedUser);

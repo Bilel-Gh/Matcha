@@ -3,6 +3,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { PhotoRepository, Photo, CreatePhotoData } from '../repositories/PhotoRepository';
 import { AppError } from '../utils/AppError';
+import { FameRatingService } from './FameRatingService';
 
 export interface PhotoResponse {
   id: number;
@@ -127,6 +128,14 @@ export class PhotoService {
 
       const photo = await PhotoRepository.create(photoData);
 
+      // Auto-update fame rating when photo is uploaded
+      try {
+        await FameRatingService.updateUserFameRating(userId);
+      } catch (error) {
+        console.error('Failed to update fame rating after photo upload:', error);
+        // Continue even if fame rating update fails
+      }
+
       return {
         success: true,
         photo: this.formatPhotoResponse(photo),
@@ -159,6 +168,14 @@ export class PhotoService {
 
     if (!updatedPhoto) {
       throw new AppError('Failed to update profile photo', 500);
+    }
+
+    // Auto-update fame rating when profile photo is set
+    try {
+      await FameRatingService.updateUserFameRating(userId);
+    } catch (error) {
+      console.error('Failed to update fame rating after setting profile photo:', error);
+      // Continue even if fame rating update fails
     }
 
     return this.formatPhotoResponse(updatedPhoto);

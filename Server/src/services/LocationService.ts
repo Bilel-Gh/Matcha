@@ -1,6 +1,7 @@
 import { UserRepository } from '../repositories/UserRepository';
 import { User } from '../types/user';
 import { AppError } from '../utils/AppError';
+import { FameRatingService } from './FameRatingService';
 
 export interface LocationCoordinates {
   latitude: number;
@@ -184,6 +185,14 @@ export class LocationService {
 
     if (!updatedUser) {
       throw new AppError('Failed to update user location', 500);
+    }
+
+    // Auto-update fame rating when location is updated
+    try {
+      await FameRatingService.updateUserFameRating(userId);
+    } catch (error) {
+      console.error('Failed to update fame rating after location update:', error);
+      // Continue even if fame rating update fails
     }
 
     return this.formatLocationResponse(updatedUser);
