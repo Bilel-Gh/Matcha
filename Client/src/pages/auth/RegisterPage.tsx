@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaUserTie, FaCalendarAlt } from 'react-icons/fa';
@@ -16,7 +16,14 @@ const RegisterPage: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated when component mounts
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/profile', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +58,9 @@ const RegisterPage: React.FC = () => {
 
   return (
     <div className="auth-container">
+      <div className="auth-header">
+        <h1>Matcha</h1>
+      </div>
       <h2>Create Account</h2>
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}

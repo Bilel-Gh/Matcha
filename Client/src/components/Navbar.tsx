@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { FaUser, FaSignOutAlt } from 'react-icons/fa';
 
 const Navbar: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -23,11 +23,11 @@ const Navbar: React.FC = () => {
         <Link to="/">Matcha</Link>
       </div>
       <div className="nav-links">
-        {isAuthenticated && (
+        {isAuthenticated && user && (
           <>
-            <Link to="/profile" className="nav-link">
+            <Link to="/profile" className="nav-username">
               <FaUser style={{ marginRight: '8px' }} />
-              Profile
+              {user.username}
             </Link>
             <button onClick={handleLogout} className="nav-link logout-btn">
               <FaSignOutAlt style={{ marginRight: '8px' }} />

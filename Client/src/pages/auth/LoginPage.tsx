@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaUser, FaLock, FaSignInAlt } from 'react-icons/fa';
@@ -10,7 +10,14 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated when component mounts
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/profile', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +42,9 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <h2>Welcome Back</h2>
+      <div className="auth-header">
+        <h1>Matcha</h1>
+      </div>
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit}>

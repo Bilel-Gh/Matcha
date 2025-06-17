@@ -5,15 +5,19 @@ interface User {
   id: string;
   username: string;
   email: string;
+  first_name: string;
+  last_name: string;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string, firstName: string, lastName: string, birthDate: string) => Promise<void>;
   logout: () => void;
+  updateUser: (userData: Partial<User>) => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
 }
@@ -22,37 +26,57 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Initialize auth state from localStorage
+  useEffect(() => {
+    const initializeAuth = () => {
+      try {
+        const savedToken = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
+
+        if (savedToken && savedUser) {
+          setToken(savedToken);
+          setUser(JSON.parse(savedUser));
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        // Clear corrupted data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
 
   useEffect(() => {
-    console.log('Current token:', token);
     if (token) {
       localStorage.setItem('token', token);
-      console.log('Token saved to localStorage');
     } else {
       localStorage.removeItem('token');
-      console.log('Token removed from localStorage');
     }
   }, [token]);
 
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('user');
+    }
+  }, [user]);
+
   const login = async (username: string, password: string) => {
     try {
-      console.log('Attempting login...');
       const response = await authService.login({ username, password });
-      console.log('Login response received:', response.data);
-
       const { token: newToken, user: userData } = response.data.data;
-      console.log('New token:', newToken);
-      console.log('User data:', userData);
 
       setToken(newToken);
       setUser(userData);
-
-      // Vérification immédiate
-      console.log('Token after set:', newToken);
-      console.log('localStorage token:', localStorage.getItem('token'));
     } catch (error) {
-      console.error('Login error in context:', error);
       throw error;
     }
   };
@@ -76,24 +100,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       return response;
     } catch (error) {
-      console.error('Registration error:', error);
       throw error;
     }
   };
 
   const logout = () => {
-    console.log('Logging out...');
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
-    console.log('Logout complete, localStorage token:', localStorage.getItem('token'));
+    localStorage.removeItem('user');
+  };
+
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+    }
   };
 
   const forgotPassword = async (email: string) => {
     try {
       await authService.forgotPassword(email);
     } catch (error) {
-      console.error('Forgot password error:', error);
       throw error;
     }
   };
@@ -102,13 +130,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.resetPassword(password, token);
     } catch (error) {
-      console.error('Reset password error:', error);
       throw error;
     }
   };
 
-  const isAuthenticated = !!token;
-  console.log('isAuthenticated:', isAuthenticated);
+  const isAuthenticated = !!token && !!user;
 
   return (
     <AuthContext.Provider
@@ -116,9 +142,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         token,
         isAuthenticated,
+        isLoading,
         login,
         register,
         logout,
+        updateUser,
         forgotPassword,
         resetPassword,
       }}
