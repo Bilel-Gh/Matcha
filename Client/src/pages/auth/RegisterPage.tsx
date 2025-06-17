@@ -44,7 +44,6 @@ const RegisterPage: React.FC = () => {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      console.log('Registration error:', err);
       if (axios.isAxiosError(err)) {
         const errorMessage = err.response?.data?.message || err.response?.data?.details || 'Registration failed. Please try again.';
         setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);

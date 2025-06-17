@@ -40,7 +40,6 @@ const InterestTagList: React.FC<InterestTagListProps> = ({
           const interestId = userInterest.interest_id || userInterest.id;
 
           if (!interest) {
-            console.warn('Invalid userInterest structure:', userInterest);
             return null;
           }
 

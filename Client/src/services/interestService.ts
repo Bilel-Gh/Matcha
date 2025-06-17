@@ -50,7 +50,6 @@ const interestService = {
       } else if (data && typeof data === 'object' && 'interests' in data) {
         return (data as any).interests;
       } else {
-        console.warn('Unexpected data format from getAllInterests:', data);
         return [];
       }
     } catch (error) {
@@ -103,8 +102,6 @@ const interestService = {
         },
       });
 
-      console.log('Raw getUserInterests response:', response.data);
-
       const data = response.data.data;
 
       // Handle different response formats
@@ -113,7 +110,6 @@ const interestService = {
       } else if (data && data.interests && Array.isArray(data.interests)) {
         return data.interests;
       } else {
-        console.warn('Unexpected data format from getUserInterests:', data);
         return [];
       }
     } catch (error) {
@@ -172,8 +168,7 @@ const interestService = {
   // Add interest by name (auto-create if doesn't exist)
   async addInterestByName(token: string, name: string): Promise<void> {
     try {
-      console.log('Sending addInterestByName request:', { name });
-      const response = await axios.post<ApiResponse<void>>(`${API_URL}/api/profile/interests/add-by-name`,
+      await axios.post<ApiResponse<void>>(`${API_URL}/api/profile/interests/add-by-name`,
         { name },
         {
           headers: {
@@ -182,13 +177,8 @@ const interestService = {
           },
         }
       );
-      console.log('addInterestByName response:', response.data);
     } catch (error) {
       console.error('Add interest by name service error:', error);
-      if (axios.isAxiosError(error)) {
-        console.error('Error response data:', error.response?.data);
-        console.error('Error status:', error.response?.status);
-      }
       throw error;
     }
   },

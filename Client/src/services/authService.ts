@@ -33,9 +33,7 @@ interface AuthResponse {
 const authService = {
   async login(credentials: LoginCredentials): Promise<{ data: AuthResponse }> {
     try {
-      console.log('Sending login request to:', `${API_URL}/api/auth/login`);
       const response = await axios.post(`${API_URL}/api/auth/login`, credentials);
-      console.log('Login response:', response.data);
       return response;
     } catch (error) {
       console.error('Login service error:', error);
@@ -45,9 +43,7 @@ const authService = {
 
   async register(data: RegisterData): Promise<{ data: AuthResponse }> {
     try {
-      console.log('Sending register request to:', `${API_URL}/api/auth/register`);
       const response = await axios.post(`${API_URL}/api/auth/register`, data);
-      console.log('Register response:', response.data);
       return response;
     } catch (error) {
       console.error('Register service error:', error);

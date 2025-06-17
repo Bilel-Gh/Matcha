@@ -28,7 +28,6 @@ const LoginPage: React.FC = () => {
       await login(username, password);
       navigate('/profile');
     } catch (err) {
-      console.log('Login error:', err);
       if (axios.isAxiosError(err)) {
         const errorMessage = err.response?.data?.message || 'Invalid username or password';
         setError(errorMessage);

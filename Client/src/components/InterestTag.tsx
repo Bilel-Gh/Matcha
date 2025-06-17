@@ -21,7 +21,6 @@ const InterestTag: React.FC<InterestTagProps> = ({
 
   // Safety check for interest object
   if (!interest) {
-    console.error('InterestTag: interest is undefined');
     return null;
   }
 

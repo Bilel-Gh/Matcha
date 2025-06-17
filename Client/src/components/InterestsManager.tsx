@@ -37,13 +37,11 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
     try {
       setIsLoading(true);
       const interests = await interestService.getUserInterests(token);
-      console.log('User interests received:', interests);
 
       // Ensure interests is an array
       if (Array.isArray(interests)) {
         setUserInterests(interests);
       } else {
-        console.warn('getUserInterests did not return an array:', interests);
         setUserInterests([]);
       }
     } catch (error) {
@@ -58,14 +56,12 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
   const loadPopularInterests = async () => {
     try {
       const allInterests = await interestService.getAllInterests(token);
-      console.log('All interests received:', allInterests);
 
       // Ensure allInterests is an array
       if (Array.isArray(allInterests)) {
         // Take first 10 as popular interests for now
         setPopularInterests(allInterests.slice(0, 10));
       } else {
-        console.warn('getAllInterests did not return an array:', allInterests);
         setPopularInterests([]);
       }
     } catch (error) {
@@ -159,7 +155,6 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
     } catch (error) {
       console.error('Failed to create and add interest:', error);
       if (axios.isAxiosError(error)) {
-        console.error('Error details:', error.response?.data);
         const errorMsg = error.response?.data?.message || error.response?.data?.details || 'Failed to add interest. Please try again.';
         onError?.(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
       } else {
@@ -178,7 +173,6 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
     });
 
     if (!interestToRemove) {
-      console.warn('Interest to remove not found:', interestId);
       return;
     }
 
