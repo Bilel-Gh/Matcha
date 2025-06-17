@@ -2,7 +2,7 @@ import { Router } from 'express';
 import * as interestController from '../controllers/interestController';
 import { protect } from '../middlewares/auth';
 import { validate } from '../middlewares/validation';
-import { userInterestsUpdateSchema, interestCreateSchema } from '../utils/validation';
+import { userInterestsUpdateSchema, interestAddByNameSchema } from '../utils/validation';
 
 const router = Router();
 
@@ -164,46 +164,6 @@ router.put('/', validate(userInterestsUpdateSchema), interestController.updateUs
  *       409:
  *         description: User already has this interest
  */
-router.post('/:id', interestController.addUserInterest);
-
-/**
- * @swagger
- * /api/profile/interests/{id}:
- *   delete:
- *     summary: Remove interest from user
- *     tags: [User Interests]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Interest ID
- *     responses:
- *       200:
- *         description: Interest removed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: success
- *                 message:
- *                   type: string
- *                   example: Interest removed successfully
- *       400:
- *         description: Invalid interest ID
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Interest not found or not associated with user
- */
-router.delete('/:id', interestController.removeUserInterest);
-
 /**
  * @swagger
  * /api/profile/interests/add-by-name:
@@ -252,6 +212,46 @@ router.delete('/:id', interestController.removeUserInterest);
  *       409:
  *         description: User already has this interest
  */
-router.post('/add-by-name', validate(interestCreateSchema), interestController.addUserInterestByName);
+router.post('/add-by-name', validate(interestAddByNameSchema), interestController.addUserInterestByName);
+
+router.post('/:id', interestController.addUserInterest);
+
+/**
+ * @swagger
+ * /api/profile/interests/{id}:
+ *   delete:
+ *     summary: Remove interest from user
+ *     tags: [User Interests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Interest ID
+ *     responses:
+ *       200:
+ *         description: Interest removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Interest removed successfully
+ *       400:
+ *         description: Invalid interest ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Interest not found or not associated with user
+ */
+router.delete('/:id', interestController.removeUserInterest);
 
 export default router;

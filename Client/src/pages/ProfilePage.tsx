@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaSignInAlt, FaUser, FaLock, FaCamera } from 'react-icons/fa';
+import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart } from 'react-icons/fa';
 import axios from 'axios';
 import PersonalInfoForm from '../components/PersonalInfoForm';
 import PasswordChangeForm from '../components/PasswordChangeForm';
 import PhotoManagement from '../components/PhotoManagement';
+import InterestsManager from '../components/InterestsManager';
 import profileService, { ProfileData, ProfileUpdateData, PasswordChangeData } from '../services/profileService';
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'security'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'security'>('personal');
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -157,6 +158,13 @@ const ProfilePage: React.FC = () => {
           Photos
         </button>
         <button
+          className={`tab-button ${activeTab === 'interests' ? 'active' : ''}`}
+          onClick={() => setActiveTab('interests')}
+        >
+          <FaHeart style={{ marginRight: '8px' }} />
+          Interests
+        </button>
+        <button
           className={`tab-button ${activeTab === 'security' ? 'active' : ''}`}
           onClick={() => setActiveTab('security')}
         >
@@ -176,6 +184,14 @@ const ProfilePage: React.FC = () => {
 
         {activeTab === 'photos' && token && (
           <PhotoManagement
+            token={token}
+            onSuccess={setSuccessMessage}
+            onError={setErrorMessage}
+          />
+        )}
+
+        {activeTab === 'interests' && token && (
+          <InterestsManager
             token={token}
             onSuccess={setSuccessMessage}
             onError={setErrorMessage}

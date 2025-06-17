@@ -115,6 +115,14 @@ export const interestCreateSchema = z.object({
     .optional(),
 });
 
+export const interestAddByNameSchema = z.object({
+  name: z
+    .string()
+    .min(2, 'Interest name must be at least 2 characters long')
+    .max(30, 'Interest name must not exceed 30 characters')
+    .regex(/^[a-zA-ZÀ-ÿ0-9\s_-]+$/, 'Interest name can only contain letters, numbers, spaces, underscores, and hyphens'),
+});
+
 export const interestSearchSchema = z.object({
   q: z
     .string()
@@ -137,5 +145,6 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
 export type InterestCreateInput = z.infer<typeof interestCreateSchema>;
+export type InterestAddByNameInput = z.infer<typeof interestAddByNameSchema>;
 export type InterestSearchInput = z.infer<typeof interestSearchSchema>;
 export type UserInterestsUpdateInput = z.infer<typeof userInterestsUpdateSchema>;
