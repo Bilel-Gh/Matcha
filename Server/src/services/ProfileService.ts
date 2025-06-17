@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/UserRepository';
+import { PhotoRepository } from '../repositories/PhotoRepository';
 import { User } from '../types/user';
 import { AppError } from '../utils/AppError';
 import config from '../config/config';
@@ -16,6 +17,9 @@ export interface ProfileResponse {
   birth_date?: string;
   age?: number;
   profile_completed: boolean;
+  has_profile_picture: boolean;
+  profile_picture_url?: string;
+  photos_count: number;
   created_at: string;
 }
 
@@ -48,7 +52,10 @@ export class ProfileService {
     return !!(user.gender && user.sexual_preferences && user.biography);
   }
 
-  static formatProfileResponse(user: User): ProfileResponse {
+  static async formatProfileResponse(user: User): Promise<ProfileResponse> {
+    const hasProfilePicture = await PhotoRepository.hasProfilePhoto(user.id);
+    const photosCount = await PhotoRepository.countByUserId(user.id);
+
     return {
       id: user.id,
       username: user.username,
@@ -61,6 +68,9 @@ export class ProfileService {
       birth_date: user.birth_date ? user.birth_date.toISOString().split('T')[0] : undefined,
       age: user.birth_date ? this.calculateAge(user.birth_date) : undefined,
       profile_completed: this.isProfileComplete(user),
+      has_profile_picture: hasProfilePicture,
+      profile_picture_url: user.profile_picture_url || undefined,
+      photos_count: photosCount,
       created_at: user.created_at.toISOString(),
     };
   }

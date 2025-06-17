@@ -18,5 +18,6 @@ export interface User {
     password_reset_token?: string | null;
     password_reset_expires?: Date | null;
     birth_date?: Date;
+    profile_picture_url?: string | null;
     created_at: Date;
   }

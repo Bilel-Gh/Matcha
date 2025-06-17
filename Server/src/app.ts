@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
+import photoRoutes from './routes/photos';
 import { protect } from './middlewares/auth';
 import { errorHandler } from './middlewares/errorHandler';
 import { swaggerOptions } from './config/swagger';
@@ -25,6 +27,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve static files for photos
+app.use('/uploads/photos', express.static(path.join(process.cwd(), 'uploads', 'photos')));
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -38,6 +43,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/profile/photos', photoRoutes);
 
 // Protected test route
 app.get('/api/protected', protect, (req, res) => {
