@@ -66,8 +66,45 @@ export const resetPasswordSchema = z.object({
   new_password: passwordSchema,
 });
 
+// Profile update schema
+export const profileUpdateSchema = z.object({
+  firstname: nameSchema.optional(),
+  lastname: nameSchema.optional(),
+  email: emailSchema.optional(),
+  username: usernameSchema.optional(),
+  gender: z.enum(['male', 'female', 'other']).optional(),
+  sexual_preferences: z.enum(['male', 'female', 'both']).optional(),
+  biography: z.string().max(500, 'Biography must not exceed 500 characters').optional(),
+  birth_date: z
+    .string()
+    .optional()
+    .refine(
+      (date) => {
+        if (!date) return true; // Optional field
+        const birthDate = new Date(date);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          return age - 1 >= 18;
+        }
+        return age >= 18;
+      },
+      'You must be at least 18 years old'
+    ),
+});
+
+// Password change schema
+export const passwordChangeSchema = z.object({
+  current_password: z.string().min(1, 'Current password is required'),
+  new_password: passwordSchema,
+});
+
 // Export types
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
+export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;

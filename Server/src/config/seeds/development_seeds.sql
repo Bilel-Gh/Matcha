@@ -130,8 +130,13 @@ BEGIN
         FROM users u, interests i
         WHERE u.username = 'jane_doe' AND i.tag IN ('cooking', 'photography');
 
+        -- Fix de la séquence pour éviter les conflits d'ID
+        PERFORM setval('users_id_seq', (SELECT MAX(id) FROM users));
+
         RAISE NOTICE 'Utilisateurs de test créés avec succès !';
     ELSE
+        -- Fix de la séquence même si les utilisateurs existent déjà
+        PERFORM setval('users_id_seq', (SELECT MAX(id) FROM users));
         RAISE NOTICE 'Les utilisateurs de test existent déjà.';
     END IF;
 END $$;

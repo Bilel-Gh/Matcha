@@ -119,4 +119,99 @@ export class UserRepository {
     `;
     await pool.query(query, [id]);
   }
+
+  static async checkEmailExists(email: string, excludeUserId?: number): Promise<boolean> {
+    let query = 'SELECT id FROM users WHERE email = $1';
+    let params: any[] = [email];
+
+    if (excludeUserId) {
+      query += ' AND id != $2';
+      params.push(excludeUserId);
+    }
+
+    const result = await pool.query(query, params);
+    return result.rows.length > 0;
+  }
+
+  static async checkUsernameExists(username: string, excludeUserId?: number): Promise<boolean> {
+    let query = 'SELECT id FROM users WHERE username = $1';
+    let params: any[] = [username];
+
+    if (excludeUserId) {
+      query += ' AND id != $2';
+      params.push(excludeUserId);
+    }
+
+    const result = await pool.query(query, params);
+    return result.rows.length > 0;
+  }
+
+  static async updateProfile(
+    id: number,
+    updates: {
+      firstname?: string;
+      lastname?: string;
+      email?: string;
+      username?: string;
+      gender?: string;
+      sexual_preferences?: string;
+      biography?: string;
+      birth_date?: Date;
+    }
+  ): Promise<User | null> {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    // Build dynamic query based on provided fields
+    if (updates.firstname !== undefined) {
+      fields.push(`firstname = $${paramCount++}`);
+      values.push(updates.firstname);
+    }
+    if (updates.lastname !== undefined) {
+      fields.push(`lastname = $${paramCount++}`);
+      values.push(updates.lastname);
+    }
+    if (updates.email !== undefined) {
+      fields.push(`email = $${paramCount++}`);
+      values.push(updates.email);
+    }
+    if (updates.username !== undefined) {
+      fields.push(`username = $${paramCount++}`);
+      values.push(updates.username);
+    }
+    if (updates.gender !== undefined) {
+      fields.push(`gender = $${paramCount++}`);
+      values.push(updates.gender);
+    }
+    if (updates.sexual_preferences !== undefined) {
+      fields.push(`sexual_preferences = $${paramCount++}`);
+      values.push(updates.sexual_preferences);
+    }
+    if (updates.biography !== undefined) {
+      fields.push(`biography = $${paramCount++}`);
+      values.push(updates.biography);
+    }
+    if (updates.birth_date !== undefined) {
+      fields.push(`birth_date = $${paramCount++}`);
+      values.push(updates.birth_date);
+    }
+
+    if (fields.length === 0) {
+      // No fields to update, return current user
+      return this.findById(id);
+    }
+
+    values.push(id); // Add user ID as last parameter
+
+    const query = `
+      UPDATE users
+      SET ${fields.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, values);
+    return result.rows[0] || null;
+  }
 }

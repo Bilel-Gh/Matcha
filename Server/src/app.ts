@@ -3,6 +3,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import authRoutes from './routes/auth';
+import profileRoutes from './routes/profile';
 import { protect } from './middlewares/auth';
 import { errorHandler } from './middlewares/errorHandler';
 import { swaggerOptions } from './config/swagger';
@@ -36,6 +37,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Protected test route
 app.get('/api/protected', protect, (req, res) => {
