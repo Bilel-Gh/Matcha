@@ -100,6 +100,19 @@ export class ProfileService {
       throw new AppError('User not found', 404);
     }
 
+    // Auto-update fame rating to ensure it's current
+    try {
+      await FameRatingService.updateUserFameRating(userId);
+      // Refetch user data to get updated fame rating
+      const updatedUser = await UserRepository.findById(userId);
+      if (updatedUser) {
+        return this.formatProfileResponse(updatedUser);
+      }
+    } catch (error) {
+      console.error('Failed to update fame rating during profile fetch:', error);
+      // Continue with existing user data if fame rating update fails
+    }
+
     return this.formatProfileResponse(user);
   }
 
@@ -157,6 +170,11 @@ export class ProfileService {
     // Auto-update fame rating when profile is updated
     try {
       await FameRatingService.updateUserFameRating(userId);
+      // Refetch user data to get updated fame rating
+      const finalUser = await UserRepository.findById(userId);
+      if (finalUser) {
+        return this.formatProfileResponse(finalUser);
+      }
     } catch (error) {
       console.error('Failed to update fame rating after profile update:', error);
       // Continue even if fame rating update fails

@@ -16,6 +16,7 @@ export interface ProfileData {
   profile_completed: boolean;
   profile_picture_url?: string;
   has_profile_picture: boolean;
+  fame_rating?: number;
   // Location fields
   latitude?: number;
   longitude?: number;

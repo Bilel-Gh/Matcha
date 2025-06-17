@@ -9,12 +9,14 @@ interface InterestsManagerProps {
   token: string;
   onSuccess?: (message: string) => void;
   onError?: (message: string) => void;
+  onProfileUpdate?: () => void;
 }
 
 const InterestsManager: React.FC<InterestsManagerProps> = ({
   token,
   onSuccess,
   onError,
+  onProfileUpdate,
 }) => {
   const [userInterests, setUserInterests] = useState<UserInterest[]>([]);
   const [searchResults, setSearchResults] = useState<Interest[]>([]);
@@ -115,6 +117,7 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
 
       setUserInterests(prev => [...prev, newUserInterest]);
       onSuccess?.(`Added "${interest.name}" to your interests!`);
+      onProfileUpdate?.();
     } catch (error) {
       console.error('Failed to add interest:', error);
       if (axios.isAxiosError(error)) {
@@ -152,6 +155,7 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
       // Reload user interests to get the new one
       await loadUserInterests();
       onSuccess?.(`Added "${trimmedName}" to your interests!`);
+      onProfileUpdate?.();
     } catch (error) {
       console.error('Failed to create and add interest:', error);
       if (axios.isAxiosError(error)) {
@@ -190,6 +194,7 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
 
       const interestName = interestToRemove.interest?.name || 'interest';
       onSuccess?.(`Removed "${interestName}" from your interests.`);
+      onProfileUpdate?.();
     } catch (error) {
       console.error('Failed to remove interest:', error);
       if (axios.isAxiosError(error)) {

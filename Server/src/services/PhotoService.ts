@@ -198,6 +198,14 @@ export class PhotoService {
       // Log error but don't throw - database deletion succeeded
       console.error('Failed to delete file:', filePath, error);
     }
+
+    // Auto-update fame rating when photo is deleted
+    try {
+      await FameRatingService.updateUserFameRating(userId);
+    } catch (error) {
+      console.error('Failed to update fame rating after photo deletion:', error);
+      // Continue even if fame rating update fails
+    }
   }
 
   static async deleteUserPhotos(userId: number): Promise<void> {

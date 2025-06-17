@@ -10,12 +10,14 @@ interface PhotoManagementProps {
   token: string;
   onSuccess?: (message: string) => void;
   onError?: (message: string) => void;
+  onProfileUpdate?: () => void;
 }
 
 const PhotoManagement: React.FC<PhotoManagementProps> = ({
   token,
   onSuccess,
   onError,
+  onProfileUpdate,
 }) => {
   const { refreshUser } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -88,6 +90,7 @@ const PhotoManagement: React.FC<PhotoManagementProps> = ({
       await refreshUser();
 
       onSuccess?.('Profile picture updated successfully!');
+      onProfileUpdate?.();
     } catch (error) {
       console.error('Failed to set profile picture:', error);
 
@@ -118,6 +121,7 @@ const PhotoManagement: React.FC<PhotoManagementProps> = ({
       }
 
       onSuccess?.('Photo deleted successfully!');
+      onProfileUpdate?.();
     } catch (error) {
       console.error('Failed to delete photo:', error);
 

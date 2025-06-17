@@ -10,6 +10,7 @@ interface LocationManagerProps {
   onSuccess?: (message: string) => void;
   onError?: (message: string) => void;
   showInitialSetup?: boolean;
+  onProfileUpdate?: () => void;
 }
 
 const LocationManager: React.FC<LocationManagerProps> = ({
@@ -17,6 +18,7 @@ const LocationManager: React.FC<LocationManagerProps> = ({
   onSuccess,
   onError,
   showInitialSetup = false,
+  onProfileUpdate,
 }) => {
   const [location, setLocation] = useState<LocationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,17 +62,20 @@ const LocationManager: React.FC<LocationManagerProps> = ({
     };
 
     onSuccess?.(sourceMessages[newLocation.location_source] || 'Location updated successfully!');
+    onProfileUpdate?.();
   };
 
   const handleLocationUpdate = (updatedLocation: LocationData) => {
     setLocation(updatedLocation);
     onSuccess?.(`✅ Location updated to ${updatedLocation.city || 'your area'}`);
+    onProfileUpdate?.();
   };
 
   const handleManualSave = (savedLocation: LocationData) => {
     setLocation(savedLocation);
     setShowManualEditor(false);
     onSuccess?.(`✅ Location changed to ${savedLocation.city || 'your area'}`);
+    onProfileUpdate?.();
   };
 
   const handleError = (message: string) => {

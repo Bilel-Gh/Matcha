@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart, FaMapMarkerAlt, FaTachometerAlt } from 'react-icons/fa';
 import axios from 'axios';
 import PersonalInfoForm from '../components/PersonalInfoForm';
 import PasswordChangeForm from '../components/PasswordChangeForm';
 import PhotoManagement from '../components/PhotoManagement';
 import InterestsManager from '../components/InterestsManager';
 import LocationManager from '../components/LocationManager';
+import FameRatingCard from '../components/FameRatingCard';
 import profileService, { ProfileData, ProfileUpdateData, PasswordChangeData } from '../services/profileService';
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'location' | 'security'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'location' | 'security' | 'overview'>('overview');
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -50,6 +51,11 @@ const ProfilePage: React.FC = () => {
     } finally {
       setIsLoadingProfile(false);
     }
+  };
+
+  // Callback to refresh profile data
+  const handleProfileUpdate = () => {
+    loadProfile();
   };
 
   const handleUpdateProfile = async (data: ProfileUpdateData) => {
@@ -150,6 +156,13 @@ const ProfilePage: React.FC = () => {
 
       <div className="profile-tabs">
         <button
+          className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          <FaTachometerAlt style={{ marginRight: '8px' }} />
+          Overview
+        </button>
+        <button
           className={`tab-button ${activeTab === 'personal' ? 'active' : ''}`}
           onClick={() => setActiveTab('personal')}
         >
@@ -188,11 +201,18 @@ const ProfilePage: React.FC = () => {
 
       <div className="profile-content">
         {activeTab === 'personal' && (
-          <PersonalInfoForm
-            profile={profile}
-            onUpdate={handleUpdateProfile}
-            isLoading={isUpdatingProfile}
-          />
+          <>
+            <PersonalInfoForm
+              profile={profile}
+              onUpdate={handleUpdateProfile}
+              isLoading={isUpdatingProfile}
+            />
+            {profile && (
+              <FameRatingCard
+                fameRating={profile.fame_rating || 0}
+              />
+            )}
+          </>
         )}
 
         {activeTab === 'photos' && token && (
@@ -200,6 +220,7 @@ const ProfilePage: React.FC = () => {
             token={token}
             onSuccess={showSuccessMessage}
             onError={showErrorMessage}
+            onProfileUpdate={handleProfileUpdate}
           />
         )}
 
@@ -208,6 +229,7 @@ const ProfilePage: React.FC = () => {
             token={token}
             onSuccess={showSuccessMessage}
             onError={showErrorMessage}
+            onProfileUpdate={handleProfileUpdate}
           />
         )}
 
@@ -217,6 +239,7 @@ const ProfilePage: React.FC = () => {
             onSuccess={showSuccessMessage}
             onError={showErrorMessage}
             showInitialSetup={!profile?.profile_completed}
+            onProfileUpdate={handleProfileUpdate}
           />
         )}
 
@@ -225,6 +248,51 @@ const ProfilePage: React.FC = () => {
             onChangePassword={handleChangePassword}
             isLoading={isChangingPassword}
           />
+        )}
+
+        {activeTab === 'overview' && profile && (
+          <div className="overview-section">
+            <FameRatingCard
+              fameRating={profile.fame_rating || 0}
+            />
+
+            <div className="profile-stats">
+              <h3>Profile Completion</h3>
+              <div className="stats-grid">
+                <div className="stat-item">
+                  <span className="stat-icon">📸</span>
+                  <span className="stat-label">Profile Picture</span>
+                  <span className={`stat-status ${profile.has_profile_picture ? 'completed' : 'incomplete'}`}>
+                    {profile.has_profile_picture ? '✓' : '✗'}
+                  </span>
+                </div>
+
+                <div className="stat-item">
+                  <span className="stat-icon">✍️</span>
+                  <span className="stat-label">Biography</span>
+                  <span className={`stat-status ${profile.biography ? 'completed' : 'incomplete'}`}>
+                    {profile.biography ? '✓' : '✗'}
+                  </span>
+                </div>
+
+                <div className="stat-item">
+                  <span className="stat-icon">📍</span>
+                  <span className="stat-label">Location</span>
+                  <span className={`stat-status ${profile.has_location ? 'completed' : 'incomplete'}`}>
+                    {profile.has_location ? '✓' : '✗'}
+                  </span>
+                </div>
+
+                <div className="stat-item">
+                  <span className="stat-icon">⚥</span>
+                  <span className="stat-label">Gender & Preferences</span>
+                  <span className={`stat-status ${profile.gender && profile.sexual_preferences ? 'completed' : 'incomplete'}`}>
+                    {profile.gender && profile.sexual_preferences ? '✓' : '✗'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

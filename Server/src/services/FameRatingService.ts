@@ -1,4 +1,5 @@
 import { UserRepository } from '../repositories/UserRepository';
+import { PhotoRepository } from '../repositories/PhotoRepository';
 import pool from '../config/database';
 import { User } from '../types/user';
 
@@ -11,11 +12,11 @@ export class FameRatingService {
   /**
    * Simple fame rating calculation based on profile completeness and likes received
    */
-  static calculateSimpleFameRating(user: User, likesReceived: number): number {
+  static calculateSimpleFameRating(user: User, likesReceived: number, hasProfilePicture: boolean): number {
     let score = 0;
 
     // Profile completeness (0-50 points)
-    if (user.profile_picture_url) score += 20;
+    if (hasProfilePicture) score += 20;
     if (user.biography) score += 10;
     if (user.gender && user.sexual_preferences) score += 10;
     if (user.latitude && user.longitude) score += 10;
@@ -48,8 +49,11 @@ export class FameRatingService {
     // Get likes count
     const likesCount = await this.getLikesCount(userId);
 
+    // Check if user has profile picture
+    const hasProfilePicture = await PhotoRepository.hasProfilePhoto(userId);
+
     // Calculate rating
-    const rating = this.calculateSimpleFameRating(user, likesCount);
+    const rating = this.calculateSimpleFameRating(user, likesCount, hasProfilePicture);
 
     // Update database
     const query = 'UPDATE users SET fame_rating = $1 WHERE id = $2 RETURNING fame_rating';

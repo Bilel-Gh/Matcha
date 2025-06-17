@@ -35,6 +35,9 @@ body {
 .App {
   text-align: center;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Navigation */
@@ -1839,5 +1842,489 @@ body {
   .modal-content.manual-location-editor {
     margin: 1rem;
     width: calc(100% - 2rem);
+  }
+}
+
+/* ===============================
+   FAME RATING STYLES
+   =============================== */
+
+/* Fame Rating Card */
+.fame-rating-card {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  border-radius: 20px;
+  padding: 2rem;
+  color: white;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(253, 41, 123, 0.3);
+  margin: 1.5rem 0;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.fame-rating-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: rotate(45deg);
+  transition: all 0.5s;
+  opacity: 0;
+}
+
+.fame-rating-card:hover::before {
+  opacity: 1;
+  transform: rotate(45deg) translateX(100%);
+}
+
+.fame-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.fame-header h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+}
+
+.rating-level-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px solid;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.level-emoji {
+  font-size: 1.1rem;
+}
+
+.level-label {
+  font-weight: 700;
+}
+
+/* Rating Circle */
+.rating-circle {
+  position: relative;
+  display: inline-block;
+  margin: 1.5rem 0;
+}
+
+.circular-progress {
+  position: relative;
+  display: inline-block;
+}
+
+.progress-svg {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+.progress-circle {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
+}
+
+.rating-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.rating-number {
+  font-size: 2rem;
+  font-weight: 900;
+  display: block;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.rating-max {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+/* Rating Description */
+.rating-description {
+  margin: 1.5rem 0;
+}
+
+.rating-description p {
+  font-size: 1.1rem;
+  margin: 0;
+  opacity: 0.95;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Rating Actions */
+.rating-actions {
+  margin-top: 1.5rem;
+}
+
+.improve-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
+  backdrop-filter: blur(10px);
+}
+
+.improve-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Fame Badge */
+.fame-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border: 2px solid;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.fame-badge.small {
+  padding: 0.4rem 0.8rem;
+}
+
+.fame-badge.medium {
+  padding: 0.6rem 1rem;
+}
+
+.fame-badge.large {
+  padding: 0.8rem 1.2rem;
+}
+
+.badge-content {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.badge-emoji {
+  font-size: 1rem;
+}
+
+.fame-badge.small .badge-emoji {
+  font-size: 0.9rem;
+}
+
+.fame-badge.large .badge-emoji {
+  font-size: 1.2rem;
+}
+
+.badge-rating {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.fame-badge.small .badge-rating {
+  font-size: 0.8rem;
+}
+
+.fame-badge.large .badge-rating {
+  font-size: 1rem;
+}
+
+.badge-level {
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fame-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Improvement Tips Modal */
+.tips-modal {
+  max-width: 500px;
+  width: 90%;
+}
+
+.tips-intro {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+.tip-item:hover {
+  background: #f0f1f3;
+  transform: translateX(4px);
+}
+
+.tip-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.tip-content {
+  flex: 1;
+}
+
+.tip-content h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-color);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.tip-content p {
+  margin: 0 0 0.5rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.tip-points {
+  display: inline-block;
+  background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.tips-footer {
+  background: rgba(253, 41, 123, 0.05);
+  border: 1px solid rgba(253, 41, 123, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tips-note {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.rating-circle:hover {
+  animation: pulse 2s infinite;
+}
+
+/* Responsive Design for Fame Rating */
+@media (max-width: 768px) {
+  .fame-rating-card {
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+
+  .fame-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .rating-number {
+    font-size: 1.8rem;
+  }
+
+  .rating-description p {
+    font-size: 1rem;
+  }
+
+  .tips-modal {
+    margin: 1rem;
+    width: calc(100% - 2rem);
+  }
+
+  .tip-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .tip-icon {
+    align-self: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .fame-rating-card {
+    padding: 1rem;
+  }
+
+  .rating-circle {
+    margin: 1rem 0;
+  }
+
+  .circular-progress {
+    width: 100px !important;
+    height: 100px !important;
+  }
+
+  .rating-number {
+    font-size: 1.5rem;
+  }
+
+  .improve-btn {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Overview Section */
+.overview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-stats {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.profile-stats h3 {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-color);
+  font-size: 1.3rem;
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: #f0f1f3;
+  transform: translateY(-1px);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.stat-label {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.stat-status {
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+}
+
+.stat-status.completed {
+  color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.stat-status.incomplete {
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+@media (max-width: 768px) {
+  .overview-section {
+    gap: 1.5rem;
+  }
+
+  .profile-stats {
+    padding: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-item {
+    padding: 0.75rem;
   }
 }

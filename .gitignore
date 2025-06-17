@@ -10,3 +10,4 @@ package-lock.json
 pnpm-lock.yaml
 Server/pnpm-lock.yaml
 Client/pnpm-lock.yaml
+Server/uploads/
