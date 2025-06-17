@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaSignInAlt, FaUser, FaLock } from 'react-icons/fa';
+import { FaSignInAlt, FaUser, FaLock, FaCamera } from 'react-icons/fa';
 import axios from 'axios';
 import PersonalInfoForm from '../components/PersonalInfoForm';
 import PasswordChangeForm from '../components/PasswordChangeForm';
+import PhotoManagement from '../components/PhotoManagement';
 import profileService, { ProfileData, ProfileUpdateData, PasswordChangeData } from '../services/profileService';
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'security'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'security'>('personal');
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -149,6 +150,13 @@ const ProfilePage: React.FC = () => {
           Personal Information
         </button>
         <button
+          className={`tab-button ${activeTab === 'photos' ? 'active' : ''}`}
+          onClick={() => setActiveTab('photos')}
+        >
+          <FaCamera style={{ marginRight: '8px' }} />
+          Photos
+        </button>
+        <button
           className={`tab-button ${activeTab === 'security' ? 'active' : ''}`}
           onClick={() => setActiveTab('security')}
         >
@@ -163,6 +171,14 @@ const ProfilePage: React.FC = () => {
             profile={profile}
             onUpdate={handleUpdateProfile}
             isLoading={isUpdatingProfile}
+          />
+        )}
+
+        {activeTab === 'photos' && token && (
+          <PhotoManagement
+            token={token}
+            onSuccess={setSuccessMessage}
+            onError={setErrorMessage}
           />
         )}
 

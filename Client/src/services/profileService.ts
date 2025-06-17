@@ -14,6 +14,8 @@ export interface ProfileData {
   birth_date?: string;
   age?: number;
   profile_completed: boolean;
+  profile_picture_url?: string;
+  has_profile_picture: boolean;
   created_at: string;
 }
 
@@ -50,6 +52,37 @@ const profileService = {
       return response.data.data;
     } catch (error) {
       console.error('Get profile service error:', error);
+      throw error;
+    }
+  },
+
+  async getUserInfo(token: string): Promise<{ username: string; email: string; first_name: string; last_name: string; profile_picture_url?: string }> {
+    try {
+      const response = await axios.get<ApiResponse<ProfileData>>(`${API_URL}/api/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const profile = response.data.data;
+
+      // Ensure full URL for profile picture
+      const getFullImageUrl = (url: string): string => {
+        if (!url) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          return url;
+        }
+        return `${API_URL}${url}`;
+      };
+
+      return {
+        username: profile.username,
+        email: profile.email,
+        first_name: profile.firstname,
+        last_name: profile.lastname,
+        profile_picture_url: profile.profile_picture_url ? getFullImageUrl(profile.profile_picture_url) : undefined,
+      };
+    } catch (error) {
+      console.error('Get user info service error:', error);
       throw error;
     }
   },

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
+import profileService from '../services/profileService';
 
 interface User {
   id: string;
@@ -7,6 +8,7 @@ interface User {
   email: string;
   first_name: string;
   last_name: string;
+  profile_picture_url?: string;
 }
 
 interface AuthContextType {
@@ -18,6 +20,7 @@ interface AuthContextType {
   register: (username: string, email: string, password: string, firstName: string, lastName: string, birthDate: string) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
 }
@@ -118,6 +121,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshUser = async () => {
+    if (!token) return;
+
+    try {
+      const userInfo = await profileService.getUserInfo(token);
+      setUser({
+        id: user?.id || '',
+        ...userInfo,
+      });
+    } catch (error) {
+      console.error('Failed to refresh user info:', error);
+    }
+  };
+
   const forgotPassword = async (email: string) => {
     try {
       await authService.forgotPassword(email);
@@ -136,24 +153,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const isAuthenticated = !!token && !!user;
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        isAuthenticated,
-        isLoading,
-        login,
-        register,
-        logout,
-        updateUser,
-        forgotPassword,
-        resetPassword,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+      return (
+      <AuthContext.Provider
+        value={{
+          user,
+          token,
+          isAuthenticated,
+          isLoading,
+          login,
+          register,
+          logout,
+          updateUser,
+          refreshUser,
+          forgotPassword,
+          resetPassword,
+        }}
+      >
+        {children}
+      </AuthContext.Provider>
+    );
 };
 
 export const useAuth = () => {
