@@ -6,6 +6,7 @@ import { User } from '../types/user';
 import { AppError } from '../utils/AppError';
 import config from '../config/config';
 import emailService from './EmailService';
+import { LocationService } from './LocationService';
 
 export interface RegisterUserData {
   email: string;
@@ -33,7 +34,7 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  static async registerUser(data: RegisterUserData): Promise<AuthResponse> {
+  static async registerUser(data: RegisterUserData, userIP?: string): Promise<AuthResponse> {
     const { email, username, firstName, lastName, password, birthDate } = data;
 
     // Check if user already exists
@@ -66,6 +67,16 @@ export class AuthService {
     } catch (error) {
       console.error('Failed to send verification email:', error);
       // Continue with registration even if email fails
+    }
+
+    // Set initial location from IP if provided
+    if (userIP) {
+      try {
+        await LocationService.setLocationFromIP(user.id, userIP);
+      } catch (error) {
+        console.error('Failed to set initial location from IP:', error);
+        // Continue even if IP location fails
+      }
     }
 
         // Generate JWT token

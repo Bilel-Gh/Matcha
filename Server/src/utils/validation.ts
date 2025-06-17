@@ -137,6 +137,29 @@ export const userInterestsUpdateSchema = z.object({
     .refine((ids) => new Set(ids).size === ids.length, 'Duplicate interest IDs are not allowed'),
 });
 
+// Location validation schemas
+export const locationUpdateSchema = z.object({
+  latitude: z
+    .number()
+    .min(-90, 'Latitude must be between -90 and 90')
+    .max(90, 'Latitude must be between -90 and 90'),
+  longitude: z
+    .number()
+    .min(-180, 'Longitude must be between -180 and 180')
+    .max(180, 'Longitude must be between -180 and 180'),
+  source: z.enum(['gps', 'ip', 'manual'], {
+    errorMap: () => ({ message: 'Source must be gps, ip, or manual' })
+  }),
+  city: z
+    .string()
+    .max(100, 'City name must not exceed 100 characters')
+    .optional(),
+  country: z
+    .string()
+    .max(100, 'Country name must not exceed 100 characters')
+    .optional(),
+});
+
 // Export types
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -148,3 +171,4 @@ export type InterestCreateInput = z.infer<typeof interestCreateSchema>;
 export type InterestAddByNameInput = z.infer<typeof interestAddByNameSchema>;
 export type InterestSearchInput = z.infer<typeof interestSearchSchema>;
 export type UserInterestsUpdateInput = z.infer<typeof userInterestsUpdateSchema>;
+export type LocationUpdateInput = z.infer<typeof locationUpdateSchema>;

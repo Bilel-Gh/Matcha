@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 import { AppError } from '../utils/AppError';
+import { LocationService } from '../services/LocationService';
 import { v4 as uuidv4 } from 'uuid';
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const response = await AuthService.registerUser(req.body);
+    const userIP = LocationService.getUserIP(req);
+    const response = await AuthService.registerUser(req.body, userIP);
     res.status(201).json({
       status: 'success',
       data: response,

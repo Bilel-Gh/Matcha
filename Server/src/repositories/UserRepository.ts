@@ -147,6 +147,81 @@ export class UserRepository {
     return result.rows.length > 0;
   }
 
+  static async updateLocation(
+    id: number,
+    locationData: {
+      latitude?: number;
+      longitude?: number;
+      location_source?: string;
+      city?: string;
+      country?: string;
+      location_updated_at?: Date;
+    }
+  ): Promise<User | null> {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let paramCount = 1;
+
+    if (locationData.latitude !== undefined) {
+      fields.push(`latitude = $${paramCount++}`);
+      values.push(locationData.latitude);
+    }
+    if (locationData.longitude !== undefined) {
+      fields.push(`longitude = $${paramCount++}`);
+      values.push(locationData.longitude);
+    }
+    if (locationData.location_source !== undefined) {
+      fields.push(`location_source = $${paramCount++}`);
+      values.push(locationData.location_source);
+    }
+    if (locationData.city !== undefined) {
+      fields.push(`city = $${paramCount++}`);
+      values.push(locationData.city);
+    }
+    if (locationData.country !== undefined) {
+      fields.push(`country = $${paramCount++}`);
+      values.push(locationData.country);
+    }
+    if (locationData.location_updated_at !== undefined) {
+      fields.push(`location_updated_at = $${paramCount++}`);
+      values.push(locationData.location_updated_at);
+    }
+
+    if (fields.length === 0) {
+      return this.findById(id);
+    }
+
+    values.push(id);
+
+    const query = `
+      UPDATE users
+      SET ${fields.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, values);
+    return result.rows[0] || null;
+  }
+
+  static async findUsersWithLocation(excludeUserId?: number): Promise<User[]> {
+    let query = `
+      SELECT * FROM users
+      WHERE latitude IS NOT NULL
+      AND longitude IS NOT NULL
+      AND email_verified = true
+    `;
+    const params: any[] = [];
+
+    if (excludeUserId) {
+      query += ' AND id != $1';
+      params.push(excludeUserId);
+    }
+
+    const result = await pool.query(query, params);
+    return result.rows;
+  }
+
   static async updateProfile(
     id: number,
     updates: {

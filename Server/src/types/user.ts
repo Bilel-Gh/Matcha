@@ -10,6 +10,10 @@ export interface User {
     biography?: string;
     latitude?: number;
     longitude?: number;
+    location_source?: 'gps' | 'ip' | 'manual' | 'unknown';
+    city?: string;
+    country?: string;
+    location_updated_at?: Date;
     fame_rating: number;
     last_connection?: Date;
     is_online: boolean;

@@ -20,6 +20,13 @@ export interface ProfileResponse {
   has_profile_picture: boolean;
   profile_picture_url?: string;
   photos_count: number;
+  has_location: boolean;
+  location?: {
+    city?: string;
+    country?: string;
+    source?: string;
+    updated_at?: string;
+  };
   created_at: string;
 }
 
@@ -49,12 +56,13 @@ export class ProfileService {
   }
 
   static isProfileComplete(user: User): boolean {
-    return !!(user.gender && user.sexual_preferences && user.biography);
+    return !!(user.gender && user.sexual_preferences && user.biography && user.latitude && user.longitude);
   }
 
   static async formatProfileResponse(user: User): Promise<ProfileResponse> {
     const hasProfilePicture = await PhotoRepository.hasProfilePhoto(user.id);
     const photosCount = await PhotoRepository.countByUserId(user.id);
+    const hasLocation = !!(user.latitude && user.longitude);
 
     return {
       id: user.id,
@@ -71,6 +79,13 @@ export class ProfileService {
       has_profile_picture: hasProfilePicture,
       profile_picture_url: user.profile_picture_url || undefined,
       photos_count: photosCount,
+      has_location: hasLocation,
+      location: hasLocation ? {
+        city: user.city || undefined,
+        country: user.country || undefined,
+        source: user.location_source || undefined,
+        updated_at: user.location_updated_at?.toISOString(),
+      } : undefined,
       created_at: user.created_at.toISOString(),
     };
   }
