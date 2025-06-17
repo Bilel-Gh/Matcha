@@ -19,7 +19,7 @@ export const errorHandler = (
 
   // Default error values
   let statusCode = 500;
-  let status = 'error';
+  let status: 'error' | 'fail' = 'error';
   let responseMessage: any = err.message;
 
   // If it's an AppError, use its properties

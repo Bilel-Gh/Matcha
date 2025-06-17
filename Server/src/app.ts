@@ -6,6 +6,8 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
 import photoRoutes from './routes/photos';
+import interestRoutes from './routes/interests';
+import userInterestRoutes from './routes/userInterests';
 import { protect } from './middlewares/auth';
 import { errorHandler } from './middlewares/errorHandler';
 import { swaggerOptions } from './config/swagger';
@@ -44,6 +46,8 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/profile/photos', photoRoutes);
+app.use('/api/interests', interestRoutes);
+app.use('/api/profile/interests', userInterestRoutes);
 
 // Protected test route
 app.get('/api/protected', protect, (req, res) => {

@@ -9,20 +9,21 @@ export interface CreateUserData {
   password: string;
   verification_token: string;
   birth_date: Date;
+  email_verified?: boolean;
 }
 
 export class UserRepository {
   static async create(userData: CreateUserData): Promise<User> {
-    const { email, username, firstname, lastname, password, verification_token, birth_date } = userData;
+    const { email, username, firstname, lastname, password, verification_token, birth_date, email_verified = false } = userData;
 
     const query = `
-      INSERT INTO users (email, username, firstname, lastname, password, verification_token, birth_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO users (email, username, firstname, lastname, password, verification_token, birth_date, email_verified)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
 
     const result = await pool.query(query, [
-      email, username, firstname, lastname, password, verification_token, birth_date
+      email, username, firstname, lastname, password, verification_token, birth_date, email_verified
     ]);
 
     return result.rows[0];

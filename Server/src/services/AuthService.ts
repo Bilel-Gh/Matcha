@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
 import { UserRepository } from '../repositories/UserRepository';
 import { User } from '../types/user';
@@ -68,11 +68,15 @@ export class AuthService {
       // Continue with registration even if email fails
     }
 
-    // Generate JWT token
+        // Generate JWT token
+    const signOptions: SignOptions = {
+      expiresIn: config.JWT_EXPIRES_IN as any
+    };
+
     const token = jwt.sign(
       { id: user.id },
       config.JWT_SECRET,
-      { expiresIn: config.JWT_EXPIRES_IN }
+      signOptions
     );
 
     return {
@@ -107,11 +111,15 @@ export class AuthService {
       throw new AppError('Invalid credentials', 401);
     }
 
-    // Generate JWT token
+        // Generate JWT token
+    const signOptions: SignOptions = {
+      expiresIn: config.JWT_EXPIRES_IN as any
+    };
+
     const token = jwt.sign(
       { id: user.id },
       config.JWT_SECRET,
-      { expiresIn: config.JWT_EXPIRES_IN }
+      signOptions
     );
 
     // Update last connection

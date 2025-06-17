@@ -101,6 +101,34 @@ export const passwordChangeSchema = z.object({
   new_password: passwordSchema,
 });
 
+// Interest validation schemas
+export const interestCreateSchema = z.object({
+  name: z
+    .string()
+    .min(2, 'Interest name must be at least 2 characters long')
+    .max(30, 'Interest name must not exceed 30 characters')
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, 'Interest name can only contain letters and spaces'),
+  tag: z
+    .string()
+    .max(50, 'Interest tag must not exceed 50 characters')
+    .regex(/^[a-z0-9_]+$/, 'Interest tag can only contain lowercase letters, numbers, and underscores')
+    .optional(),
+});
+
+export const interestSearchSchema = z.object({
+  q: z
+    .string()
+    .min(1, 'Search query must be at least 1 character long')
+    .max(50, 'Search query must not exceed 50 characters'),
+});
+
+export const userInterestsUpdateSchema = z.object({
+  interest_ids: z
+    .array(z.number().int().positive('Interest ID must be a positive integer'))
+    .max(10, 'Maximum 10 interests allowed per user')
+    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate interest IDs are not allowed'),
+});
+
 // Export types
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -108,3 +136,6 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
+export type InterestCreateInput = z.infer<typeof interestCreateSchema>;
+export type InterestSearchInput = z.infer<typeof interestSearchSchema>;
+export type UserInterestsUpdateInput = z.infer<typeof userInterestsUpdateSchema>;
