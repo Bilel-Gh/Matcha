@@ -1,25 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart } from 'react-icons/fa';
+import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart, FaMapMarkerAlt } from 'react-icons/fa';
 import axios from 'axios';
 import PersonalInfoForm from '../components/PersonalInfoForm';
 import PasswordChangeForm from '../components/PasswordChangeForm';
 import PhotoManagement from '../components/PhotoManagement';
 import InterestsManager from '../components/InterestsManager';
+import LocationManager from '../components/LocationManager';
 import profileService, { ProfileData, ProfileUpdateData, PasswordChangeData } from '../services/profileService';
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'security'>('personal');
+  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'location' | 'security'>('personal');
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Helper functions for auto-clearing messages
+  const showSuccessMessage = (message: string) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(''), 4000);
+  };
+
+  const showErrorMessage = (message: string) => {
+    setErrorMessage(message);
+    setTimeout(() => setErrorMessage(''), 5000);
+  };
 
   useEffect(() => {
     if (token) {
@@ -34,7 +46,7 @@ const ProfilePage: React.FC = () => {
       setProfile(profileData);
     } catch (error) {
       console.error('Failed to load profile:', error);
-      setErrorMessage('Failed to load profile. Please try again.');
+      showErrorMessage('Failed to load profile. Please try again.');
     } finally {
       setIsLoadingProfile(false);
     }
@@ -58,17 +70,14 @@ const ProfilePage: React.FC = () => {
         });
       }
 
-      setSuccessMessage('Profile updated successfully!');
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
+            showSuccessMessage('Profile updated successfully!');
     } catch (error) {
       console.error('Failed to update profile:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to update profile. Please try again.';
-        setErrorMessage(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
+        showErrorMessage(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
       } else {
-        setErrorMessage('Failed to update profile. Please try again.');
+        showErrorMessage('Failed to update profile. Please try again.');
       }
     } finally {
       setIsUpdatingProfile(false);
@@ -81,17 +90,14 @@ const ProfilePage: React.FC = () => {
       setErrorMessage('');
 
       await profileService.changePassword(token!, data);
-      setSuccessMessage('Password changed successfully!');
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
+            showSuccessMessage('Password changed successfully!');
     } catch (error) {
       console.error('Failed to change password:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to change password. Please try again.';
-        setErrorMessage(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
+        showErrorMessage(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
       } else {
-        setErrorMessage('Failed to change password. Please try again.');
+        showErrorMessage('Failed to change password. Please try again.');
       }
       throw error; // Re-throw to let PasswordChangeForm handle it
     } finally {
@@ -165,6 +171,13 @@ const ProfilePage: React.FC = () => {
           Interests
         </button>
         <button
+          className={`tab-button ${activeTab === 'location' ? 'active' : ''}`}
+          onClick={() => setActiveTab('location')}
+        >
+          <FaMapMarkerAlt style={{ marginRight: '8px' }} />
+          Location
+        </button>
+        <button
           className={`tab-button ${activeTab === 'security' ? 'active' : ''}`}
           onClick={() => setActiveTab('security')}
         >
@@ -185,16 +198,25 @@ const ProfilePage: React.FC = () => {
         {activeTab === 'photos' && token && (
           <PhotoManagement
             token={token}
-            onSuccess={setSuccessMessage}
-            onError={setErrorMessage}
+            onSuccess={showSuccessMessage}
+            onError={showErrorMessage}
           />
         )}
 
         {activeTab === 'interests' && token && (
           <InterestsManager
             token={token}
-            onSuccess={setSuccessMessage}
-            onError={setErrorMessage}
+            onSuccess={showSuccessMessage}
+            onError={showErrorMessage}
+          />
+        )}
+
+        {activeTab === 'location' && token && (
+          <LocationManager
+            token={token}
+            onSuccess={showSuccessMessage}
+            onError={showErrorMessage}
+            showInitialSetup={!profile?.profile_completed}
           />
         )}
 

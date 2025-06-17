@@ -188,7 +188,7 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
         return currentInterestId !== interestId;
       }));
 
-      const interestName = interestToRemove.interest?.name || interestToRemove.name || 'interest';
+      const interestName = interestToRemove.interest?.name || 'interest';
       onSuccess?.(`Removed "${interestName}" from your interests.`);
     } catch (error) {
       console.error('Failed to remove interest:', error);

@@ -68,6 +68,15 @@ const authService = {
       throw error;
     }
   },
+
+  async verify(token: string): Promise<void> {
+    try {
+      await axios.get(`${API_URL}/api/auth/verify/${token}`);
+    } catch (error) {
+      console.error('Email verification service error:', error);
+      throw error;
+    }
+  },
 };
 
 export default authService;

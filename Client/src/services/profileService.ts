@@ -16,6 +16,14 @@ export interface ProfileData {
   profile_completed: boolean;
   profile_picture_url?: string;
   has_profile_picture: boolean;
+  // Location fields
+  latitude?: number;
+  longitude?: number;
+  city?: string;
+  country?: string;
+  location_source?: 'gps' | 'ip' | 'manual';
+  location_updated_at?: string;
+  has_location?: boolean;
   created_at: string;
 }
 

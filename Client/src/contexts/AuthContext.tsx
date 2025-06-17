@@ -6,8 +6,8 @@ interface User {
   id: string;
   username: string;
   email: string;
-  first_name: string;
-  last_name: string;
+  first_name?: string;
+  last_name?: string;
   profile_picture_url?: string;
 }
 
@@ -91,9 +91,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     firstName: string,
     lastName: string,
     birthDate: string
-  ) => {
+  ): Promise<void> => {
     try {
-      const response = await authService.register({
+      await authService.register({
         username,
         email,
         password,
@@ -101,7 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastName,
         birthDate,
       });
-      return response;
     } catch (error) {
       throw error;
     }
