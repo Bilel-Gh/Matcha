@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart, FaMapMarkerAlt, FaTachometerAlt } from 'react-icons/fa';
+import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart, FaMapMarkerAlt, FaTachometerAlt, FaPalette } from 'react-icons/fa';
 import axios from 'axios';
 import PersonalInfoForm from '../components/PersonalInfoForm';
 import PasswordChangeForm from '../components/PasswordChangeForm';
@@ -9,13 +9,14 @@ import PhotoManagement from '../components/PhotoManagement';
 import InterestsManager from '../components/InterestsManager';
 import LocationManager from '../components/LocationManager';
 import FameRatingCard from '../components/FameRatingCard';
+import ThemeSelector from '../components/ThemeSelector';
 import profileService, { ProfileData, ProfileUpdateData, PasswordChangeData } from '../services/profileService';
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'location' | 'security' | 'overview'>('overview');
+  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'location' | 'security' | 'overview' | 'theme'>('overview');
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -197,6 +198,13 @@ const ProfilePage: React.FC = () => {
           <FaLock style={{ marginRight: '8px' }} />
           Security
         </button>
+        <button
+          className={`tab-button ${activeTab === 'theme' ? 'active' : ''}`}
+          onClick={() => setActiveTab('theme')}
+        >
+          <FaPalette style={{ marginRight: '8px' }} />
+          Theme
+        </button>
       </div>
 
       <div className="profile-content">
@@ -248,6 +256,10 @@ const ProfilePage: React.FC = () => {
             onChangePassword={handleChangePassword}
             isLoading={isChangingPassword}
           />
+        )}
+
+        {activeTab === 'theme' && (
+          <ThemeSelector />
         )}
 
         {activeTab === 'overview' && profile && (

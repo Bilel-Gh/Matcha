@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FaSignOutAlt } from 'react-icons/fa';
 import UserIcon from './UserIcon';
+import ThemeSelector from './ThemeSelector';
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout, refreshUser, token } = useAuth();
@@ -20,6 +21,16 @@ const Navbar: React.FC = () => {
   const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(location.pathname);
   if (isAuthPage) return null;
 
+  const getFullImageUrl = (url: string): string => {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${url}`;
+  };
+
+  const profilePictureUrl = user?.profile_picture_url
+    ? getFullImageUrl(user.profile_picture_url)
+    : undefined;
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -31,12 +42,14 @@ const Navbar: React.FC = () => {
         <Link to="/">Matcha</Link>
       </div>
       <div className="nav-links">
+        <ThemeSelector compact className="nav-theme-selector" />
         {isAuthenticated && user && (
           <>
-                                    <Link to="/profile" className="nav-username">
+            <Link to="/profile" className="nav-username">
               <UserIcon
-                profilePictureUrl={user.profile_picture_url}
+                profilePictureUrl={profilePictureUrl}
                 username={user.username}
+                className="nav-profile-picture"
               />
               {user.username}
             </Link>
