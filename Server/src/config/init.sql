@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 \i /docker-entrypoint-initdb.d/migrations/001_initial_schema.sql
 \i /docker-entrypoint-initdb.d/migrations/002_add_photos_table.sql
 \i /docker-entrypoint-initdb.d/migrations/003_add_location_fields.sql
+\i /docker-entrypoint-initdb.d/migrations/004_add_reason_to_blocks.sql
 
 -- !!!! Exécution des seeds de dev qui crée des utilisateurs de test (à supprimer en prod) !!!!
 \i /docker-entrypoint-initdb.d/seeds/development_seeds.sql

@@ -10,19 +10,30 @@ export interface FameRatingResponse {
 
 export class FameRatingService {
   /**
-   * Simple fame rating calculation based on profile completeness and likes received
+   * Enhanced fame rating calculation based on profile completeness, likes, and visits
    */
-  static calculateSimpleFameRating(user: User, likesReceived: number, hasProfilePicture: boolean): number {
+  static calculateFameRating(
+    user: User,
+    likesReceived: number,
+    visitsReceived: number,
+    hasProfilePicture: boolean,
+    photosCount: number = 0
+  ): number {
     let score = 0;
 
-    // Profile completeness (0-50 points)
-    if (hasProfilePicture) score += 20;
-    if (user.biography) score += 10;
-    if (user.gender && user.sexual_preferences) score += 10;
-    if (user.latitude && user.longitude) score += 10;
+    // Profile completeness (0-40 points)
+    if (hasProfilePicture) score += 15;
+    if (user.biography && user.biography.length > 20) score += 10;
+    if (user.gender && user.sexual_preferences) score += 5;
+    if (user.latitude && user.longitude) score += 5;
+    if (photosCount >= 3) score += 5; // Bonus for having multiple photos
 
-    // Likes received (0-50 points)
-    score += Math.min(likesReceived * 5, 50);
+    // Social activity (0-60 points)
+    // Likes received (0-40 points) - more valuable than visits
+    score += Math.min(likesReceived * 4, 40);
+
+    // Profile visits (0-20 points) - shows profile attractiveness
+    score += Math.min(Math.floor(visitsReceived / 2), 20);
 
     return Math.min(score, 100);
   }
@@ -37,6 +48,24 @@ export class FameRatingService {
   }
 
   /**
+   * Get visits count for a user
+   */
+  static async getVisitsCount(userId: number): Promise<number> {
+    const query = 'SELECT COUNT(*) as visits_count FROM visits WHERE visited_id = $1';
+    const result = await pool.query(query, [userId]);
+    return parseInt(result.rows[0].visits_count);
+  }
+
+  /**
+   * Get photos count for a user
+   */
+  static async getPhotosCount(userId: number): Promise<number> {
+    const query = 'SELECT COUNT(*) as photos_count FROM photos WHERE user_id = $1';
+    const result = await pool.query(query, [userId]);
+    return parseInt(result.rows[0].photos_count);
+  }
+
+  /**
    * Update user's fame rating in database
    */
   static async updateUserFameRating(userId: number): Promise<FameRatingResponse> {
@@ -46,14 +75,16 @@ export class FameRatingService {
       throw new Error('User not found');
     }
 
-    // Get likes count
-    const likesCount = await this.getLikesCount(userId);
+    // Get all required data in parallel for efficiency
+    const [likesCount, visitsCount, hasProfilePicture, photosCount] = await Promise.all([
+      this.getLikesCount(userId),
+      this.getVisitsCount(userId),
+      PhotoRepository.hasProfilePhoto(userId),
+      this.getPhotosCount(userId)
+    ]);
 
-    // Check if user has profile picture
-    const hasProfilePicture = await PhotoRepository.hasProfilePhoto(userId);
-
-    // Calculate rating
-    const rating = this.calculateSimpleFameRating(user, likesCount, hasProfilePicture);
+    // Calculate rating with enhanced algorithm
+    const rating = this.calculateFameRating(user, likesCount, visitsCount, hasProfilePicture, photosCount);
 
     // Update database
     const query = 'UPDATE users SET fame_rating = $1 WHERE id = $2 RETURNING fame_rating';

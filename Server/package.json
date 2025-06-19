@@ -8,6 +8,7 @@
     "db:create-migration": "node scripts/create-migration.js",
     "db:migrate": "docker compose exec database psql -U matcha_user -d matcha -f /docker-entrypoint-initdb.d/init.sql",
     "db:seed": "docker compose exec database psql -U matcha_user -d matcha -f /docker-entrypoint-initdb.d/seeds/development_seeds.sql",
+    "create-test-images": "node create-test-images.js",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",

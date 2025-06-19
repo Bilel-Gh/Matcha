@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { BrowsingService, BrowseFilters } from '../services/BrowsingService';
+import { VisitService } from '../services/VisitService';
 import { AppError } from '../utils/AppError';
 import { asyncHandler } from '../middlewares/errorHandler';
 
@@ -103,6 +104,19 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
 
   if (!profile) {
     throw new AppError('User not found', 404);
+  }
+
+  // Auto-record visit (but don't let errors block the response)
+  try {
+    if (req.user.id !== profileId) {
+      const hasRecentlyVisited = await VisitService.hasRecentlyVisited(req.user.id, profileId);
+      if (!hasRecentlyVisited) {
+        await VisitService.recordVisit(req.user.id, profileId);
+      }
+    }
+  } catch (error) {
+    // Log error but don't fail the request
+    console.error('Failed to record visit:', error);
   }
 
   res.status(200).json({

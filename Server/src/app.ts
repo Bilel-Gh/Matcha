@@ -11,6 +11,7 @@ import userInterestRoutes from './routes/userInterests';
 import locationRoutes from './routes/location';
 import fameRatingRoutes from './routes/fameRating';
 import browsingRoutes from './routes/browsing';
+import interactionRoutes from './routes/interactions';
 import { protect } from './middlewares/auth';
 import { errorHandler } from './middlewares/errorHandler';
 import { swaggerOptions } from './config/swagger';
@@ -55,6 +56,7 @@ app.use('/api', locationRoutes);
 app.use('/api/profile/fame-rating', fameRatingRoutes);
 app.use('/api/browse', browsingRoutes);
 app.use('/api/search', browsingRoutes);
+app.use('/api/interactions', interactionRoutes);
 
 // Protected test route
 app.get('/api/protected', protect, (req, res) => {

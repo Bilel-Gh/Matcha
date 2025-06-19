@@ -21,9 +21,14 @@ BEGIN
             biography,
             latitude,
             longitude,
+            city,
+            country,
+            location_source,
             birth_date,
             email_verified,
-            is_online
+            is_online,
+            profile_picture_url,
+            fame_rating
         ) VALUES (
             1,
             'admin@matcha.com',
@@ -33,12 +38,17 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m', -- mot de passe: admin123
             'male',
             'female',
-            'Compte administrateur permanent pour les tests.',
+            'Compte administrateur permanent pour les tests. J''aime la technologie et les rencontres authentiques.',
             48.8566,
             2.3522,
+            'Paris',
+            'France',
+            'gps',
             '1990-01-01',
             true,
-            false
+            false,
+            '/uploads/photos/admin_profile.jpg',
+            65
         );
 
         -- Création du premier utilisateur de test
@@ -54,9 +64,14 @@ BEGIN
             biography,
             latitude,
             longitude,
+            city,
+            country,
+            location_source,
             birth_date,
             email_verified,
-            is_online
+            is_online,
+            profile_picture_url,
+            fame_rating
         ) VALUES (
             2,
             'john@test.com',
@@ -66,12 +81,17 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m', -- mot de passe: admin123
             'male',
             'female',
-            'Je suis John, 25 ans, passionné de sport et de voyages.',
+            'Je suis John, 25 ans, passionné de sport et de voyages. J''adore découvrir de nouveaux endroits et rencontrer des personnes intéressantes.',
             48.8566,
             2.3522,
+            'Paris',
+            'France',
+            'gps',
             '1998-05-15',
             true,
-            false
+            false,
+            '/uploads/photos/john_profile.jpg',
+            72
         );
 
         -- Création du deuxième utilisateur de test
@@ -87,9 +107,14 @@ BEGIN
             biography,
             latitude,
             longitude,
+            city,
+            country,
+            location_source,
             birth_date,
             email_verified,
-            is_online
+            is_online,
+            profile_picture_url,
+            fame_rating
         ) VALUES (
             3,
             'jane@test.com',
@@ -99,12 +124,17 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m', -- mot de passe: admin123
             'female',
             'male',
-            'Salut, je suis Jane, 23 ans, j''adore la photo et la cuisine.',
+            'Salut, je suis Jane, 23 ans, j''adore la photo et la cuisine. Toujours à la recherche de nouvelles expériences culinaires et artistiques.',
             48.8534,
             2.3488,
+            'Paris',
+            'France',
+            'gps',
             '2000-08-20',
             true,
-            false
+            false,
+            '/uploads/photos/jane_profile.jpg',
+            78
         );
 
         -- Ajout de quelques intérêts de base
@@ -144,27 +174,61 @@ BEGIN
         INSERT INTO user_interests (user_id, interest_id)
         SELECT u.id, i.id
         FROM users u, interests i
-        WHERE u.username = 'admin' AND i.tag IN ('sport', 'travel', 'cooking', 'photography');
+        WHERE u.username = 'admin' AND i.tag IN ('technology', 'travel', 'cooking', 'photography');
 
         INSERT INTO user_interests (user_id, interest_id)
         SELECT u.id, i.id
         FROM users u, interests i
-        WHERE u.username = 'john_doe' AND i.tag IN ('sport', 'travel');
+        WHERE u.username = 'john_doe' AND i.tag IN ('sport', 'travel', 'fitness', 'music');
 
         INSERT INTO user_interests (user_id, interest_id)
         SELECT u.id, i.id
         FROM users u, interests i
-        WHERE u.username = 'jane_doe' AND i.tag IN ('cooking', 'photography');
+        WHERE u.username = 'jane_doe' AND i.tag IN ('cooking', 'photography', 'art', 'yoga');
+
+        -- Ajout de photos fictives pour les utilisateurs de test
+        INSERT INTO photos (user_id, filename, url, is_profile, created_at) VALUES
+            (1, 'admin_profile.jpg', '/uploads/photos/admin_profile.jpg', true, NOW()),
+            (1, 'admin_photo2.jpg', '/uploads/photos/admin_photo2.jpg', false, NOW()),
+
+            (2, 'john_profile.jpg', '/uploads/photos/john_profile.jpg', true, NOW()),
+            (2, 'john_sport.jpg', '/uploads/photos/john_sport.jpg', false, NOW()),
+            (2, 'john_travel.jpg', '/uploads/photos/john_travel.jpg', false, NOW()),
+
+            (3, 'jane_profile.jpg', '/uploads/photos/jane_profile.jpg', true, NOW()),
+            (3, 'jane_cooking.jpg', '/uploads/photos/jane_cooking.jpg', false, NOW()),
+            (3, 'jane_art.jpg', '/uploads/photos/jane_art.jpg', false, NOW());
+
+        -- Ajout de quelques interactions de test pour démonstration
+        -- John like Jane
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (2, 3, NOW() - INTERVAL '2 days');
+
+        -- Jane like John (créé un match)
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (3, 2, NOW() - INTERVAL '1 day');
+
+        -- Admin like Jane
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (1, 3, NOW() - INTERVAL '3 hours');
+
+        -- Quelques visites de profil
+        INSERT INTO visits (visitor_id, visited_id, visit_date) VALUES
+            (1, 2, NOW() - INTERVAL '1 hour'),
+            (1, 3, NOW() - INTERVAL '2 hours'),
+            (2, 1, NOW() - INTERVAL '3 hours'),
+            (2, 3, NOW() - INTERVAL '4 hours'),
+            (3, 1, NOW() - INTERVAL '5 hours'),
+            (3, 2, NOW() - INTERVAL '6 hours');
 
         -- Fix de la séquence pour éviter les conflits d'ID
         PERFORM setval('users_id_seq', (SELECT MAX(id) FROM users));
         PERFORM setval('interests_id_seq', (SELECT MAX(id) FROM interests));
+        PERFORM setval('photos_id_seq', (SELECT MAX(id) FROM photos));
 
-        RAISE NOTICE 'Utilisateurs de test créés avec succès !';
+        RAISE NOTICE 'Utilisateurs de test créés avec succès avec photos de profil et interactions !';
     ELSE
         -- Fix de la séquence même si les utilisateurs existent déjà
         PERFORM setval('users_id_seq', (SELECT MAX(id) FROM users));
         PERFORM setval('interests_id_seq', (SELECT MAX(id) FROM interests));
+        PERFORM setval('photos_id_seq', (SELECT MAX(id) FROM photos));
         RAISE NOTICE 'Les utilisateurs de test existent déjà.';
     END IF;
 END $$;

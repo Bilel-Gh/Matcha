@@ -158,6 +158,11 @@ export class BrowsingService {
       AND u.profile_picture_url IS NOT NULL
       AND u.latitude IS NOT NULL
       AND u.longitude IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM blocks
+        WHERE (blocker_id = $6 AND blocked_id = u.id)
+        OR (blocker_id = u.id AND blocked_id = $7)
+      )
     `;
 
     // Sexual orientation compatibility (mandatory)
@@ -179,6 +184,8 @@ export class BrowsingService {
       currentUser.latitude,
       currentUser.longitude,
       currentUser.latitude,
+      userId,
+      userId,
       userId,
       userId
     ]);
@@ -220,6 +227,20 @@ export class BrowsingService {
    * Get user details for profile view
    */
   static async getUserProfile(viewerId: number, profileId: number): Promise<BrowseUser | null> {
+    // Check if users are blocked
+    const blockQuery = `
+      SELECT EXISTS(
+        SELECT 1 FROM blocks
+        WHERE (blocker_id = $1 AND blocked_id = $2)
+        OR (blocker_id = $2 AND blocked_id = $1)
+      ) as blocked
+    `;
+    const blockResult = await pool.query(blockQuery, [viewerId, profileId]);
+
+    if (blockResult.rows[0].blocked) {
+      return null; // Don't reveal that user exists if blocked
+    }
+
     // Get viewer info for distance calculation
     const viewerQuery = 'SELECT latitude, longitude FROM users WHERE id = $1';
     const viewerResult = await pool.query(viewerQuery, [viewerId]);
