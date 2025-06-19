@@ -101,65 +101,6 @@ export const passwordChangeSchema = z.object({
   new_password: passwordSchema,
 });
 
-// Interest validation schemas
-export const interestCreateSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Interest name must be at least 2 characters long')
-    .max(30, 'Interest name must not exceed 30 characters')
-    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, 'Interest name can only contain letters and spaces'),
-  tag: z
-    .string()
-    .max(50, 'Interest tag must not exceed 50 characters')
-    .regex(/^[a-z0-9_]+$/, 'Interest tag can only contain lowercase letters, numbers, and underscores')
-    .optional(),
-});
-
-export const interestAddByNameSchema = z.object({
-  name: z
-    .string()
-    .min(2, 'Interest name must be at least 2 characters long')
-    .max(30, 'Interest name must not exceed 30 characters')
-    .regex(/^[a-zA-ZÀ-ÿ0-9\s_-]+$/, 'Interest name can only contain letters, numbers, spaces, underscores, and hyphens'),
-});
-
-export const interestSearchSchema = z.object({
-  q: z
-    .string()
-    .min(1, 'Search query must be at least 1 character long')
-    .max(50, 'Search query must not exceed 50 characters'),
-});
-
-export const userInterestsUpdateSchema = z.object({
-  interest_ids: z
-    .array(z.number().int().positive('Interest ID must be a positive integer'))
-    .max(10, 'Maximum 10 interests allowed per user')
-    .refine((ids) => new Set(ids).size === ids.length, 'Duplicate interest IDs are not allowed'),
-});
-
-// Location validation schemas
-export const locationUpdateSchema = z.object({
-  latitude: z
-    .number()
-    .min(-90, 'Latitude must be between -90 and 90')
-    .max(90, 'Latitude must be between -90 and 90'),
-  longitude: z
-    .number()
-    .min(-180, 'Longitude must be between -180 and 180')
-    .max(180, 'Longitude must be between -180 and 180'),
-  source: z.enum(['gps', 'ip', 'manual'], {
-    errorMap: () => ({ message: 'Source must be gps, ip, or manual' })
-  }),
-  city: z
-    .string()
-    .max(100, 'City name must not exceed 100 characters')
-    .optional(),
-  country: z
-    .string()
-    .max(100, 'Country name must not exceed 100 characters')
-    .optional(),
-});
-
 // Export types
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -167,8 +108,3 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;
 export type PasswordChangeInput = z.infer<typeof passwordChangeSchema>;
-export type InterestCreateInput = z.infer<typeof interestCreateSchema>;
-export type InterestAddByNameInput = z.infer<typeof interestAddByNameSchema>;
-export type InterestSearchInput = z.infer<typeof interestSearchSchema>;
-export type UserInterestsUpdateInput = z.infer<typeof userInterestsUpdateSchema>;
-export type LocationUpdateInput = z.infer<typeof locationUpdateSchema>;
