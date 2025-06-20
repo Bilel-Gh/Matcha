@@ -7,6 +7,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
+import BrowsePage from './pages/BrowsePage';
 import { useAuth } from './contexts/AuthContext';
 import './index.css';
 
@@ -17,7 +18,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 const HomeRedirect: React.FC = () => {
   const { isAuthenticated } = useAuth();
-  return <Navigate to={isAuthenticated ? "/profile" : "/login"} replace />;
+  return <Navigate to={isAuthenticated ? "/browse" : "/login"} replace />;
 };
 
 const AppRoutes: React.FC = () => {
@@ -40,6 +41,14 @@ const AppRoutes: React.FC = () => {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/" element={<HomeRedirect />} />
+        <Route
+          path="/browse"
+          element={
+            <PrivateRoute>
+              <BrowsePage />
+            </PrivateRoute>
+          }
+        />
         <Route
           path="/profile"
           element={

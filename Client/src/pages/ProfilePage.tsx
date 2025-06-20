@@ -13,7 +13,7 @@ import ThemeSelector from '../components/ThemeSelector';
 import profileService, { ProfileData, ProfileUpdateData, PasswordChangeData } from '../services/profileService';
 
 const ProfilePage: React.FC = () => {
-  const { user, token, updateUser } = useAuth();
+  const { user, token, updateUser, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'location' | 'security' | 'overview' | 'theme'>('overview');
@@ -57,6 +57,8 @@ const ProfilePage: React.FC = () => {
   // Callback to refresh profile data
   const handleProfileUpdate = () => {
     loadProfile();
+    // Also refresh user info in AuthContext to update navbar
+    refreshUser();
   };
 
   const handleUpdateProfile = async (data: ProfileUpdateData) => {

@@ -1,126 +1,88 @@
-import React, { useState, useEffect } from 'react';
-import { FaPalette, FaCheck } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaPalette } from 'react-icons/fa';
 
 interface Theme {
   id: string;
   name: string;
   description: string;
-  preview: {
-    primary: string;
-    secondary: string;
-    accent: string;
-  };
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
 }
 
 const themes: Theme[] = [
   {
-    id: 'default',
+    id: 'romantic',
     name: 'Romantic Sunset',
-    description: 'Couleurs douces et romantiques',
-    preview: {
-      primary: '#FF6B9D',
-      secondary: '#FF8A80',
-      accent: '#FFC107'
-    }
+    description: 'Warm and passionate tones',
+    primaryColor: '#fd297b',
+    secondaryColor: '#ff8a00',
+    accentColor: '#ffb347'
   },
   {
     id: 'ocean',
     name: 'Ocean Breeze',
-    description: 'Fraîcheur marine et sérénité',
-    preview: {
-      primary: '#26C6DA',
-      secondary: '#42A5F5',
-      accent: '#66BB6A'
-    }
+    description: 'Cool and refreshing blues',
+    primaryColor: '#2196F3',
+    secondaryColor: '#00BCD4',
+    accentColor: '#4FC3F7'
   },
   {
     id: 'lavender',
     name: 'Lavender Dreams',
-    description: 'Élégance violette et mystère',
-    preview: {
-      primary: '#9C27B0',
-      secondary: '#BA68C8',
-      accent: '#7986CB'
-    }
+    description: 'Soft and elegant purples',
+    primaryColor: '#9C27B0',
+    secondaryColor: '#673AB7',
+    accentColor: '#BA68C8'
   },
   {
     id: 'forest',
     name: 'Forest Green',
-    description: 'Nature et harmonie',
-    preview: {
-      primary: '#4CAF50',
-      secondary: '#8BC34A',
-      accent: '#FF7043'
-    }
+    description: 'Natural and earthy greens',
+    primaryColor: '#4CAF50',
+    secondaryColor: '#8BC34A',
+    accentColor: '#81C784'
   },
   {
     id: 'midnight',
     name: 'Midnight',
-    description: 'Mode sombre élégant',
-    preview: {
-      primary: '#BB86FC',
-      secondary: '#03DAC6',
-      accent: '#FF6E40'
-    }
+    description: 'Dark and sophisticated',
+    primaryColor: '#6366f1',
+    secondaryColor: '#8b5cf6',
+    accentColor: '#a855f7'
   }
 ];
 
 interface ThemeSelectorProps {
-  className?: string;
   compact?: boolean;
+  className?: string;
 }
 
-const ThemeSelector: React.FC<ThemeSelectorProps> = ({
-  className = '',
-  compact = false
-}) => {
-  const [currentTheme, setCurrentTheme] = useState('default');
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    // Load saved theme from localStorage
-    const savedTheme = localStorage.getItem('matcha-theme') || 'default';
-    setCurrentTheme(savedTheme);
-    applyTheme(savedTheme);
-  }, []);
-
-  const applyTheme = (themeId: string) => {
-    const body = document.body;
-
-    // Remove all theme classes
-    themes.forEach(theme => {
-      body.removeAttribute('data-theme');
-    });
-
-    // Apply new theme
-    if (themeId !== 'default') {
-      body.setAttribute('data-theme', themeId);
-    }
-
-    // Save to localStorage
-    localStorage.setItem('matcha-theme', themeId);
-  };
+const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false, className = '' }) => {
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    return document.documentElement.getAttribute('data-theme') || 'romantic';
+  });
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const handleThemeChange = (themeId: string) => {
     setCurrentTheme(themeId);
-    applyTheme(themeId);
-    setIsOpen(false);
+    document.documentElement.setAttribute('data-theme', themeId);
+    localStorage.setItem('theme', themeId);
+    setShowDropdown(false);
   };
-
-  const currentThemeData = themes.find(t => t.id === currentTheme) || themes[0];
 
   if (compact) {
     return (
       <div className={`theme-selector-compact ${className}`}>
         <button
           className="theme-toggle-btn"
-          onClick={() => setIsOpen(!isOpen)}
-          title="Changer de thème"
+          onClick={() => setShowDropdown(!showDropdown)}
+          title="Change theme"
         >
           <FaPalette />
         </button>
 
-        {isOpen && (
+        {showDropdown && (
           <div className="theme-dropdown">
             {themes.map((theme) => (
               <button
@@ -131,35 +93,50 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
                 <div className="theme-preview-mini">
                   <div
                     className="color-dot"
-                    style={{ backgroundColor: theme.preview.primary }}
+                    style={{ backgroundColor: theme.primaryColor }}
                   />
                   <div
                     className="color-dot"
-                    style={{ backgroundColor: theme.preview.secondary }}
+                    style={{ backgroundColor: theme.secondaryColor }}
                   />
                   <div
                     className="color-dot"
-                    style={{ backgroundColor: theme.preview.accent }}
+                    style={{ backgroundColor: theme.accentColor }}
                   />
                 </div>
                 <span className="theme-name">{theme.name}</span>
-                {currentTheme === theme.id && <FaCheck className="check-icon" />}
+                {currentTheme === theme.id && (
+                  <span className="check-icon">✓</span>
+                )}
               </button>
             ))}
           </div>
+        )}
+
+        {/* Backdrop to close dropdown */}
+        {showDropdown && (
+          <div
+            className="dropdown-backdrop"
+            onClick={() => setShowDropdown(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 999
+            }}
+          />
         )}
       </div>
     );
   }
 
   return (
-    <div className={`theme-selector ${className}`}>
+    <div className="theme-selector">
       <div className="theme-selector-header">
-        <h3>
-          <FaPalette style={{ marginRight: '8px' }} />
-          Thème de l'interface
-        </h3>
-        <p>Personnalisez l'apparence de Matcha selon vos préférences</p>
+        <h3>Choose Your Theme</h3>
+        <p>Personalize your experience with beautiful color schemes</p>
       </div>
 
       <div className="themes-grid">
@@ -173,23 +150,24 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = ({
               <div className="preview-colors">
                 <div
                   className="color-primary"
-                  style={{ backgroundColor: theme.preview.primary }}
+                  style={{ backgroundColor: theme.primaryColor }}
                 />
                 <div
                   className="color-secondary"
-                  style={{ backgroundColor: theme.preview.secondary }}
+                  style={{ backgroundColor: theme.secondaryColor }}
                 />
                 <div
                   className="color-accent"
-                  style={{ backgroundColor: theme.preview.accent }}
+                  style={{ backgroundColor: theme.accentColor }}
                 />
               </div>
               {currentTheme === theme.id && (
                 <div className="selected-indicator">
-                  <FaCheck />
+                  ✓
                 </div>
               )}
             </div>
+
             <div className="theme-info">
               <h4>{theme.name}</h4>
               <p>{theme.description}</p>

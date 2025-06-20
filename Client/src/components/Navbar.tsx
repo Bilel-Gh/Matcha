@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaSignOutAlt } from 'react-icons/fa';
+import { FaSignOutAlt, FaSearch } from 'react-icons/fa';
 import UserIcon from './UserIcon';
 import ThemeSelector from './ThemeSelector';
 
@@ -45,6 +45,10 @@ const Navbar: React.FC = () => {
         <ThemeSelector compact className="nav-theme-selector" />
         {isAuthenticated && user && (
           <>
+            <Link to="/browse" className="nav-link">
+              <FaSearch style={{ marginRight: '8px' }} />
+              Browse
+            </Link>
             <Link to="/profile" className="nav-username">
               <UserIcon
                 profilePictureUrl={profilePictureUrl}
