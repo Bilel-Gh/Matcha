@@ -11,6 +11,15 @@ export interface FameRatingResponse {
 export class FameRatingService {
   /**
    * Enhanced fame rating calculation based on profile completeness, likes, and visits
+   * Points breakdown:
+   * - Profile Picture: 20 points
+   * - Biography (20+ chars): 10 points
+   * - Gender & Preferences: 10 points
+   * - Location: 10 points
+   * - Multiple photos (3+): 5 points bonus
+   * - Likes received: up to 40 points (4 points per like)
+   * - Profile visits: up to 20 points (2 visits = 1 point)
+   * Total possible: 115 points (capped at 100)
    */
   static calculateFameRating(
     user: User,
@@ -21,11 +30,11 @@ export class FameRatingService {
   ): number {
     let score = 0;
 
-    // Profile completeness (0-40 points)
-    if (hasProfilePicture) score += 15;
+    // Profile completeness (0-55 points total)
+    if (hasProfilePicture) score += 20; // Corrected: 20 points instead of 15
     if (user.biography && user.biography.length > 20) score += 10;
-    if (user.gender && user.sexual_preferences) score += 5;
-    if (user.latitude && user.longitude) score += 5;
+    if (user.gender && user.sexual_preferences) score += 10; // Corrected: 10 points instead of 5
+    if (user.latitude && user.longitude) score += 10; // Corrected: 10 points instead of 5
     if (photosCount >= 3) score += 5; // Bonus for having multiple photos
 
     // Social activity (0-60 points)

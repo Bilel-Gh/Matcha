@@ -38,14 +38,14 @@ export const getImprovementTips = (currentRating: number): ImprovementTip[] => {
     {
       icon: "✍️",
       title: "Write Your Bio",
-      description: "Tell others about yourself and your interests",
+      description: "Tell others about yourself and your interests (20+ characters)",
       points: 10
     },
     {
-      icon: "❤️",
-      title: "Get More Likes",
-      description: "Be active and engaging to receive more likes",
-      points: "5 each"
+      icon: "⚥",
+      title: "Set Gender & Preferences",
+      description: "Complete your gender and sexual preferences",
+      points: 10
     },
     {
       icon: "📍",
@@ -54,10 +54,22 @@ export const getImprovementTips = (currentRating: number): ImprovementTip[] => {
       points: 10
     },
     {
-      icon: "🎯",
-      title: "Complete Your Profile",
-      description: "Fill in all your preferences and details",
-      points: 10
+      icon: "📷",
+      title: "Add More Photos",
+      description: "Upload at least 3 photos for a bonus",
+      points: 5
+    },
+    {
+      icon: "❤️",
+      title: "Get More Likes",
+      description: "Be active and engaging to receive more likes",
+      points: "4 each"
+    },
+    {
+      icon: "👀",
+      title: "Get Profile Visits",
+      description: "Attract visitors to your profile",
+      points: "1 per 2 visits"
     }
   ];
 };
