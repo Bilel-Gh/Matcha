@@ -163,6 +163,10 @@ export class BrowsingService {
         WHERE (blocker_id = $6 AND blocked_id = u.id)
         OR (blocker_id = u.id AND blocked_id = $7)
       )
+      AND NOT EXISTS (
+        SELECT 1 FROM likes
+        WHERE liker_id = $8 AND liked_id = u.id
+      )
     `;
 
     // Sexual orientation compatibility (mandatory)
@@ -184,6 +188,7 @@ export class BrowsingService {
       currentUser.latitude,
       currentUser.longitude,
       currentUser.latitude,
+      userId,
       userId,
       userId,
       userId,

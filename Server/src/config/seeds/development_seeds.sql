@@ -47,7 +47,7 @@ BEGIN
             '1990-01-01',
             true,
             false,
-            '/uploads/photos/admin_profile.jpg',
+            '/uploads/default/ppHOMME2.jpeg',
             65
         );
 
@@ -90,7 +90,7 @@ BEGIN
             '1998-05-15',
             true,
             false,
-            '/uploads/photos/john_profile.jpg',
+            '/uploads/default/ppHOMME.jpeg',
             72
         );
 
@@ -133,7 +133,7 @@ BEGIN
             '2000-08-20',
             true,
             false,
-            '/uploads/photos/jane_profile.jpg',
+            '/uploads/default/ppFEMME.jpg',
             78
         );
 
@@ -188,16 +188,16 @@ BEGIN
 
         -- Ajout de photos fictives pour les utilisateurs de test
         INSERT INTO photos (user_id, filename, url, is_profile, created_at) VALUES
-            (1, 'admin_profile.jpg', '/uploads/photos/admin_profile.jpg', true, NOW()),
-            (1, 'admin_photo2.jpg', '/uploads/photos/admin_photo2.jpg', false, NOW()),
+            (1, 'admin_profile.jpeg', '/uploads/default/ppHOMME2.jpeg', true, NOW()),
+            (1, 'admin_photo2.jpeg', '/uploads/default/ppHOMME.jpeg', false, NOW()),
 
-            (2, 'john_profile.jpg', '/uploads/photos/john_profile.jpg', true, NOW()),
-            (2, 'john_sport.jpg', '/uploads/photos/john_sport.jpg', false, NOW()),
-            (2, 'john_travel.jpg', '/uploads/photos/john_travel.jpg', false, NOW()),
+            (2, 'john_profile.jpeg', '/uploads/default/ppHOMME.jpeg', true, NOW()),
+            (2, 'john_sport.jpeg', '/uploads/default/ppHOMME2.jpeg', false, NOW()),
+            (2, 'john_travel.jpeg', '/uploads/default/ppHOMME.jpeg', false, NOW()),
 
-            (3, 'jane_profile.jpg', '/uploads/photos/jane_profile.jpg', true, NOW()),
-            (3, 'jane_cooking.jpg', '/uploads/photos/jane_cooking.jpg', false, NOW()),
-            (3, 'jane_art.jpg', '/uploads/photos/jane_art.jpg', false, NOW());
+            (3, 'jane_profile.jpg', '/uploads/default/ppFEMME.jpg', true, NOW()),
+            (3, 'jane_cooking.jpg', '/uploads/default/ppFEMME2.jpg', false, NOW()),
+            (3, 'jane_art.jpg', '/uploads/default/ppFEMME.jpg', false, NOW());
 
         -- Ajout de quelques interactions de test pour démonstration
         -- John like Jane
@@ -206,8 +206,8 @@ BEGIN
         -- Jane like John (créé un match)
         INSERT INTO likes (liker_id, liked_id, created_at) VALUES (3, 2, NOW() - INTERVAL '1 day');
 
-        -- Admin like Jane
-        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (1, 3, NOW() - INTERVAL '3 hours');
+        -- Admin like John SEULEMENT (pour permettre de tester le swipe avec Jane disponible)
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (1, 2, NOW() - INTERVAL '3 hours');
 
         -- Quelques visites de profil
         INSERT INTO visits (visitor_id, visited_id, visit_date) VALUES

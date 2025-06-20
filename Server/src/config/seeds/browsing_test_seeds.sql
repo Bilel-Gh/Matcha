@@ -18,7 +18,7 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m',
             'male', 'female', 'Passionate developer living in Paris. Love coffee and coding.',
             48.8566, 2.3522, 'Paris', 'France', 'gps',
-            '1995-03-15', true, '/uploads/photos/pierre.jpg', 45
+            '1995-03-15', true, '/uploads/default/ppHOMME.jpeg', 45
         );
 
         -- User 5: Female, hetero, close to Paris
@@ -32,7 +32,7 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m',
             'female', 'male', 'Art student who loves museums and long walks in the city.',
             48.8584, 2.3545, 'Paris', 'France', 'gps',
-            '1997-07-22', true, '/uploads/photos/marie.jpg', 60
+            '1997-07-22', true, '/uploads/default/ppFEMME.jpg', 60
         );
 
         -- User 6: Male, bisexual, Lyon
@@ -46,7 +46,7 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m',
             'male', 'both', 'Creative soul from Lyon. Photography and music are my passions.',
             45.7640, 4.8357, 'Lyon', 'France', 'gps',
-            '1993-11-08', true, '/uploads/photos/luc.jpg', 75
+            '1993-11-08', true, '/uploads/default/ppHOMME2.jpeg', 75
         );
 
         -- User 7: Female, bisexual, Marseille
@@ -60,7 +60,7 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m',
             'female', 'both', 'Beach lover from Marseille. Surfing, yoga, and good vibes.',
             43.2965, 5.3698, 'Marseille', 'France', 'gps',
-            '1996-05-14', true, '/uploads/photos/sophie.jpg', 80
+            '1996-05-14', true, '/uploads/default/ppFEMME2.jpg', 80
         );
 
         -- User 8: Male, gay, Nice
@@ -74,7 +74,7 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m',
             'male', 'male', 'Fashion designer on the French Riviera. Style and elegance.',
             43.7102, 7.2620, 'Nice', 'France', 'gps',
-            '1994-09-30', true, '/uploads/photos/thomas.jpg', 85
+            '1994-09-30', true, '/uploads/default/ppHOMME.jpeg', 85
         );
 
         -- User 9: Female, lesbian, Bordeaux
@@ -88,7 +88,7 @@ BEGIN
             '$2b$10$NSrsqjoP5zpngrkol8dH1uIza.OVByaZiRSsejBCBN7S2.O61Mv2m',
             'female', 'female', 'Wine enthusiast and sommelier. Love good food and great company.',
             44.8378, -0.5792, 'Bordeaux', 'France', 'gps',
-            '1992-12-03', true, '/uploads/photos/camille.jpg', 70
+            '1992-12-03', true, '/uploads/default/ppFEMME.jpg', 70
         );
 
         -- Add interests for these users

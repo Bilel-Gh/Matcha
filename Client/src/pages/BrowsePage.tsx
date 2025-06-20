@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FaHeart, FaSearch, FaEye, FaFilter, FaTh, FaLayerGroup, FaSync, FaMapMarkerAlt, FaStar, FaTimes } from 'react-icons/fa';
+import SwipeMode from '../components/SwipeMode';
 import './BrowsePage.css';
 
 interface User {
@@ -217,33 +218,7 @@ const BrowsePage: React.FC = () => {
           ) : (
             <>
               {viewMode === 'swipe' ? (
-                <div className="swipe-mode-placeholder">
-                  <div className="mode-header">
-                    <FaLayerGroup className="mode-icon" />
-                    <h3>Swipe Mode</h3>
-                  </div>
-                  <p><strong>{users.length}</strong> users available</p>
-                  <p>Swipe through profiles to find your match!</p>
-                  <p className="coming-soon">Swipe implementation coming in next prompt</p>
-                  {users.length > 0 && (
-                    <div className="preview-stats">
-                      <div className="stat-item">
-                        <FaMapMarkerAlt className="stat-icon" />
-                        <div className="stat-info">
-                          <span className="stat-label">Average distance</span>
-                          <span className="stat-value">{Math.round(users.reduce((sum, u) => sum + (u.distance_km || 0), 0) / users.length)} km</span>
-                        </div>
-                      </div>
-                      <div className="stat-item">
-                        <FaStar className="stat-icon" />
-                        <div className="stat-info">
-                          <span className="stat-label">Average fame</span>
-                          <span className="stat-value">{Math.round(users.reduce((sum, u) => sum + (u.fame_rating || 0), 0) / users.length)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <SwipeMode users={users} onUsersUpdate={handleRefresh} />
               ) : (
                 <div className="grid-mode-placeholder">
                   <div className="mode-header">

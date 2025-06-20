@@ -35,6 +35,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Serve static files for photos
 app.use('/uploads/photos', express.static(path.join(process.cwd(), 'uploads', 'photos')));
+app.use('/uploads/default', express.static(path.join(process.cwd(), 'uploads', 'default')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
