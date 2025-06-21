@@ -9,6 +9,7 @@ export interface BrowseFilters {
   fame_min?: number;
   fame_max?: number;
   min_common_interests?: number;
+  location?: string;
 }
 
 export interface BrowseUser {
@@ -68,37 +69,69 @@ export class BrowsingService {
   /**
    * Apply filters to the query
    */
-  private static applyFilters(filters: BrowseFilters): { whereClause: string; havingClause: string } {
+  private static applyFilters(filters: BrowseFilters, startParamIndex: number = 9): {
+    whereClause: string;
+    havingClause: string;
+    joinClause: string;
+    params: any[];
+    nextParamIndex: number;
+  } {
     let whereClause = '';
     let havingClause = '';
+    let joinClause = '';
+    const params: any[] = [];
+    let paramIndex = startParamIndex;
 
     // Age filter
     if (filters.age_min) {
-      whereClause += ` AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.birth_date)) >= ${filters.age_min}`;
+      whereClause += ` AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.birth_date)) >= $${paramIndex}`;
+      params.push(filters.age_min);
+      paramIndex++;
     }
     if (filters.age_max) {
-      whereClause += ` AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.birth_date)) <= ${filters.age_max}`;
+      whereClause += ` AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.birth_date)) <= $${paramIndex}`;
+      params.push(filters.age_max);
+      paramIndex++;
     }
 
     // Fame rating filter
     if (filters.fame_min) {
-      whereClause += ` AND u.fame_rating >= ${filters.fame_min}`;
+      whereClause += ` AND u.fame_rating >= $${paramIndex}`;
+      params.push(filters.fame_min);
+      paramIndex++;
     }
     if (filters.fame_max) {
-      whereClause += ` AND u.fame_rating <= ${filters.fame_max}`;
+      whereClause += ` AND u.fame_rating <= $${paramIndex}`;
+      params.push(filters.fame_max);
+      paramIndex++;
+    }
+
+    // Location filter (city/country search)
+    if (filters.location && filters.location.trim()) {
+      const locationSearch = `%${filters.location.trim().toLowerCase()}%`;
+      whereClause += ` AND (
+        LOWER(u.city) LIKE $${paramIndex} OR
+        LOWER(u.country) LIKE $${paramIndex}
+      )`;
+      params.push(locationSearch);
+      paramIndex++;
     }
 
     // Distance filter (applied in HAVING clause)
     if (filters.max_distance) {
-      havingClause += havingClause ? ` AND distance_km <= ${filters.max_distance}` : ` HAVING distance_km <= ${filters.max_distance}`;
+      havingClause += havingClause ? ` AND distance_km <= $${paramIndex}` : ` HAVING distance_km <= $${paramIndex}`;
+      params.push(filters.max_distance);
+      paramIndex++;
     }
 
     // Common interests filter (applied in HAVING clause)
     if (filters.min_common_interests) {
-      havingClause += havingClause ? ` AND common_interests_count >= ${filters.min_common_interests}` : ` HAVING common_interests_count >= ${filters.min_common_interests}`;
+      havingClause += havingClause ? ` AND COUNT(DISTINCT common_interests.interest_id) >= $${paramIndex}` : ` HAVING COUNT(DISTINCT common_interests.interest_id) >= $${paramIndex}`;
+      params.push(filters.min_common_interests);
+      paramIndex++;
     }
 
-    return { whereClause, havingClause };
+    return { whereClause, havingClause, joinClause, params, nextParamIndex: paramIndex };
   }
 
   /**
@@ -153,6 +186,13 @@ export class BrowsingService {
         AND common_interests.interest_id IN (
           SELECT interest_id FROM user_interests WHERE user_id = $4
         )
+    `;
+
+    // Apply filters (including specific interests join)
+    const { whereClause, havingClause, joinClause, params } = this.applyFilters(filters);
+    query += joinClause;
+
+    query += `
       WHERE u.id != $5
       AND u.email_verified = true
       AND u.profile_picture_url IS NOT NULL
@@ -172,8 +212,7 @@ export class BrowsingService {
     // Sexual orientation compatibility (mandatory)
     query += this.getOrientationFilter(currentUser);
 
-    // Apply filters
-    const { whereClause, havingClause } = this.applyFilters(filters);
+    // Apply additional WHERE filters
     query += whereClause;
 
     query += ` GROUP BY u.id`;
@@ -184,7 +223,8 @@ export class BrowsingService {
     // Geographic priority (mandatory)
     query += ` ORDER BY ${this.getSortClause(sortBy)}`;
 
-    const result = await pool.query(query, [
+    // Combine base parameters with filter parameters
+    const queryParams = [
       currentUser.latitude,
       currentUser.longitude,
       currentUser.latitude,
@@ -192,8 +232,11 @@ export class BrowsingService {
       userId,
       userId,
       userId,
-      userId
-    ]);
+      userId,
+      ...params
+    ];
+
+    const result = await pool.query(query, queryParams);
 
     const users: BrowseUser[] = result.rows.map(row => ({
       id: row.id,

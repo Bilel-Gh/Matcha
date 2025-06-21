@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import SwipeCard from './SwipeCard';
 
@@ -24,36 +24,16 @@ interface User {
 interface SwipeModeProps {
   users: User[];
   onUsersUpdate: () => void;
+  onUserRemoved?: (userId: number) => void;
+  onUserLiked?: (userId: number, isMatch: boolean) => void;
+  onShowMessage?: (message: string, type: 'success' | 'error') => void;
 }
 
-const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate }) => {
+const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate, onUserRemoved, onUserLiked, onShowMessage }) => {
   const { token } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isMatch, setIsMatch] = useState<boolean>(false);
   const [removingCardId, setRemovingCardId] = useState<number | null>(null);
-
-
-
-  // Clear messages after delay
-  useEffect(() => {
-    if (errorMessage) {
-      const timer = setTimeout(() => setErrorMessage(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [errorMessage]);
-
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-        setIsMatch(false);
-      }, isMatch ? 4000 : 3000); // Longer duration for matches
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage, isMatch]);
 
   const getCurrentCards = () => {
     const cards = [];
@@ -72,8 +52,6 @@ const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate }) => {
 
     setIsLoading(true);
     setRemovingCardId(user.id);
-    setErrorMessage(null);
-    setSuccessMessage(null);
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/like/${user.id}`, {
@@ -88,43 +66,61 @@ const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate }) => {
 
       if (response.ok && data.status === 'success') {
         if (data.data?.match) {
-          setIsMatch(true);
-          setSuccessMessage(`It's a match with ${user.firstname}!`);
+          onShowMessage?.(`🎉 It's a match with ${user.firstname}!`, 'success');
         } else {
-          setIsMatch(false);
-          setSuccessMessage(`You liked ${user.firstname}`);
+          onShowMessage?.(`❤️ You liked ${user.firstname}`, 'success');
         }
 
-        // Advance to next card after a short delay
-        setTimeout(() => {
-          moveToNextCard();
-        }, 300);
+        // Remove user from local list immediately for better UX
+        if (onUserRemoved) {
+          onUserRemoved(user.id);
+        }
+
+        // Notify parent about the like action
+        if (onUserLiked) {
+          onUserLiked(user.id, data.data?.match || false);
+        }
+
+        // Don't call moveToNextCard() here since onUserRemoved already removes the user
+        // The next card will automatically become the current card
+        // Just reset the removing state
+        setRemovingCardId(null);
       } else {
         // Handle specific error cases
         if (response.status === 409 && data.message && data.message.includes('Like already exists')) {
           // Like already exists - treat as success and move to next card
-          setIsMatch(false);
-          setSuccessMessage(`You already liked ${user.firstname}`);
-          setTimeout(() => {
-            moveToNextCard();
-          }, 300);
+          onShowMessage?.(`❤️ You already liked ${user.firstname}`, 'success');
+
+          // Remove user from local list immediately
+          if (onUserRemoved) {
+            onUserRemoved(user.id);
+          }
+
+          // Notify parent about the like action (already liked, so no match)
+          if (onUserLiked) {
+            onUserLiked(user.id, false);
+          }
+
+          // Don't call moveToNextCard() here since onUserRemoved already removes the user
+          // Just reset the removing state
+          setRemovingCardId(null);
         } else if (data.message && data.message.includes('Profile picture required')) {
-          setErrorMessage('Please add a profile picture to like other users');
+          onShowMessage?.('❌ Please add a profile picture to like other users', 'error');
           // Reset the removing state on this error only
           setRemovingCardId(null);
         } else if (data.message && data.message.includes('Complete your profile')) {
-          setErrorMessage('Please complete your profile to like other users');
+          onShowMessage?.('❌ Please complete your profile to like other users', 'error');
           // Reset the removing state on this error only
           setRemovingCardId(null);
         } else {
-          setErrorMessage(data.message || 'Failed to like user');
+          onShowMessage?.(`❌ ${data.message || 'Failed to like user'}`, 'error');
           // Reset the removing state on unknown errors only
           setRemovingCardId(null);
         }
       }
     } catch (error) {
       console.error('Failed to like user:', error);
-      setErrorMessage('Network error. Please check your connection');
+      onShowMessage?.('❌ Network error. Please check your connection', 'error');
       setRemovingCardId(null);
     } finally {
       setIsLoading(false);
@@ -136,8 +132,7 @@ const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate }) => {
 
     console.log('Passed on', user.firstname);
     setRemovingCardId(user.id);
-    setIsMatch(false);
-    setSuccessMessage(`You passed on ${user.firstname}`);
+    onShowMessage?.(`👎 You passed on ${user.firstname}`, 'success');
 
     // Move to next card after a short delay
     setTimeout(() => {
@@ -185,18 +180,6 @@ const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate }) => {
 
   return (
     <div className="swipe-mode">
-      {/* Messages */}
-      {errorMessage && (
-        <div className="swipe-message error-message">
-          {errorMessage}
-        </div>
-      )}
-      {successMessage && (
-        <div className={`swipe-message success-message ${isMatch ? 'match-message' : ''}`}>
-          {successMessage}
-        </div>
-      )}
-
       <div className="cards-stack">
         {currentCards.map((user, index) => (
           <SwipeCard

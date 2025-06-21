@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FaHeart, FaSearch, FaEye, FaFilter, FaTh, FaLayerGroup, FaSync, FaMapMarkerAlt, FaStar, FaTimes } from 'react-icons/fa';
 import SwipeMode from '../components/SwipeMode';
+import GridMode from '../components/GridMode';
+import MatchesMode from '../components/MatchesMode';
+import AdvancedSearchModal from '../components/AdvancedSearchModal';
 import './BrowsePage.css';
 
 interface User {
@@ -23,7 +26,7 @@ const BrowsePage: React.FC = () => {
   const { token } = useAuth();
 
   // View mode state
-  const [viewMode, setViewMode] = useState<'swipe' | 'grid'>('swipe');
+  const [viewMode, setViewMode] = useState<'swipe' | 'grid' | 'matches'>('swipe');
 
   // Modal states
   const [showFilters, setShowFilters] = useState(false);
@@ -36,6 +39,10 @@ const BrowsePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [matchCount, setMatchCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  // Global message state
+  const [globalMessage, setGlobalMessage] = useState<string | null>(null);
+  const [globalMessageType, setGlobalMessageType] = useState<'success' | 'error' | null>(null);
 
   // Load initial data
   useEffect(() => {
@@ -110,6 +117,48 @@ const BrowsePage: React.FC = () => {
     loadMatchCount();
   };
 
+  // Global message handler
+  const showGlobalMessage = (message: string, type: 'success' | 'error') => {
+    setGlobalMessage(message);
+    setGlobalMessageType(type);
+    // Auto-hide message after 4 seconds
+    setTimeout(() => {
+      setGlobalMessage(null);
+      setGlobalMessageType(null);
+    }, 4000);
+  };
+
+  // Clear messages when switching modes
+  const handleViewModeChange = (mode: 'swipe' | 'grid' | 'matches') => {
+    setViewMode(mode);
+    setGlobalMessage(null);
+    setGlobalMessageType(null);
+  };
+
+  // Remove user from local list (for immediate UI update)
+  const handleUserRemoved = (userId: number) => {
+    setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+  };
+
+  // Handle like action - update match count automatically
+  const handleUserLiked = (userId: number, isMatch: boolean) => {
+    // Remove user from local list
+    handleUserRemoved(userId);
+
+    // If it's a match, increment match count
+    if (isMatch) {
+      setMatchCount(prev => prev + 1);
+    }
+  };
+
+  // Handle unlike action - update match count automatically
+  const handleUserUnliked = (userId: number, wasMatch: boolean) => {
+    // If it was a match, decrement match count
+    if (wasMatch) {
+      setMatchCount(prev => Math.max(0, prev - 1));
+    }
+  };
+
   return (
     <div className="browse-page">
       {/* Main Container - Structure identique à ProfilePage */}
@@ -125,17 +174,24 @@ const BrowsePage: React.FC = () => {
               <div className="view-toggle">
                 <button
                   className={`toggle-btn ${viewMode === 'swipe' ? 'active' : ''}`}
-                  onClick={() => setViewMode('swipe')}
+                  onClick={() => handleViewModeChange('swipe')}
                 >
                   <FaLayerGroup style={{ marginRight: '8px' }} />
                   Swipe
                 </button>
                 <button
                   className={`toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => handleViewModeChange('grid')}
                 >
                   <FaTh style={{ marginRight: '8px' }} />
                   Grid
+                </button>
+                <button
+                  className={`toggle-btn ${viewMode === 'matches' ? 'active' : ''}`}
+                  onClick={() => handleViewModeChange('matches')}
+                >
+                  <FaHeart style={{ marginRight: '8px' }} />
+                  Matches ({matchCount})
                 </button>
               </div>
 
@@ -218,79 +274,50 @@ const BrowsePage: React.FC = () => {
           ) : (
             <>
               {viewMode === 'swipe' ? (
-                <SwipeMode users={users} onUsersUpdate={handleRefresh} />
+                <SwipeMode
+                  users={users}
+                  onUsersUpdate={handleRefresh}
+                  onUserRemoved={handleUserRemoved}
+                  onUserLiked={handleUserLiked}
+                  onShowMessage={showGlobalMessage}
+                />
+              ) : viewMode === 'grid' ? (
+                <GridMode
+                  users={users}
+                  onUsersUpdate={handleRefresh}
+                  onShowMessage={showGlobalMessage}
+                  onUserRemoved={handleUserRemoved}
+                  onUserLiked={handleUserLiked}
+                />
               ) : (
-                <div className="grid-mode-placeholder">
-                  <div className="mode-header">
-                    <FaTh className="mode-icon" />
-                    <h3>Grid Mode</h3>
-                  </div>
-                  <p><strong>{users.length}</strong> users found</p>
-                  <p>Browse profiles in a grid layout</p>
-                  <p className="coming-soon">Grid implementation coming in next prompt</p>
-                  {users.length > 0 && (
-                    <div className="preview-list">
-                      <h4>Preview of available users:</h4>
-                      <div className="user-preview-grid">
-                        {users.slice(0, 6).map(user => (
-                          <div key={user.id} className="user-preview-card">
-                            <div className="user-info">
-                              <strong>{user.firstname}</strong>, {user.age}
-                            </div>
-                            <div className="user-location">
-                              <FaMapMarkerAlt className="location-icon" />
-                              {user.city} ({user.distance_km}km)
-                            </div>
-                            <div className="user-stats">
-                              <FaStar className="star-icon" /> {user.fame_rating} | <FaHeart className="heart-icon" /> {user.common_interests} interests
-                            </div>
-                          </div>
-                        ))}
-                        {users.length > 6 && (
-                          <div className="user-preview-card more-users">
-                            +{users.length - 6} more users
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <MatchesMode
+                  onShowMessage={showGlobalMessage}
+                  onMatchCountChange={setMatchCount}
+                  onUserUnliked={handleUserUnliked}
+                />
               )}
             </>
           )}
         </div>
       </div>
 
-      {/* Modal Placeholders */}
-      {showAdvancedSearch && (
-        <div className="modal-overlay" onClick={() => setShowAdvancedSearch(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>
-                <FaSearch style={{ marginRight: '8px' }} />
-                Advanced Search
-              </h3>
-              <button className="modal-close" onClick={() => setShowAdvancedSearch(false)}>
-                <FaTimes />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>Advanced search with filters for:</p>
-              <ul>
-                <li>Age range</li>
-                <li>Distance radius</li>
-                <li>Fame rating</li>
-                <li>Common interests</li>
-                <li>Location</li>
-              </ul>
-              <p className="coming-soon">Implementation coming in next prompt</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowAdvancedSearch(false)}>Close</button>
-            </div>
-          </div>
+      {/* Global Message Notification */}
+      {globalMessage && (
+        <div className={`message-notification ${globalMessageType === 'success' ? 'success' : 'error'}`}>
+          {globalMessage}
         </div>
       )}
+
+      {/* Advanced Search Modal */}
+      <AdvancedSearchModal
+        isOpen={showAdvancedSearch}
+        onClose={() => setShowAdvancedSearch(false)}
+        onSearchResults={(results) => {
+          setUsers(results);
+          // Force grid mode when showing search results
+          setViewMode('grid');
+        }}
+      />
 
       {showMatches && (
         <div className="modal-overlay" onClick={() => setShowMatches(false)}>

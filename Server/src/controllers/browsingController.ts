@@ -30,6 +30,9 @@ export const browseUsers = asyncHandler(async (req: Request, res: Response) => {
   if (req.query.min_common_interests) {
     filters.min_common_interests = parseInt(req.query.min_common_interests as string);
   }
+  if (req.query.location) {
+    filters.location = req.query.location as string;
+  }
 
   const sortBy = (req.query.sort as string) || 'distance';
 
@@ -72,6 +75,9 @@ export const searchUsers = asyncHandler(async (req: Request, res: Response) => {
   }
   if (req.query.min_common_interests) {
     filters.min_common_interests = parseInt(req.query.min_common_interests as string);
+  }
+  if (req.query.location) {
+    filters.location = req.query.location as string;
   }
 
   const sortBy = (req.query.sort as string) || 'distance';
