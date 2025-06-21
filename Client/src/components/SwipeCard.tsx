@@ -15,6 +15,7 @@ interface User {
   fame_rating: number;
   common_interests: number;
   common_interests_count?: number;
+  common_interests_names?: string[];
   is_online?: boolean;
   last_connection?: string;
 }
@@ -215,10 +216,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
     handleStart(e.touches[0].clientX);
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    // Ne pas appeler preventDefault ici car les événements touch sont passifs
-    handleMove(e.touches[0].clientX);
-  };
+
 
   const handleTouchEnd = () => {
     handleEnd();
@@ -322,7 +320,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
             <div className="indicator pass-indicator">PASS</div>
           </div>
           <div className="online-status">
-            {user.is_online ? '🟢 Online' : `Last seen ${formatLastSeen(user.last_connection)}`}
+            {user.is_online ? '🟢 Online' : '⚫ Offline'}
           </div>
         </div>
       </div>
@@ -345,7 +343,10 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
 
         {(user.common_interests_count || user.common_interests) > 0 && (
           <div className="common-interests">
-            ❤️ {user.common_interests_count || user.common_interests} common interests
+            ❤️ {user.common_interests_names && user.common_interests_names.length > 0
+              ? user.common_interests_names.slice(0, 3).join(', ') + (user.common_interests_names.length > 3 ? '...' : '')
+              : `${user.common_interests_count || user.common_interests} common interests`
+            }
           </div>
         )}
 
@@ -358,17 +359,6 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
 };
 
 // Helper functions
-const formatLastSeen = (lastConnection?: string): string => {
-  if (!lastConnection) return 'Recently';
-  const date = new Date(lastConnection);
-  const now = new Date();
-  const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-
-  if (diffHours < 1) return 'Recently';
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
-};
 
 const calculateAge = (birthDateOrAge?: string | number): string => {
   if (typeof birthDateOrAge === 'number') {

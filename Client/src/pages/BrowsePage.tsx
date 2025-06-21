@@ -20,6 +20,7 @@ interface User {
   distance_km: number;
   fame_rating: number;
   common_interests: number;
+  common_interests_names?: string[];
 }
 
 const BrowsePage: React.FC = () => {

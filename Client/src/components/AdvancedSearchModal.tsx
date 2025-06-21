@@ -28,6 +28,7 @@ interface User {
   fame_rating: number;
   common_interests: number;
   common_interests_count?: number;
+  common_interests_names?: string[];
   is_online: boolean;
   last_connection?: string;
 }
@@ -127,12 +128,15 @@ const SearchResultCard: React.FC<{ user: User }> = ({ user }) => {
       <div className="result-info">
         <h4>{user.firstname}, {calculateAge(user.birth_date)}</h4>
         <div className="result-stats">
-          <span>📍 {user.distance_km}km</span>
+          <span>📍 {user.city} • {user.distance_km}km</span>
           <span>⭐ {user.fame_rating}</span>
         </div>
         {(user.common_interests_count || user.common_interests) > 0 && (
           <div className="result-interests">
-            ❤️ {user.common_interests_count || user.common_interests} common
+            ❤️ {user.common_interests_names && user.common_interests_names.length > 0
+              ? user.common_interests_names.slice(0, 2).join(', ') + (user.common_interests_names.length > 2 ? '...' : '')
+              : `${user.common_interests_count || user.common_interests} common`
+            }
           </div>
         )}
       </div>

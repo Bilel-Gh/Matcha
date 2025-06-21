@@ -23,6 +23,7 @@ export interface BrowseUser {
   fame_rating: number;
   distance_km: number;
   common_interests_count: number;
+  common_interests_names?: string[];
   is_online: boolean;
   last_connection?: string;
   gender: string;
@@ -173,6 +174,7 @@ export class BrowsingService {
     let query = `
       SELECT DISTINCT u.*,
              COUNT(DISTINCT common_interests.interest_id) as common_interests_count,
+             ARRAY_AGG(DISTINCT interests.name) FILTER (WHERE interests.name IS NOT NULL) as common_interests_names,
              ROUND(
                6371 * acos(
                  cos(radians($1)) * cos(radians(u.latitude)) *
@@ -186,6 +188,7 @@ export class BrowsingService {
         AND common_interests.interest_id IN (
           SELECT interest_id FROM user_interests WHERE user_id = $4
         )
+      LEFT JOIN interests ON interests.id = common_interests.interest_id
     `;
 
     // Apply filters (including specific interests join)
@@ -249,6 +252,7 @@ export class BrowsingService {
       fame_rating: row.fame_rating,
       distance_km: parseFloat(row.distance_km),
       common_interests_count: parseInt(row.common_interests_count),
+      common_interests_names: row.common_interests_names || [],
       is_online: row.is_online,
       last_connection: row.last_connection?.toISOString(),
       gender: row.gender,
@@ -306,6 +310,7 @@ export class BrowsingService {
     const query = `
       SELECT u.*,
              COUNT(DISTINCT common_interests.interest_id) as common_interests_count,
+             ARRAY_AGG(DISTINCT interests.name) FILTER (WHERE interests.name IS NOT NULL) as common_interests_names,
              ROUND(
                6371 * acos(
                  cos(radians($1)) * cos(radians(u.latitude)) *
@@ -319,6 +324,7 @@ export class BrowsingService {
         AND common_interests.interest_id IN (
           SELECT interest_id FROM user_interests WHERE user_id = $4
         )
+      LEFT JOIN interests ON interests.id = common_interests.interest_id
       WHERE u.id = $5
       AND u.email_verified = true
       GROUP BY u.id
@@ -348,6 +354,7 @@ export class BrowsingService {
       fame_rating: row.fame_rating,
       distance_km: parseFloat(row.distance_km),
       common_interests_count: parseInt(row.common_interests_count),
+      common_interests_names: row.common_interests_names || [],
       is_online: row.is_online,
       last_connection: row.last_connection?.toISOString(),
       gender: row.gender,

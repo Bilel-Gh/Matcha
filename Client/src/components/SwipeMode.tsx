@@ -17,6 +17,7 @@ interface User {
   fame_rating: number;
   common_interests: number;
   common_interests_count?: number;
+  common_interests_names?: string[];
   is_online?: boolean;
   last_connection?: string;
 }

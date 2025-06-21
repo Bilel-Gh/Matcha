@@ -18,6 +18,7 @@ interface User {
   fame_rating: number;
   common_interests: number;
   common_interests_count?: number;
+  common_interests_names?: string[];
   is_online?: boolean;
   last_connection?: string;
 }
@@ -294,22 +295,23 @@ const GridUserCard: React.FC<GridUserCardProps> = ({ user, onUserUpdate, onShowM
 
           <div className="user-details">
             <div className="detail-row">
-              <span className="distance">📍 {user.distance_km}km away</span>
+              <span className="distance">📍 {user.city} • {user.distance_km}km away</span>
             </div>
             {(user.common_interests_count || user.common_interests) > 0 && (
               <div className="detail-row">
-                <span className="interests">❤️ {user.common_interests_count || user.common_interests} common interests</span>
+                <span className="interests">
+                  ❤️ {user.common_interests_names && user.common_interests_names.length > 0
+                    ? user.common_interests_names.slice(0, 2).join(', ') + (user.common_interests_names.length > 2 ? '...' : '')
+                    : `${user.common_interests_count || user.common_interests} common interests`
+                  }
+                </span>
               </div>
             )}
-            {user.is_online ? (
-              <div className="detail-row">
-                <span className="online">🟢 Online now</span>
-              </div>
-            ) : (
-              <div className="detail-row">
-                <span className="offline">Last seen {formatLastSeen(user.last_connection)}</span>
-              </div>
-            )}
+            <div className="detail-row">
+              <span className={user.is_online ? "online" : "offline"}>
+                {user.is_online ? '🟢 Online now' : '⚫ Offline'}
+              </span>
+            </div>
           </div>
 
           <div className="user-bio">
@@ -462,16 +464,6 @@ const calculateAge = (birthDateOrAge?: string | number): string => {
   return String(age);
 };
 
-const formatLastSeen = (lastConnection?: string): string => {
-  if (!lastConnection) return 'Recently';
-  const date = new Date(lastConnection);
-  const now = new Date();
-  const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
 
-  if (diffHours < 1) return 'Recently';
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
-};
 
 export default GridMode;
