@@ -1372,17 +1372,17 @@
   font-weight: 500;
 }
 
-.match-status {
+.match-card .match-status {
   margin-bottom: 8px;
 }
 
-.match-status .online {
+.match-card .match-status .online {
   color: var(--success-color);
   font-weight: 500;
   font-size: 0.9rem;
 }
 
-.match-status .offline {
+.match-card .match-status .offline {
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
@@ -4223,7 +4223,7 @@
   transform: none !important;
 }
 
-.match-status {
+.user-profile-page .match-status {
   background: var(--primary-gradient);
   color: white;
   padding: 1.5rem;
@@ -4237,7 +4237,7 @@
   overflow: hidden;
 }
 
-.match-status::before {
+.user-profile-page .match-status::before {
   content: '';
   position: absolute;
   top: 0;

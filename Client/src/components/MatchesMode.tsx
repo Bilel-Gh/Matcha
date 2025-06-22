@@ -113,7 +113,7 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
     window.location.href = `/user/${user.id}`;
   };
 
-  const handleLikeBack = async (user: ActivityUser) => {
+  const handleLikeBack = async (user: ActivityUser | MatchUser) => {
     if (!token) return;
 
     try {
@@ -140,8 +140,18 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
           }
         }
       } else {
-        if (onShowMessage) {
-          onShowMessage(data.message || 'Failed to like user', 'error');
+        // Handle specific error cases
+        if (response.status === 409) {
+          // Like already exists - this means it's already a match or you already liked them
+          if (onShowMessage) {
+            onShowMessage(`💝 You and ${user.firstname} are already connected!`, 'success');
+          }
+          // Reload data to update the UI state
+          loadData();
+        } else {
+          if (onShowMessage) {
+            onShowMessage(data.message || 'Failed to like user', 'error');
+          }
         }
       }
     } catch (error) {
@@ -449,6 +459,14 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
                         onClick={() => handleUnlike(matchUser)}
                       >
                         💔 Unlike
+                      </button>
+                    )}
+                    {activeTab === 'likes-received' && (
+                      <button
+                        className="action-btn like-btn"
+                        onClick={() => handleLikeBack(matchUser)}
+                      >
+                        {matches.some(match => match.id === matchUser.id) ? '💝 Already Matched' : '❤️ Like Back'}
                       </button>
                     )}
                     {activeTab === 'activity' && (
