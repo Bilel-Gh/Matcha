@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaPalette } from 'react-icons/fa';
 
 interface Theme {
@@ -60,15 +60,69 @@ interface ThemeSelectorProps {
 
 const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false, className = '' }) => {
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return document.documentElement.getAttribute('data-theme') || 'romantic';
+    return localStorage.getItem('theme') || document.documentElement.getAttribute('data-theme') || 'romantic';
   });
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // Sync with theme changes from other sources
+  useEffect(() => {
+    const syncTheme = () => {
+      const savedTheme = localStorage.getItem('theme');
+      const documentTheme = document.documentElement.getAttribute('data-theme');
+      const activeTheme = savedTheme || documentTheme || 'romantic';
+
+      if (activeTheme !== currentTheme) {
+        setCurrentTheme(activeTheme);
+      }
+    };
+
+    // Listen for storage changes (theme changes from other tabs/windows)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'theme' && e.newValue) {
+        setCurrentTheme(e.newValue);
+        document.documentElement.setAttribute('data-theme', e.newValue);
+      }
+    };
+
+    // Listen for attribute changes on document element
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+          const newTheme = document.documentElement.getAttribute('data-theme');
+          if (newTheme && newTheme !== currentTheme) {
+            setCurrentTheme(newTheme);
+          }
+        }
+      });
+    });
+
+    // Start observing
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+
+    // Add storage event listener
+    window.addEventListener('storage', handleStorageChange);
+
+    // Initial sync
+    syncTheme();
+
+    // Cleanup
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [currentTheme]);
 
   const handleThemeChange = (themeId: string) => {
     setCurrentTheme(themeId);
     document.documentElement.setAttribute('data-theme', themeId);
     localStorage.setItem('theme', themeId);
     setShowDropdown(false);
+
+    // Dispatch a custom event to notify other components
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: themeId } }));
   };
 
   if (compact) {

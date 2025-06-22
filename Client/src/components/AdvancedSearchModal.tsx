@@ -1,18 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-interface SearchCriteria {
-  age_min: string;
-  age_max: string;
-  fame_min: string;
-  fame_max: string;
-  max_distance: string;
-  location: string;
-  min_common_interests: string;
-}
-
-
-
 interface User {
   id: number;
   username: string;
@@ -33,32 +21,18 @@ interface User {
   last_connection?: string;
 }
 
-interface AdvancedSearchModalProps {
+interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSearchResults: (results: User[]) => void;
 }
 
-const SearchResultCard: React.FC<{ user: User }> = ({ user }) => {
+const SearchResultCard: React.FC<{ user: User; searchQuery: string }> = ({ user, searchQuery }) => {
   const { token } = useAuth();
 
-  const handleViewProfile = async () => {
-    if (!token) return;
-
-    try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/visit/${user.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      alert(`👁️ Viewing ${user.firstname}'s profile (visit recorded)`);
-    } catch (error) {
-      console.error('Failed to record visit:', error);
-      alert(`👁️ Viewing ${user.firstname}'s profile`);
-    }
+  const handleViewProfile = () => {
+    // Navigate to user profile page - visit will be recorded there
+    window.location.href = `/user/${user.id}`;
   };
 
   const handleLike = async () => {
@@ -108,6 +82,27 @@ const SearchResultCard: React.FC<{ user: User }> = ({ user }) => {
     return age;
   };
 
+  const highlightMatch = (text: string, searchQuery: string): JSX.Element => {
+    if (!searchQuery.trim()) return <span>{text}</span>;
+
+    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+
+    return (
+      <span>
+        {parts.map((part, index) =>
+          regex.test(part) ? (
+            <mark key={index} style={{ background: '#ffeb3b', padding: '0 2px', borderRadius: '2px' }}>
+              {part}
+            </mark>
+          ) : (
+            <span key={index}>{part}</span>
+          )
+        )}
+      </span>
+    );
+  };
+
   return (
     <div className="search-result-card">
       <div className="result-image" onClick={handleViewProfile}>
@@ -126,7 +121,12 @@ const SearchResultCard: React.FC<{ user: User }> = ({ user }) => {
       </div>
 
       <div className="result-info">
-        <h4>{user.firstname}, {calculateAge(user.birth_date)}</h4>
+        <h4>
+          {highlightMatch(`${user.firstname} ${user.lastname}`, searchQuery)}, {calculateAge(user.birth_date)}
+        </h4>
+        <div className="result-username">
+          @{highlightMatch(user.username, searchQuery)}
+        </div>
         <div className="result-stats">
           <span>📍 {user.city} • {user.distance_km}km</span>
           <span>⭐ {user.fame_rating}</span>
@@ -153,39 +153,46 @@ const SearchResultCard: React.FC<{ user: User }> = ({ user }) => {
   );
 };
 
-const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClose, onSearchResults }) => {
+const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResults }) => {
   const { token } = useAuth();
-  const [searchCriteria, setSearchCriteria] = useState<SearchCriteria>({
-    age_min: '',
-    age_max: '',
-    fame_min: '',
-    fame_max: '',
-    max_distance: '',
-    location: '',
-    min_common_interests: ''
-  });
-
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showResults, setShowResults] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
-  const updateCriteria = (key: keyof SearchCriteria, value: string) => {
-    setSearchCriteria(prev => ({ ...prev, [key]: value }));
-  };
+  // Auto-search when user types (debounced)
+  useEffect(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    if (searchQuery.trim().length >= 2) {
+      const timeout = setTimeout(() => {
+        handleSearch();
+      }, 500); // 500ms delay after user stops typing
+      setSearchTimeout(timeout);
+    } else if (searchQuery.trim().length === 0) {
+      setSearchResults([]);
+      setHasSearched(false);
+    }
+
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchQuery]);
 
   const handleSearch = async () => {
-    if (!token) return;
+    if (!token || !searchQuery.trim()) return;
 
     setIsSearching(true);
+    setHasSearched(true);
+
     try {
       const params = new URLSearchParams();
-
-      // Add search criteria to params
-      Object.entries(searchCriteria).forEach(([key, value]) => {
-        if (value && value !== '') {
-          params.append(key, String(value));
-        }
-      });
+      params.append('search', searchQuery.trim());
 
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/browse/search?${params.toString()}`, {
         headers: {
@@ -194,32 +201,45 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
       });
 
       const data = await response.json();
+
+      if (response.ok) {
       setSearchResults(data.data?.users || []);
-      setShowResults(true);
+      } else {
+        console.error('Search failed:', data.message);
+        setSearchResults([]);
+      }
     } catch (error) {
       console.error('Search failed:', error);
-      alert('Search failed. Please try again.');
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
   };
 
-  const resetSearch = () => {
-    setSearchCriteria({
-      age_min: '',
-      age_max: '',
-      fame_min: '',
-      fame_max: '',
-      max_distance: '',
-      location: '',
-      min_common_interests: ''
-    });
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      handleSearch();
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
     setSearchResults([]);
-    setShowResults(false);
+    setHasSearched(false);
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
   };
 
   const closeModal = () => {
-    resetSearch();
+    clearSearch();
     onClose();
   };
 
@@ -234,182 +254,105 @@ const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({ isOpen, onClo
     <div className="modal-overlay" onClick={closeModal}>
       <div className="search-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>🔍 Advanced Search</h2>
+          <h2>🔍 Search Users</h2>
           <button className="close-btn" onClick={closeModal}>×</button>
         </div>
 
-        {!showResults ? (
-          <div className="search-form">
-            {/* Demographics Section */}
-            <div className="search-section">
-              <h4>👤 Demographics</h4>
-              <div className="form-row">
-                <div className="input-group">
-                  <label>Age Range</label>
-                  <div className="range-inputs">
-                    <input
-                      type="number"
-                      placeholder="Min age"
-                      value={searchCriteria.age_min}
-                      onChange={(e) => updateCriteria('age_min', e.target.value)}
-                      min="18"
-                      max="100"
-                    />
-                    <span>to</span>
-                    <input
-                      type="number"
-                      placeholder="Max age"
-                      value={searchCriteria.age_max}
-                      onChange={(e) => updateCriteria('age_max', e.target.value)}
-                      min="18"
-                      max="100"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Location Section */}
-            <div className="search-section">
-              <h4>📍 Location</h4>
-              <div className="form-row">
-                <div className="input-group">
-                  <label>Maximum Distance (km)</label>
-                  <input
-                    type="number"
-                    placeholder="Distance in km"
-                    value={searchCriteria.max_distance}
-                    onChange={(e) => updateCriteria('max_distance', e.target.value)}
-                    min="1"
-                    max="500"
-                  />
-                </div>
-                <div className="input-group">
-                  <label>Location (optional)</label>
+        <div className="search-content">
+          {/* Search Input */}
+          <div className="search-input-section">
+            <div className="search-input-wrapper">
+              <div className="search-icon">🔍</div>
                   <input
                     type="text"
-                    placeholder="City or area"
-                    value={searchCriteria.location}
-                    onChange={(e) => updateCriteria('location', e.target.value)}
-                  />
-                </div>
+                className="search-input"
+                placeholder="Search by name, first name, or username..."
+                value={searchQuery}
+                onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
+                autoFocus
+              />
+              {searchQuery && (
+                <button className="clear-search-btn" onClick={clearSearch}>
+                  ×
+                </button>
+              )}
+            </div>
+            <div className="search-hint">
+              💡 Type at least 2 characters to start searching
+            </div>
+            {isSearching && (
+              <div className="search-loading">
+                <div className="loading-spinner"></div>
+                Searching...
               </div>
-            </div>
-
-            {/* Fame Rating Section */}
-            <div className="search-section">
-              <h4>⭐ Fame Rating</h4>
-              <div className="form-row">
-                <div className="input-group">
-                  <label>Fame Rating Range</label>
-                  <div className="range-inputs">
-                    <input
-                      type="number"
-                      placeholder="Min rating"
-                      value={searchCriteria.fame_min}
-                      onChange={(e) => updateCriteria('fame_min', e.target.value)}
-                      min="0"
-                      max="100"
-                    />
-                    <span>to</span>
-                    <input
-                      type="number"
-                      placeholder="Max rating"
-                      value={searchCriteria.fame_max}
-                      onChange={(e) => updateCriteria('fame_max', e.target.value)}
-                      min="0"
-                      max="100"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Common Interests Section */}
-            <div className="search-section">
-              <h4>❤️ Common Interests</h4>
-              <div className="form-row">
-                <div className="input-group">
-                  <label>Minimum Common Interests</label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 3"
-                    value={searchCriteria.min_common_interests}
-                    onChange={(e) => updateCriteria('min_common_interests', e.target.value)}
-                    min="0"
-                    max="20"
-                  />
-                  <small>Number of interests you must have in common (0 = no requirement)</small>
-                </div>
-              </div>
-            </div>
-
-            {/* Search Actions */}
-            <div className="search-actions">
-              <button
-                className="search-btn primary"
-                onClick={handleSearch}
-                disabled={isSearching}
-              >
-                {isSearching ? 'Searching...' : '🔍 Search'}
-              </button>
-              <button
-                className="reset-btn secondary"
-                onClick={resetSearch}
-              >
-                Reset
-              </button>
-            </div>
+            )}
           </div>
-        ) : (
-          <div className="search-results">
+
+          {/* Search Results */}
+          {hasSearched && (
+            <div className="search-results-section">
             <div className="results-header">
-              <h4>Search Results ({searchResults.length} found)</h4>
+                <h4>
+                  {searchResults.length > 0
+                    ? `Found ${searchResults.length} user${searchResults.length === 1 ? '' : 's'}`
+                    : 'No users found'
+                  }
+                </h4>
+                {searchResults.length > 0 && (
               <div className="results-actions">
-                <button
-                  className="back-btn"
-                  onClick={() => setShowResults(false)}
-                >
-                  ← Back to Search
-                </button>
-                <button
-                  className="use-results-btn"
-                  onClick={useSearchResults}
-                >
-                  Use These Results
-                </button>
-                <button
-                  className="new-search-btn"
-                  onClick={resetSearch}
-                >
-                  New Search
+                    <button className="use-results-btn" onClick={useSearchResults}>
+                      Use These Results ({searchResults.length})
                 </button>
               </div>
+                )}
             </div>
 
             {searchResults.length === 0 ? (
               <div className="empty-results">
+                  <div className="empty-icon">🔍</div>
                 <h3>No users found</h3>
-                <p>Try adjusting your search criteria</p>
-                <button
-                  className="modify-search-btn"
-                  onClick={() => setShowResults(false)}
-                >
-                  Modify Search
-                </button>
+                  <p>Try different keywords or check your spelling</p>
+                  <div className="search-tips">
+                    <strong>Search tips:</strong>
+                    <ul>
+                      <li>Try searching by first name: "John"</li>
+                      <li>Try searching by username: "john123"</li>
+                      <li>Use partial names: "Jo" will find "John", "Joan", etc.</li>
+                    </ul>
+                  </div>
               </div>
             ) : (
               <div className="search-results-grid">
                 {searchResults.map(user => (
-                  <SearchResultCard key={user.id} user={user} />
+                    <SearchResultCard key={user.id} user={user} searchQuery={searchQuery} />
                 ))}
               </div>
             )}
           </div>
         )}
+
+          {/* Initial State */}
+          {!hasSearched && !searchQuery && (
+            <div className="search-welcome">
+              <div className="welcome-icon">👋</div>
+              <h3>Find someone special</h3>
+              <p>Search for users by their name, first name, or username</p>
+              <div className="search-examples">
+                <strong>Examples:</strong>
+                <div className="example-searches">
+                  <span className="example-tag">John</span>
+                  <span className="example-tag">Marie</span>
+                  <span className="example-tag">alex123</span>
+                  <span className="example-tag">Sarah</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default AdvancedSearchModal;
+export default SearchModal;

@@ -136,61 +136,68 @@ router.get('/', browsingController.browseUsers);
 
 /**
  * @swagger
- * /api/search:
+ * /api/browse/search:
  *   get:
- *     summary: Advanced search (same logic as browse)
+ *     summary: Search users by name, firstname, or username
  *     tags: [Browsing]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *         description: Search query for name, firstname, or username (minimum 2 characters)
+ *         example: "John"
+ *       - in: query
  *         name: age_min
  *         schema:
  *           type: integer
  *           minimum: 18
- *         description: Minimum age filter
+ *         description: Minimum age filter (fallback to advanced search if no search query)
  *       - in: query
  *         name: age_max
  *         schema:
  *           type: integer
  *           maximum: 100
- *         description: Maximum age filter
+ *         description: Maximum age filter (fallback to advanced search if no search query)
  *       - in: query
  *         name: max_distance
  *         schema:
  *           type: integer
  *           minimum: 1
- *         description: Maximum distance in kilometers
+ *         description: Maximum distance in kilometers (fallback to advanced search if no search query)
  *       - in: query
  *         name: fame_min
  *         schema:
  *           type: integer
  *           minimum: 0
  *           maximum: 100
- *         description: Minimum fame rating
+ *         description: Minimum fame rating (fallback to advanced search if no search query)
  *       - in: query
  *         name: fame_max
  *         schema:
  *           type: integer
  *           minimum: 0
  *           maximum: 100
- *         description: Maximum fame rating
+ *         description: Maximum fame rating (fallback to advanced search if no search query)
  *       - in: query
  *         name: min_common_interests
  *         schema:
  *           type: integer
  *           minimum: 1
- *         description: Minimum number of common interests
+ *         description: Minimum number of common interests (fallback to advanced search if no search query)
  *       - in: query
  *         name: sort
  *         schema:
  *           type: string
  *           enum: [distance, age, fame_rating, common_interests]
  *           default: distance
- *         description: Sort criteria (geographic priority always maintained)
+ *         description: Sort criteria (fallback to advanced search if no search query)
  *     responses:
  *       200:
- *         description: Advanced search results
+ *         description: Search results sorted by relevance and distance
  *         content:
  *           application/json:
  *             schema:
@@ -209,7 +216,7 @@ router.get('/', browsingController.browseUsers);
  *                     total:
  *                       type: integer
  *       400:
- *         description: Location required or invalid parameters
+ *         description: Location required, search query too short, or invalid parameters
  *       401:
  *         description: Unauthorized
  */

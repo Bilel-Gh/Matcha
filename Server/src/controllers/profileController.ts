@@ -43,3 +43,28 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
     message: 'Password updated successfully',
   });
 });
+
+export const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    throw new AppError('User not authenticated', 401);
+  }
+
+  const { userId } = req.params;
+  const targetUserId = parseInt(userId);
+
+  if (isNaN(targetUserId)) {
+    throw new AppError('Invalid user ID', 400);
+  }
+
+  // Prevent users from viewing their own profile through this endpoint
+  if (targetUserId === req.user.id) {
+    throw new AppError('Use /profile endpoint for your own profile', 400);
+  }
+
+  const userProfile = await ProfileService.getUserProfile(req.user.id, targetUserId);
+
+  res.status(200).json({
+    status: 'success',
+    data: userProfile,
+  });
+});

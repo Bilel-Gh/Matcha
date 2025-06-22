@@ -15,6 +15,21 @@ interface MatchUser {
   created_at?: string;
 }
 
+interface ActivityUser {
+  id: number;
+  username: string;
+  firstname: string;
+  lastname: string;
+  age?: number;
+  birth_date?: string;
+  profile_picture_url: string;
+  fame_rating: number;
+  is_online?: boolean;
+  created_at?: string;
+  visited_at?: string;
+  visit_count?: number;
+}
+
 interface MatchesModeProps {
   onShowMessage?: (message: string, type: 'success' | 'error') => void;
   onMatchCountChange?: (count: number) => void;
@@ -23,10 +38,11 @@ interface MatchesModeProps {
 
 const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountChange, onUserUnliked }) => {
   const { token } = useAuth();
-  const [activeTab, setActiveTab] = useState<'matches' | 'likes-given' | 'likes-received'>('matches');
+  const [activeTab, setActiveTab] = useState<'matches' | 'likes-given' | 'likes-received' | 'activity'>('matches');
   const [matches, setMatches] = useState<MatchUser[]>([]);
   const [likesGiven, setLikesGiven] = useState<MatchUser[]>([]);
   const [likesReceived, setLikesReceived] = useState<MatchUser[]>([]);
+  const [visitsReceived, setVisitsReceived] = useState<ActivityUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +57,7 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
     setError(null);
 
     try {
-      const [matchesRes, likesGivenRes, likesReceivedRes] = await Promise.all([
+      const [matchesRes, likesGivenRes, likesReceivedRes, visitsRes] = await Promise.all([
         fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/matches`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
@@ -49,6 +65,9 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
           headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/likes-received`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/visits-received`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -73,6 +92,11 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         const likesReceivedData = await likesReceivedRes.json();
         setLikesReceived(likesReceivedData.data?.likes || []);
       }
+
+      if (visitsRes.ok) {
+        const visitsData = await visitsRes.json();
+        setVisitsReceived(visitsData.data?.visits || []);
+      }
     } catch (error) {
       console.error('Failed to load matches/likes:', error);
       setError('Failed to load data');
@@ -84,12 +108,16 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
     }
   };
 
-  const handleViewProfile = async (user: MatchUser) => {
+  const handleViewProfile = (user: MatchUser | ActivityUser) => {
+    // Navigate to user profile page - visit will be recorded there
+    window.location.href = `/user/${user.id}`;
+  };
+
+  const handleLikeBack = async (user: ActivityUser) => {
     if (!token) return;
 
     try {
-      // Record visit
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/visit/${user.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/like/${user.id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -97,16 +125,29 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         }
       });
 
-      // TODO: Open profile modal in future iteration
-      console.log('Viewing profile of', user.firstname);
-      if (onShowMessage) {
-        onShowMessage(`Viewing ${user.firstname}'s profile (visit recorded)`, 'success');
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.data?.match) {
+          if (onShowMessage) {
+            onShowMessage(`🎉 It's a match with ${user.firstname}!`, 'success');
+          }
+          // Reload data to update matches count
+          loadData();
+        } else {
+          if (onShowMessage) {
+            onShowMessage(`❤️ You liked ${user.firstname}!`, 'success');
+          }
+        }
+      } else {
+        if (onShowMessage) {
+          onShowMessage(data.message || 'Failed to like user', 'error');
+        }
       }
     } catch (error) {
-      console.error('Failed to record visit:', error);
-      // Still show profile even if visit recording fails
+      console.error('Failed to like user:', error);
       if (onShowMessage) {
-        onShowMessage(`Viewing ${user.firstname}'s profile`, 'success');
+        onShowMessage('Network error. Failed to like user', 'error');
       }
     }
   };
@@ -183,6 +224,18 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
     return date.toLocaleDateString();
   };
 
+  const calculateAge = (birthDate?: string): string => {
+    if (!birthDate) return '';
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return String(age);
+  };
+
   const getCurrentData = () => {
     switch (activeTab) {
       case 'matches':
@@ -191,6 +244,8 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         return likesGiven;
       case 'likes-received':
         return likesReceived;
+      case 'activity':
+        return visitsReceived;
       default:
         return [];
     }
@@ -204,6 +259,8 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         return 'People You Liked';
       case 'likes-received':
         return 'People Who Liked You';
+      case 'activity':
+        return 'Profile Visits';
       default:
         return '';
     }
@@ -217,6 +274,8 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         return 'Users you have liked - waiting for them to like you back';
       case 'likes-received':
         return 'Users who liked you - like them back to create a match!';
+      case 'activity':
+        return 'People who have visited your profile recently';
       default:
         return '';
     }
@@ -251,6 +310,12 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         >
           💖 Received ({likesReceived.length})
         </button>
+        <button
+          className={`tab-btn ${activeTab === 'activity' ? 'active' : ''}`}
+          onClick={() => setActiveTab('activity')}
+        >
+          👁️ Activity ({visitsReceived.length})
+        </button>
       </div>
 
       {/* Content */}
@@ -281,89 +346,123 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
               {activeTab === 'matches' && '💔'}
               {activeTab === 'likes-given' && '💌'}
               {activeTab === 'likes-received' && '👀'}
+              {activeTab === 'activity' && '👁️'}
             </div>
             <h4>
               {activeTab === 'matches' && 'No matches yet'}
               {activeTab === 'likes-given' && 'No likes sent yet'}
               {activeTab === 'likes-received' && 'No likes received yet'}
+              {activeTab === 'activity' && 'No profile visits yet'}
             </h4>
             <p>
               {activeTab === 'matches' && 'Keep swiping to find your perfect match!'}
               {activeTab === 'likes-given' && 'Start browsing and like people you find interesting'}
               {activeTab === 'likes-received' && 'Complete your profile to attract more likes'}
+              {activeTab === 'activity' && 'Be more active to get more profile views!'}
             </p>
           </div>
         )}
 
         {!loading && !error && currentData.length > 0 && (
           <div className="matches-grid">
-            {currentData.map((user) => (
-              <div key={user.id} className="match-card">
-                <div className="match-image" onClick={() => handleViewProfile(user)}>
-                  <img
-                    src={getFullImageUrl(user.profile_picture_url)}
-                    alt={user.firstname}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder-image.svg';
-                    }}
-                  />
-                  <div className="match-overlay">
-                    <div className="online-status">
-                      {user.is_online ? '🟢' : '⚫'}
+            {currentData.map((user) => {
+              const isActivityUser = activeTab === 'activity';
+              const activityUser = user as ActivityUser;
+              const matchUser = user as MatchUser;
+
+              return (
+                <div key={user.id} className="match-card">
+                  <div className="match-image" onClick={() => handleViewProfile(isActivityUser ? activityUser : matchUser)}>
+                    <img
+                      src={getFullImageUrl(user.profile_picture_url)}
+                      alt={user.firstname}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder-image.svg';
+                      }}
+                    />
+                    <div className="match-overlay">
+                      <div className="online-status">
+                        {user.is_online ? '🟢' : '⚫'}
+                      </div>
+                      {activeTab === 'matches' && (
+                        <div className="match-badge">💝 MATCH</div>
+                      )}
+                      {activeTab === 'activity' && (
+                        <div className="activity-type">👁️</div>
+                      )}
                     </div>
-                    {activeTab === 'matches' && (
-                      <div className="match-badge">💝 MATCH</div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="match-info">
-                  <div className="match-header">
-                    <h4>{user.firstname}, {user.age}</h4>
-                    <div className="fame-badge">⭐ {user.fame_rating}</div>
                   </div>
 
-                  <div className="match-status">
-                    {user.is_online ? (
-                      <span className="online">🟢 Online now</span>
-                    ) : (
-                      <span className="offline">Last seen {formatDate(user.last_connection)}</span>
+                  <div className="match-info">
+                    <div className="match-header">
+                      <h4>
+                        {user.firstname}, {isActivityUser ? calculateAge(activityUser.birth_date) : matchUser.age}
+                      </h4>
+                      <div className="fame-badge">⭐ {user.fame_rating}</div>
+                    </div>
+
+                    <div className="match-status">
+                      {user.is_online ? (
+                        <span className="online">🟢 Online now</span>
+                      ) : (
+                        <span className="offline">Last seen {formatDate(matchUser.last_connection)}</span>
+                      )}
+                    </div>
+
+                    <div className="match-date">
+                      {activeTab === 'matches' && matchUser.match_date && (
+                        <span>Matched {formatDate(matchUser.match_date)}</span>
+                      )}
+                      {activeTab === 'likes-given' && matchUser.created_at && (
+                        <span>Liked {formatDate(matchUser.created_at)}</span>
+                      )}
+                      {activeTab === 'likes-received' && matchUser.created_at && (
+                        <span>Liked you {formatDate(matchUser.created_at)}</span>
+                      )}
+                      {activeTab === 'activity' && activityUser.visited_at && (
+                        <span>Visited {formatDate(activityUser.visited_at)}</span>
+                      )}
+                    </div>
+
+                    {activeTab === 'activity' && activityUser.visit_count && activityUser.visit_count > 1 && (
+                      <div className="visit-count">
+                        Visited {activityUser.visit_count} times
+                      </div>
                     )}
                   </div>
 
-                  <div className="match-date">
-                    {activeTab === 'matches' && user.match_date && (
-                      <span>Matched {formatDate(user.match_date)}</span>
-                    )}
-                    {activeTab !== 'matches' && user.created_at && (
-                      <span>Liked {formatDate(user.created_at)}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="match-actions">
-                  <button
-                    className="action-btn view-btn"
-                    onClick={() => handleViewProfile(user)}
-                  >
-                    👁️ View Profile
-                  </button>
-                  {activeTab === 'matches' && (
-                    <button className="action-btn message-btn">
-                      💬 Message
-                    </button>
-                  )}
-                  {activeTab === 'likes-given' && (
+                  <div className="match-actions">
                     <button
-                      className="action-btn unlike-btn"
-                      onClick={() => handleUnlike(user)}
+                      className="action-btn view-btn"
+                      onClick={() => handleViewProfile(isActivityUser ? activityUser : matchUser)}
                     >
-                      💔 Unlike
+                      👁️ View Profile
                     </button>
-                  )}
+                    {activeTab === 'matches' && (
+                      <button className="action-btn message-btn">
+                        💬 Message
+                      </button>
+                    )}
+                    {activeTab === 'likes-given' && (
+                      <button
+                        className="action-btn unlike-btn"
+                        onClick={() => handleUnlike(matchUser)}
+                      >
+                        💔 Unlike
+                      </button>
+                    )}
+                    {activeTab === 'activity' && (
+                      <button
+                        className="action-btn like-btn"
+                        onClick={() => handleLikeBack(activityUser)}
+                      >
+                        ❤️ Like Back
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

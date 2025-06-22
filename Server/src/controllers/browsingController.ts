@@ -55,7 +55,25 @@ export const searchUsers = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('User not authenticated', 401);
   }
 
-  // Parse filters from query parameters (same as browse)
+  // Check if it's a name search
+  const searchQuery = req.query.search as string;
+
+  if (searchQuery && searchQuery.trim()) {
+    // Name-based search
+    if (searchQuery.trim().length < 2) {
+      throw new AppError('Search query must be at least 2 characters long', 400);
+    }
+
+    const result = await BrowsingService.searchUsersByName(req.user.id, searchQuery.trim());
+
+    res.status(200).json({
+      status: 'success',
+      data: result,
+    });
+    return;
+  }
+
+  // Fallback to advanced search with filters (legacy behavior)
   const filters: BrowseFilters = {};
 
   if (req.query.age_min) {

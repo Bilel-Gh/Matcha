@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import useTheme from '../hooks/useTheme';
 import { FaHeart, FaSearch, FaEye, FaFilter, FaTh, FaLayerGroup, FaSync, FaMapMarkerAlt, FaStar, FaTimes } from 'react-icons/fa';
 import SwipeMode from '../components/SwipeMode';
 import GridMode from '../components/GridMode';
 import MatchesMode from '../components/MatchesMode';
-import AdvancedSearchModal from '../components/AdvancedSearchModal';
+import SearchModal from '../components/AdvancedSearchModal';
+import FilterBar from '../components/FilterBar';
+import MatchesModal from '../components/MatchesModal';
+import ActivityModal from '../components/ActivityModal';
 import './BrowsePage.css';
 
 interface User {
@@ -25,6 +29,7 @@ interface User {
 
 const BrowsePage: React.FC = () => {
   const { token } = useAuth();
+  useTheme(); // Initialize theme hook to ensure theme persistence
 
   // View mode state
   const [viewMode, setViewMode] = useState<'swipe' | 'grid' | 'matches'>('swipe');
@@ -32,14 +37,13 @@ const BrowsePage: React.FC = () => {
   // Modal states
   const [showFilters, setShowFilters] = useState(false);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
-  const [showMatches, setShowMatches] = useState(false);
-  const [showActivity, setShowActivity] = useState(false);
 
   // Data states
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [matchCount, setMatchCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [appliedFilters, setAppliedFilters] = useState<any>({});
 
   // Global message state
   const [globalMessage, setGlobalMessage] = useState<string | null>(null);
@@ -160,6 +164,13 @@ const BrowsePage: React.FC = () => {
     }
   };
 
+  // Handle filter application
+  const handleFiltersApply = (filteredUsers: User[], filterParams: any) => {
+    setUsers(filteredUsers);
+    setAppliedFilters(filterParams);
+    showGlobalMessage(`Found ${filteredUsers.length} users matching your filters`, 'success');
+  };
+
   return (
     <div className="browse-page">
       {/* Main Container - Structure identique à ProfilePage */}
@@ -213,20 +224,6 @@ const BrowsePage: React.FC = () => {
                   Search
                 </button>
                 <button
-                  className="action-btn matches-btn"
-                  onClick={() => setShowMatches(true)}
-                >
-                  <FaHeart style={{ marginRight: '8px' }} />
-                  Matches ({matchCount})
-                </button>
-                <button
-                  className="action-btn activity-btn"
-                  onClick={() => setShowActivity(true)}
-                >
-                  <FaEye style={{ marginRight: '8px' }} />
-                  Activity
-                </button>
-                <button
                   className="action-btn refresh-btn"
                   onClick={handleRefresh}
                   disabled={loading}
@@ -235,27 +232,45 @@ const BrowsePage: React.FC = () => {
                   Refresh
                 </button>
               </div>
+
+              {/* Filter Summary */}
+              {Object.keys(appliedFilters).length > 0 && (
+                <div className="filter-summary">
+                  <span>Active filters:</span>
+                  {appliedFilters.age_min && (
+                    <span className="filter-chip">Age: {appliedFilters.age_min}+</span>
+                  )}
+                  {appliedFilters.age_max && (
+                    <span className="filter-chip">Age: -{appliedFilters.age_max}</span>
+                  )}
+                  {appliedFilters.max_distance && appliedFilters.max_distance !== 50 && (
+                    <span className="filter-chip">Distance: {appliedFilters.max_distance}km</span>
+                  )}
+                  {appliedFilters.fame_min && (
+                    <span className="filter-chip">Fame: {appliedFilters.fame_min}+</span>
+                  )}
+                  {appliedFilters.fame_max && (
+                    <span className="filter-chip">Fame: -{appliedFilters.fame_max}</span>
+                  )}
+                  {appliedFilters.min_common_interests && (
+                    <span className="filter-chip">{appliedFilters.min_common_interests}+ common interests</span>
+                  )}
+                  {appliedFilters.interests && appliedFilters.interests.length > 0 && (
+                    <span className="filter-chip">{appliedFilters.interests.length} interest{appliedFilters.interests.length !== 1 ? 's' : ''}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Filter Bar (collapsible) */}
-        {showFilters && (
-          <div className="filter-bar">
-            <div className="filter-content">
-              <h3>Filter Options</h3>
-              <p>Basic filters will be implemented in next prompt</p>
-              <div className="filter-actions">
-                <button className="btn btn-secondary" onClick={() => setShowFilters(false)}>
-                  Close Filters
-                </button>
-                <button className="btn btn-primary" onClick={handleRefresh}>
-                  Apply Filters
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Filter Bar */}
+        <FilterBar
+          isOpen={showFilters}
+          onClose={() => setShowFilters(false)}
+          onFiltersApply={handleFiltersApply}
+          currentFilters={appliedFilters}
+        />
 
         {/* Main Content */}
         <div className="browse-content">
@@ -309,8 +324,8 @@ const BrowsePage: React.FC = () => {
         </div>
       )}
 
-      {/* Advanced Search Modal */}
-      <AdvancedSearchModal
+      {/* Search Modal */}
+      <SearchModal
         isOpen={showAdvancedSearch}
         onClose={() => setShowAdvancedSearch(false)}
         onSearchResults={(results) => {
@@ -319,59 +334,6 @@ const BrowsePage: React.FC = () => {
           setViewMode('grid');
         }}
       />
-
-      {showMatches && (
-        <div className="modal-overlay" onClick={() => setShowMatches(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>
-                <FaHeart style={{ marginRight: '8px' }} />
-                Your Matches ({matchCount})
-              </h3>
-              <button className="modal-close" onClick={() => setShowMatches(false)}>
-                <FaTimes />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>View and manage your mutual matches</p>
-              <p>Start conversations with people who liked you back!</p>
-              <p className="coming-soon">Matches list implementation coming in next prompt</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowMatches(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showActivity && (
-        <div className="modal-overlay" onClick={() => setShowActivity(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>
-                <FaEye style={{ marginRight: '8px' }} />
-                Your Activity
-              </h3>
-              <button className="modal-close" onClick={() => setShowActivity(false)}>
-                <FaTimes />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p>Track your activity:</p>
-              <ul>
-                <li>Who visited your profile</li>
-                <li>Who liked you</li>
-                <li>Your likes and visits</li>
-                <li>Recent activity timeline</li>
-              </ul>
-              <p className="coming-soon">Activity tracking implementation coming in next prompt</p>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowActivity(false)}>Close</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

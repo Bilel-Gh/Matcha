@@ -110,6 +110,16 @@ BEGIN
         INSERT INTO user_interests (user_id, interest_id)
         SELECT 9, i.id FROM interests i WHERE i.tag IN ('wine', 'cooking', 'books');
 
+        -- LIKES VERS ADMIN pour tester les matches avec les nouveaux utilisateurs
+        -- Pierre (Paris) like admin
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (4, 1, NOW() - INTERVAL '3 hours');
+
+        -- Sophie (Marseille) like admin
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (7, 1, NOW() - INTERVAL '1 hour');
+
+        -- Camille (Bordeaux) like admin
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (9, 1, NOW() - INTERVAL '30 minutes');
+
         -- Update sequence
         PERFORM setval('users_id_seq', (SELECT MAX(id) FROM users));
 

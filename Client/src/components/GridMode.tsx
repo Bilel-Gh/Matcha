@@ -146,27 +146,9 @@ const GridUserCard: React.FC<GridUserCardProps> = ({ user, onUserUpdate, onShowM
     }
   };
 
-  const handleViewProfile = async () => {
-    if (!token) return;
-
-    try {
-      // Record visit
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/visit/${user.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      // TODO: Open profile modal in future iteration
-      console.log('Viewing profile of', user.firstname);
-      onShowMessage(`👁️ Viewing ${user.firstname}'s profile (visit recorded)`, 'success');
-    } catch (error) {
-      console.error('Failed to record visit:', error);
-      // Still show profile even if visit recording fails
-      onShowMessage(`👁️ Viewing ${user.firstname}'s profile`, 'success');
-    }
+  const handleViewProfile = () => {
+    // Navigate to user profile page - visit will be recorded there
+    window.location.href = `/user/${user.id}`;
   };
 
   const handleBlock = async (reason?: string) => {

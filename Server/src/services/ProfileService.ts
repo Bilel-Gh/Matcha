@@ -202,4 +202,89 @@ export class ProfileService {
     // Update password
     await UserRepository.updatePassword(userId, hashedNewPassword);
   }
+
+  static async getUserProfile(viewerId: number, targetUserId: number): Promise<any> {
+    // Check if target user exists
+    const targetUser = await UserRepository.findById(targetUserId);
+    if (!targetUser) {
+      throw new AppError('User not found', 404);
+    }
+
+    // Check if viewer has blocked target user or vice versa
+    const isBlocked = await UserRepository.isBlocked(viewerId, targetUserId);
+    if (isBlocked) {
+      throw new AppError('User not accessible', 403);
+    }
+
+    // Get user photos
+    const photos = await PhotoRepository.findByUserId(targetUserId);
+
+    // Get user interests
+    const interests = await UserRepository.getUserInterests(targetUserId);
+
+    // Calculate distance between users
+    const viewer = await UserRepository.findById(viewerId);
+    let distance = 0;
+    if (viewer && viewer.latitude && viewer.longitude && targetUser.latitude && targetUser.longitude) {
+      distance = this.calculateDistance(
+        viewer.latitude,
+        viewer.longitude,
+        targetUser.latitude,
+        targetUser.longitude
+      );
+    }
+
+    // Get common interests
+    const commonInterests = await UserRepository.getCommonInterests(viewerId, targetUserId);
+
+    return {
+      id: targetUser.id,
+      username: targetUser.username,
+      firstname: targetUser.firstname,
+      lastname: targetUser.lastname,
+      age: targetUser.birth_date ? this.calculateAge(targetUser.birth_date) : 0,
+      birth_date: targetUser.birth_date ? targetUser.birth_date.toISOString().split('T')[0] : null,
+      email: targetUser.email,
+      gender: targetUser.gender,
+      sexual_preferences: targetUser.sexual_preferences,
+      biography: targetUser.biography,
+      city: targetUser.city,
+      country: targetUser.country,
+      latitude: targetUser.latitude,
+      longitude: targetUser.longitude,
+      profile_picture_url: targetUser.profile_picture_url,
+      fame_rating: targetUser.fame_rating,
+      distance_km: Math.round(distance),
+      common_interests: commonInterests.count,
+      common_interests_names: commonInterests.names,
+      is_online: targetUser.is_online,
+      last_connection: targetUser.last_connection ? targetUser.last_connection.toISOString() : null,
+      photos: photos.map(photo => ({
+        id: photo.id,
+        url: photo.url,
+        is_profile_picture: photo.is_profile_picture
+      })),
+      interests: interests.map(interest => ({
+        id: interest.id,
+        name: interest.name
+      }))
+    };
+  }
+
+  private static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.toRadians(lat2 - lat1);
+    const dLon = this.toRadians(lon2 - lon1);
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private static toRadians(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
 }

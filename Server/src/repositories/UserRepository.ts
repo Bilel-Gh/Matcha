@@ -290,4 +290,42 @@ export class UserRepository {
     const result = await pool.query(query, values);
     return result.rows[0] || null;
   }
+
+  static async isBlocked(userId1: number, userId2: number): Promise<boolean> {
+    const query = `
+      SELECT 1 FROM blocks
+      WHERE (blocker_id = $1 AND blocked_id = $2)
+      OR (blocker_id = $2 AND blocked_id = $1)
+    `;
+    const result = await pool.query(query, [userId1, userId2]);
+    return result.rows.length > 0;
+  }
+
+  static async getUserInterests(userId: number): Promise<Array<{ id: number; name: string }>> {
+    const query = `
+      SELECT i.id, i.name
+      FROM interests i
+      JOIN user_interests ui ON i.id = ui.interest_id
+      WHERE ui.user_id = $1
+      ORDER BY i.name
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+  }
+
+  static async getCommonInterests(userId1: number, userId2: number): Promise<{ count: number; names: string[] }> {
+    const query = `
+      SELECT i.name
+      FROM interests i
+      JOIN user_interests ui1 ON i.id = ui1.interest_id
+      JOIN user_interests ui2 ON i.id = ui2.interest_id
+      WHERE ui1.user_id = $1 AND ui2.user_id = $2
+      ORDER BY i.name
+    `;
+    const result = await pool.query(query, [userId1, userId2]);
+    return {
+      count: result.rows.length,
+      names: result.rows.map(row => row.name)
+    };
+  }
 }

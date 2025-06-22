@@ -118,7 +118,7 @@ export class BrowsingService {
       paramIndex++;
     }
 
-    // Distance filter (applied in HAVING clause)
+    // Distance filter (applied in HAVING clause using alias)
     if (filters.max_distance) {
       havingClause += havingClause ? ` AND distance_km <= $${paramIndex}` : ` HAVING distance_km <= $${paramIndex}`;
       params.push(filters.max_distance);
@@ -127,7 +127,7 @@ export class BrowsingService {
 
     // Common interests filter (applied in HAVING clause)
     if (filters.min_common_interests) {
-      havingClause += havingClause ? ` AND COUNT(DISTINCT common_interests.interest_id) >= $${paramIndex}` : ` HAVING COUNT(DISTINCT common_interests.interest_id) >= $${paramIndex}`;
+      havingClause += havingClause ? ` AND common_interests_count >= $${paramIndex}` : ` HAVING common_interests_count >= $${paramIndex}`;
       params.push(filters.min_common_interests);
       paramIndex++;
     }
@@ -135,7 +135,7 @@ export class BrowsingService {
     return { whereClause, havingClause, joinClause, params, nextParamIndex: paramIndex };
   }
 
-  /**
+    /**
    * Get sort clause with geographic priority (mandatory)
    */
   private static getSortClause(sortBy: string): string {
@@ -143,7 +143,7 @@ export class BrowsingService {
       case 'age':
         return 'age ASC, distance_km ASC'; // Geographic priority maintained
       case 'fame_rating':
-        return 'u.fame_rating DESC, distance_km ASC';
+        return 'fame_rating DESC, distance_km ASC';
       case 'common_interests':
         return 'common_interests_count DESC, distance_km ASC';
       case 'distance':
@@ -172,23 +172,24 @@ export class BrowsingService {
     }
 
     let query = `
-      SELECT DISTINCT u.*,
-             COUNT(DISTINCT common_interests.interest_id) as common_interests_count,
-             ARRAY_AGG(DISTINCT interests.name) FILTER (WHERE interests.name IS NOT NULL) as common_interests_names,
-             ROUND(
-               6371 * acos(
-                 cos(radians($1)) * cos(radians(u.latitude)) *
-                 cos(radians(u.longitude) - radians($2)) +
-                 sin(radians($3)) * sin(radians(u.latitude))
-               )::numeric, 1
-             ) as distance_km,
-             EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.birth_date)) as age
-      FROM users u
-      LEFT JOIN user_interests common_interests ON common_interests.user_id = u.id
-        AND common_interests.interest_id IN (
-          SELECT interest_id FROM user_interests WHERE user_id = $4
-        )
-      LEFT JOIN interests ON interests.id = common_interests.interest_id
+      WITH user_data AS (
+        SELECT u.*,
+               COUNT(DISTINCT common_interests.interest_id) as common_interests_count,
+               ARRAY_AGG(DISTINCT interests.name) FILTER (WHERE interests.name IS NOT NULL) as common_interests_names,
+               ROUND(
+                 6371 * acos(
+                   cos(radians($1)) * cos(radians(u.latitude)) *
+                   cos(radians(u.longitude) - radians($2)) +
+                   sin(radians($3)) * sin(radians(u.latitude))
+                 )::numeric, 1
+               ) as distance_km,
+               EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.birth_date)) as age
+        FROM users u
+        LEFT JOIN user_interests common_interests ON common_interests.user_id = u.id
+          AND common_interests.interest_id IN (
+            SELECT interest_id FROM user_interests WHERE user_id = $4
+          )
+        LEFT JOIN interests ON interests.id = common_interests.interest_id
     `;
 
     // Apply filters (including specific interests join)
@@ -196,20 +197,20 @@ export class BrowsingService {
     query += joinClause;
 
     query += `
-      WHERE u.id != $5
-      AND u.email_verified = true
-      AND u.profile_picture_url IS NOT NULL
-      AND u.latitude IS NOT NULL
-      AND u.longitude IS NOT NULL
-      AND NOT EXISTS (
-        SELECT 1 FROM blocks
-        WHERE (blocker_id = $6 AND blocked_id = u.id)
-        OR (blocker_id = u.id AND blocked_id = $7)
-      )
-      AND NOT EXISTS (
-        SELECT 1 FROM likes
-        WHERE liker_id = $8 AND liked_id = u.id
-      )
+        WHERE u.id != $5
+        AND u.email_verified = true
+        AND u.profile_picture_url IS NOT NULL
+        AND u.latitude IS NOT NULL
+        AND u.longitude IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM blocks
+          WHERE (blocker_id = $6 AND blocked_id = u.id)
+          OR (blocker_id = u.id AND blocked_id = $7)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM likes
+          WHERE liker_id = $8 AND liked_id = u.id
+        )
     `;
 
     // Sexual orientation compatibility (mandatory)
@@ -218,10 +219,14 @@ export class BrowsingService {
     // Apply additional WHERE filters
     query += whereClause;
 
-    query += ` GROUP BY u.id`;
+    query += ` GROUP BY u.id
+      )
+      SELECT * FROM user_data`;
 
-    // Apply HAVING clause if needed
-    query += havingClause;
+    // Apply HAVING clause if needed (now as WHERE clause on the outer query)
+    if (havingClause) {
+      query += havingClause.replace('HAVING', ' WHERE');
+    }
 
     // Geographic priority (mandatory)
     query += ` ORDER BY ${this.getSortClause(sortBy)}`;
@@ -237,6 +242,140 @@ export class BrowsingService {
       userId,
       userId,
       ...params
+    ];
+
+        const result = await pool.query(query, queryParams);
+
+    const users: BrowseUser[] = result.rows.map(row => ({
+      id: row.id,
+      username: row.username,
+      firstname: row.firstname,
+      lastname: row.lastname,
+      age: parseInt(row.age),
+      profile_picture_url: row.profile_picture_url,
+      biography: row.biography,
+      fame_rating: row.fame_rating,
+      distance_km: parseFloat(row.distance_km),
+      common_interests_count: parseInt(row.common_interests_count),
+      common_interests_names: row.common_interests_names || [],
+      is_online: row.is_online,
+      last_connection: row.last_connection?.toISOString(),
+      gender: row.gender,
+      sexual_preferences: row.sexual_preferences,
+      city: row.city,
+      country: row.country
+    }));
+
+    return {
+      users,
+      total: users.length
+    };
+  }
+
+  /**
+   * Search users by name, firstname, or username
+   */
+  static async searchUsersByName(userId: number, searchQuery: string): Promise<BrowseResponse> {
+    // Get current user info for distance calculation and compatibility
+    const userQuery = 'SELECT * FROM users WHERE id = $1';
+    const userResult = await pool.query(userQuery, [userId]);
+
+    if (userResult.rows.length === 0) {
+      throw new AppError('User not found', 404);
+    }
+
+    const currentUser = userResult.rows[0];
+
+    if (!currentUser.latitude || !currentUser.longitude) {
+      throw new AppError('Location required for search', 400);
+    }
+
+    // Prepare search terms for ILIKE matching
+    const searchTerm = `%${searchQuery.toLowerCase()}%`;
+
+    let query = `
+      WITH user_data AS (
+        SELECT u.*,
+               COUNT(DISTINCT common_interests.interest_id) as common_interests_count,
+               ARRAY_AGG(DISTINCT interests.name) FILTER (WHERE interests.name IS NOT NULL) as common_interests_names,
+               ROUND(
+                 6371 * acos(
+                   cos(radians($1)) * cos(radians(u.latitude)) *
+                   cos(radians(u.longitude) - radians($2)) +
+                   sin(radians($3)) * sin(radians(u.latitude))
+                 )::numeric, 1
+               ) as distance_km,
+               EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.birth_date)) as age,
+               -- Calculate relevance score for sorting
+               (
+                 CASE
+                   WHEN LOWER(u.firstname) = LOWER($4) THEN 100
+                   WHEN LOWER(u.lastname) = LOWER($5) THEN 95
+                   WHEN LOWER(u.username) = LOWER($6) THEN 90
+                   WHEN LOWER(u.firstname) LIKE $7 THEN 80
+                   WHEN LOWER(u.lastname) LIKE $8 THEN 75
+                   WHEN LOWER(u.username) LIKE $9 THEN 70
+                   WHEN LOWER(CONCAT(u.firstname, ' ', u.lastname)) LIKE $10 THEN 85
+                   ELSE 50
+                 END
+               ) as relevance_score
+        FROM users u
+        LEFT JOIN user_interests common_interests ON common_interests.user_id = u.id
+          AND common_interests.interest_id IN (
+            SELECT interest_id FROM user_interests WHERE user_id = $11
+          )
+        LEFT JOIN interests ON interests.id = common_interests.interest_id
+        WHERE u.id != $12
+        AND u.email_verified = true
+        AND u.profile_picture_url IS NOT NULL
+        AND u.latitude IS NOT NULL
+        AND u.longitude IS NOT NULL
+        AND (
+          LOWER(u.firstname) LIKE $13
+          OR LOWER(u.lastname) LIKE $14
+          OR LOWER(u.username) LIKE $15
+          OR LOWER(CONCAT(u.firstname, ' ', u.lastname)) LIKE $16
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM blocks
+          WHERE (blocker_id = $17 AND blocked_id = u.id)
+          OR (blocker_id = u.id AND blocked_id = $18)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM likes
+          WHERE liker_id = $19 AND liked_id = u.id
+        )
+    `;
+
+    // Sexual orientation compatibility (mandatory)
+    query += this.getOrientationFilter(currentUser);
+
+    query += ` GROUP BY u.id
+      )
+      SELECT * FROM user_data
+      ORDER BY relevance_score DESC, distance_km ASC
+      LIMIT 50`; // Limit results for performance
+
+    const queryParams = [
+      currentUser.latitude,    // $1
+      currentUser.longitude,   // $2
+      currentUser.latitude,    // $3
+      searchQuery,             // $4 - exact firstname match
+      searchQuery,             // $5 - exact lastname match
+      searchQuery,             // $6 - exact username match
+      searchTerm,              // $7 - firstname like
+      searchTerm,              // $8 - lastname like
+      searchTerm,              // $9 - username like
+      searchTerm,              // $10 - full name like
+      userId,                  // $11 - for common interests
+      userId,                  // $12 - exclude self
+      searchTerm,              // $13 - firstname like (WHERE clause)
+      searchTerm,              // $14 - lastname like (WHERE clause)
+      searchTerm,              // $15 - username like (WHERE clause)
+      searchTerm,              // $16 - full name like (WHERE clause)
+      userId,                  // $17 - blocks check
+      userId,                  // $18 - blocks check
+      userId                   // $19 - likes check
     ];
 
     const result = await pool.query(query, queryParams);

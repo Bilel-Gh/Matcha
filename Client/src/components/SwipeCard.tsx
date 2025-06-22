@@ -293,6 +293,12 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
     return `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${url}`;
   };
 
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Navigate to user profile page - visit will be recorded there
+    window.location.href = `/user/${user.id}`;
+  };
+
   const age = calculateAge(user.birth_date || user.age);
 
   return (
@@ -308,7 +314,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="card-image">
+      <div className="card-image" onClick={handleImageClick}>
         <img
           src={getFullImageUrl(user.profile_picture_url)}
           alt={user.firstname}

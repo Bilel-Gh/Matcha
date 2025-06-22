@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
@@ -8,6 +8,7 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import BrowsePage from './pages/BrowsePage';
+import UserProfilePage from './pages/UserProfilePage';
 import { useAuth } from './contexts/AuthContext';
 import './index.css';
 
@@ -57,12 +58,39 @@ const AppRoutes: React.FC = () => {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/user/:userId"
+          element={
+            <PrivateRoute>
+              <UserProfilePage />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </>
   );
 };
 
 const App: React.FC = () => {
+  // Initialize theme on app startup
+  useEffect(() => {
+    const initializeTheme = () => {
+      const savedTheme = localStorage.getItem('theme');
+      const defaultTheme = 'romantic'; // Default theme
+      const themeToApply = savedTheme || defaultTheme;
+
+      // Apply the theme to the document
+      document.documentElement.setAttribute('data-theme', themeToApply);
+
+      // Save to localStorage if it wasn't already saved
+      if (!savedTheme) {
+        localStorage.setItem('theme', themeToApply);
+      }
+    };
+
+    initializeTheme();
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

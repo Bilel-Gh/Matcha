@@ -201,4 +201,101 @@ router.put('/', validate(profileUpdateSchema), profileController.updateProfile);
  */
 router.put('/password', validate(passwordChangeSchema), profileController.changePassword);
 
+/**
+ * @swagger
+ * /api/profile/user/{userId}:
+ *   get:
+ *     summary: Get another user's profile
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID of the user to view
+ *     responses:
+ *       200:
+ *         description: User profile retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     username:
+ *                       type: string
+ *                     firstname:
+ *                       type: string
+ *                     lastname:
+ *                       type: string
+ *                     age:
+ *                       type: integer
+ *                     gender:
+ *                       type: string
+ *                     sexual_preferences:
+ *                       type: string
+ *                     biography:
+ *                       type: string
+ *                     city:
+ *                       type: string
+ *                     country:
+ *                       type: string
+ *                     profile_picture_url:
+ *                       type: string
+ *                     fame_rating:
+ *                       type: number
+ *                     distance_km:
+ *                       type: number
+ *                     common_interests:
+ *                       type: integer
+ *                     common_interests_names:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     is_online:
+ *                       type: boolean
+ *                     last_connection:
+ *                       type: string
+ *                       format: date-time
+ *                     photos:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           url:
+ *                             type: string
+ *                           is_profile_picture:
+ *                             type: boolean
+ *                     interests:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           name:
+ *                             type: string
+ *       400:
+ *         description: Invalid user ID
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: User not accessible (blocked)
+ *       404:
+ *         description: User not found
+ */
+router.get('/user/:userId', profileController.getUserProfile);
+
 export default router;

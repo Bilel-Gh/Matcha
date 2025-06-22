@@ -209,6 +209,13 @@ BEGIN
         -- Admin like John SEULEMENT (pour permettre de tester le swipe avec Jane disponible)
         INSERT INTO likes (liker_id, liked_id, created_at) VALUES (1, 2, NOW() - INTERVAL '3 hours');
 
+        -- LIKES VERS ADMIN pour tester les matches (certains users ont liké admin123)
+        -- John like admin (permet un match si admin like John en retour)
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (2, 1, NOW() - INTERVAL '1 day');
+
+        -- Jane like admin (permet un match si admin like Jane en retour)
+        INSERT INTO likes (liker_id, liked_id, created_at) VALUES (3, 1, NOW() - INTERVAL '2 hours');
+
         -- Quelques visites de profil
         INSERT INTO visits (visitor_id, visited_id, visit_date) VALUES
             (1, 2, NOW() - INTERVAL '1 hour'),
