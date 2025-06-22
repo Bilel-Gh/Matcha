@@ -23,3 +23,4 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 -- !!!! Exécution des seeds de dev qui crée des utilisateurs de test (à supprimer en prod) !!!!
 \i /docker-entrypoint-initdb.d/seeds/development_seeds.sql
 \i /docker-entrypoint-initdb.d/seeds/browsing_test_seeds.sql
+\i /docker-entrypoint-initdb.d/seeds/chat_test_seeds.sql

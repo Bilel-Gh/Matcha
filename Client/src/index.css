@@ -175,6 +175,16 @@
   --button-primary-hover: var(--interactive-primary-hover);
   --button-primary-text: var(--text-inverse);
 
+  /* Chat-specific variables */
+  --bg-color: var(--bg-primary);
+  --secondary-bg: var(--bg-secondary);
+  --hover-bg: var(--bg-tertiary);
+  --accent-bg: rgba(255, 107, 157, 0.05);
+  --border-color: var(--border-primary);
+  --text-muted: var(--text-disabled);
+  --primary-hover: var(--interactive-primary-hover);
+  --primary-text: var(--button-primary-text);
+
   /* Action Button Gradients */
   --primary-gradient: linear-gradient(135deg, var(--primary-500), var(--primary-600));
   --primary-gradient-hover: linear-gradient(135deg, var(--primary-400), var(--primary-500));
@@ -261,6 +271,16 @@
   --primary-shadow: rgba(38, 198, 218, 0.3);
   --error-shadow: rgba(244, 67, 54, 0.3);
   --warning-shadow: rgba(255, 152, 0, 0.3);
+
+  /* Chat-specific variables */
+  --bg-color: var(--bg-primary);
+  --secondary-bg: var(--bg-secondary);
+  --hover-bg: var(--bg-tertiary);
+  --accent-bg: rgba(38, 198, 218, 0.05);
+  --border-color: var(--border-primary);
+  --text-muted: var(--text-disabled);
+  --primary-hover: var(--interactive-primary-hover);
+  --primary-text: var(--button-primary-text);
 }
 
 /* Theme: Lavender Dreams */
@@ -333,6 +353,16 @@
   --primary-shadow: rgba(156, 39, 176, 0.3);
   --error-shadow: rgba(244, 67, 54, 0.3);
   --warning-shadow: rgba(255, 152, 0, 0.3);
+
+  /* Chat-specific variables */
+  --bg-color: var(--bg-primary);
+  --secondary-bg: var(--bg-secondary);
+  --hover-bg: var(--bg-tertiary);
+  --accent-bg: rgba(156, 39, 176, 0.05);
+  --border-color: var(--border-primary);
+  --text-muted: var(--text-disabled);
+  --primary-hover: var(--interactive-primary-hover);
+  --primary-text: var(--button-primary-text);
 }
 
 /* Theme: Forest Green */
@@ -405,6 +435,16 @@
   --primary-shadow: rgba(76, 175, 80, 0.3);
   --error-shadow: rgba(244, 67, 54, 0.3);
   --warning-shadow: rgba(255, 152, 0, 0.3);
+
+  /* Chat-specific variables */
+  --bg-color: var(--bg-primary);
+  --secondary-bg: var(--bg-secondary);
+  --hover-bg: var(--bg-tertiary);
+  --accent-bg: rgba(76, 175, 80, 0.05);
+  --border-color: var(--border-primary);
+  --text-muted: var(--text-disabled);
+  --primary-hover: var(--interactive-primary-hover);
+  --primary-text: var(--button-primary-text);
 }
 
 /* Theme: Midnight - Mode sombre amélioré */
@@ -560,6 +600,16 @@
   --primary-shadow: rgba(187, 134, 252, 0.3);
   --error-shadow: rgba(239, 68, 68, 0.3);
   --warning-shadow: rgba(245, 158, 11, 0.3);
+
+  /* Chat-specific variables */
+  --bg-color: var(--bg-primary);
+  --secondary-bg: var(--bg-secondary);
+  --hover-bg: var(--bg-tertiary);
+  --accent-bg: rgba(187, 134, 252, 0.05);
+  --border-color: var(--border-primary);
+  --text-muted: var(--text-disabled);
+  --primary-hover: var(--interactive-primary-hover);
+  --primary-text: var(--button-primary-text);
 }
 
 /* Fix pour les cartes de thème actives en mode sombre */

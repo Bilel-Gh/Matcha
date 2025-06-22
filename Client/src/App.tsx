@@ -9,6 +9,7 @@ import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import BrowsePage from './pages/BrowsePage';
 import UserProfilePage from './pages/UserProfilePage';
+import ChatWidget from './components/chat/ChatWidget';
 import { useAuth } from './contexts/AuthContext';
 import './index.css';
 
@@ -67,6 +68,9 @@ const AppRoutes: React.FC = () => {
           }
         />
       </Routes>
+
+      {/* Widget de chat flottant - présent sur toutes les pages sauf auth */}
+      <ChatWidget />
     </>
   );
 };
