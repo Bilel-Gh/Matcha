@@ -18,7 +18,7 @@ const Navbar: React.FC = () => {
     }
   }, [isAuthenticated, token]);
 
-  // Ne pas afficher la navbar sur les pages d'authentification
+  // ✅ NAVIGATION - Ne pas afficher la navbar sur les pages d'authentification
   const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(location.pathname);
   if (isAuthPage) return null;
 
@@ -50,6 +50,7 @@ const Navbar: React.FC = () => {
               <FaSearch style={{ marginRight: '8px' }} />
               Browse
             </Link>
+            {/* ✅ NOTIFICATIONS EN TEMPS RÉEL - Visible depuis toutes les pages */}
             <NotificationDropdown
               onViewProfile={(userId) => navigate(`/user/${userId}`)}
               onOpenChat={(conversationId) => {

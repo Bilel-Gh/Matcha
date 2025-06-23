@@ -2,6 +2,7 @@ import { NotificationRepository } from '../repositories/NotificationRepository';
 import { UserRepository } from '../repositories/UserRepository';
 import { Notification, NotificationSummary, CreateNotificationRequest } from '../types/notifications';
 import { SocketManager } from '../config/socket';
+import { pool } from '../config/database';
 
 export class NotificationService {
   private static socketManager: any;
@@ -49,6 +50,18 @@ export class NotificationService {
 
       // Send real-time notification
       if (this.socketManager) {
+        // ✅ ÉVÉNEMENT SPÉCIALISÉ - Pour les toasts
+        this.socketManager.emitToUser(likedUserId, 'new-like', {
+          fromUser: {
+            id: likerUser.id,
+            username: likerUser.username,
+            firstname: likerUser.firstname,
+            lastname: likerUser.lastname,
+            profile_picture_url: likerUser.profile_picture_url
+          },
+          timestamp: new Date().toISOString()
+        });
+
         this.socketManager.emitToUser(likedUserId, 'new-notification', {
           ...notification,
           data: {
@@ -82,21 +95,20 @@ export class NotificationService {
     userId2: number
   ): Promise<{ notification1: Notification | null; notification2: Notification | null }> {
     try {
+      // Get user info for both users
       const [user1, user2] = await Promise.all([
         UserRepository.findById(userId1),
         UserRepository.findById(userId2)
       ]);
 
-      if (!user1 || !user2) {
-        return { notification1: null, notification2: null };
-      }
+      if (!user1 || !user2) return { notification1: null, notification2: null };
 
       // Create notifications for both users
       const [notification1, notification2] = await Promise.all([
         NotificationRepository.createNotification({
           user_id: userId1,
           type: 'match',
-          content: `🎉 Nouveau match avec ${user2.firstname} !`,
+          content: `🎉 Vous avez matché avec ${user2.firstname}!`,
           data: {
             match_user: {
               id: user2.id,
@@ -110,7 +122,7 @@ export class NotificationService {
         NotificationRepository.createNotification({
           user_id: userId2,
           type: 'match',
-          content: `🎉 Nouveau match avec ${user1.firstname} !`,
+          content: `🎉 Vous avez matché avec ${user1.firstname}!`,
           data: {
             match_user: {
               id: user1.id,
@@ -125,6 +137,29 @@ export class NotificationService {
 
       // Send real-time notifications
       if (this.socketManager) {
+        // ✅ ÉVÉNEMENTS SPÉCIALISÉS - Pour les toasts de match
+        this.socketManager.emitToUser(userId1, 'new-match', {
+          matchedUser: {
+            id: user2.id,
+            username: user2.username,
+            firstname: user2.firstname,
+            lastname: user2.lastname,
+            profile_picture_url: user2.profile_picture_url
+          },
+          timestamp: new Date().toISOString()
+        });
+
+        this.socketManager.emitToUser(userId2, 'new-match', {
+          matchedUser: {
+            id: user1.id,
+            username: user1.username,
+            firstname: user1.firstname,
+            lastname: user1.lastname,
+            profile_picture_url: user1.profile_picture_url
+          },
+          timestamp: new Date().toISOString()
+        });
+
         // Notify user1
         this.socketManager.emitToUser(userId1, 'new-notification', {
           ...notification1,
@@ -186,7 +221,7 @@ export class NotificationService {
         visitedUserId,
         'visit',
         visitorUserId,
-        3600 // 1 hour
+        600 // ✅ 10 minutes au lieu d'1 heure pour faciliter les tests
       );
 
       if (exists) return null;
@@ -212,6 +247,18 @@ export class NotificationService {
 
       // Send real-time notification
       if (this.socketManager) {
+        // ✅ NOTIFICATION EN TEMPS RÉEL - Émettre l'événement profile-visit
+        this.socketManager.emitToUser(visitedUserId, 'profile-visit', {
+          visitor: {
+            id: visitorUser.id,
+            username: visitorUser.username,
+            firstname: visitorUser.firstname,
+            lastname: visitorUser.lastname,
+            profile_picture_url: visitorUser.profile_picture_url
+          },
+          timestamp: new Date().toISOString()
+        });
+
         this.socketManager.emitToUser(visitedUserId, 'new-notification', {
           ...notification,
           data: {
@@ -374,5 +421,82 @@ export class NotificationService {
     }
 
     await NotificationRepository.deleteNotification(notificationId);
+  }
+
+  /**
+   * Create and send an unlike notification
+   */
+  static async createUnlikeNotification(
+    unlikedUserId: number,
+    unlikerId: number,
+    wasMatch: boolean = false
+  ): Promise<Notification | null> {
+    try {
+      // Don't notify if user unlikes themselves
+      if (unlikedUserId === unlikerId) return null;
+
+      // Get unliker user info
+      const unlikerUser = await UserRepository.findById(unlikerId);
+      if (!unlikerUser) return null;
+
+      const content = wasMatch
+        ? `${unlikerUser.firstname} a rompu votre match 💔`
+        : `${unlikerUser.firstname} a retiré son like`;
+
+      const notification = await NotificationRepository.createNotification({
+        user_id: unlikedUserId,
+        type: 'unlike',
+        content: content,
+        data: {
+          from_user: {
+            id: unlikerUser.id,
+            username: unlikerUser.username,
+            firstname: unlikerUser.firstname,
+            lastname: unlikerUser.lastname,
+            profile_picture_url: unlikerUser.profile_picture_url
+          },
+          was_match: wasMatch
+        }
+      });
+
+      // Send real-time notification
+      if (this.socketManager) {
+        // ✅ NOTIFICATION EN TEMPS RÉEL - Émettre l'événement unlike
+        this.socketManager.emitToUser(unlikedUserId, 'unlike', {
+          fromUser: {
+            id: unlikerUser.id,
+            username: unlikerUser.username,
+            firstname: unlikerUser.firstname,
+            lastname: unlikerUser.lastname,
+            profile_picture_url: unlikerUser.profile_picture_url
+          },
+          wasMatch: wasMatch,
+          timestamp: new Date().toISOString()
+        });
+
+        this.socketManager.emitToUser(unlikedUserId, 'new-notification', {
+          ...notification,
+          data: {
+            from_user: {
+              id: unlikerUser.id,
+              username: unlikerUser.username,
+              firstname: unlikerUser.firstname,
+              lastname: unlikerUser.lastname,
+              profile_picture_url: unlikerUser.profile_picture_url
+            },
+            was_match: wasMatch
+          }
+        });
+
+        // Update unread count
+        const unreadCount = await NotificationRepository.getUnreadCount(unlikedUserId);
+        this.socketManager.emitToUser(unlikedUserId, 'unread-count-update', { count: unreadCount });
+      }
+
+      return notification;
+    } catch (error) {
+      console.error('Error creating unlike notification:', error);
+      return null;
+    }
   }
 }

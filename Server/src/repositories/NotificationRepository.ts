@@ -7,22 +7,30 @@ export class NotificationRepository {
    */
   static async createNotification(request: CreateNotificationRequest): Promise<Notification> {
     const query = `
-      INSERT INTO notifications (user_id, type, content, is_read, created_at)
-      VALUES ($1, $2, $3, false, NOW())
+      INSERT INTO notifications (user_id, type, content, data, is_read, created_at)
+      VALUES ($1, $2, $3, $4, false, NOW())
       RETURNING *
     `;
 
     const result = await pool.query(query, [
       request.user_id,
       request.type,
-      request.content
+      request.content,
+      JSON.stringify(request.data || {})
     ]);
 
     const notification = result.rows[0];
 
-    // Add user data if provided
-    if (request.data) {
-      notification.data = request.data;
+    // Parse JSON data if it exists
+    if (notification.data) {
+      try {
+        notification.data = typeof notification.data === 'string'
+          ? JSON.parse(notification.data)
+          : notification.data;
+      } catch (error) {
+        console.error('Failed to parse notification data:', error);
+        notification.data = {};
+      }
     }
 
     return notification;
@@ -69,8 +77,23 @@ export class NotificationRepository {
       pool.query(countQuery, type ? [userId, type] : [userId])
     ]);
 
+    // Parse JSON data for each notification
+    const notifications = notificationsResult.rows.map(notification => {
+      if (notification.data) {
+        try {
+          notification.data = typeof notification.data === 'string'
+            ? JSON.parse(notification.data)
+            : notification.data;
+        } catch (error) {
+          console.error('Failed to parse notification data:', error);
+          notification.data = {};
+        }
+      }
+      return notification;
+    });
+
     return {
-      notifications: notificationsResult.rows,
+      notifications,
       total: parseInt(countResult.rows[0].total),
       unread_count: parseInt(countResult.rows[0].unread_count)
     };
@@ -88,7 +111,20 @@ export class NotificationRepository {
     `;
 
     const result = await pool.query(query, [notificationId, userId]);
-    return result.rows[0] || null;
+    const notification = result.rows[0] || null;
+
+    if (notification && notification.data) {
+      try {
+        notification.data = typeof notification.data === 'string'
+          ? JSON.parse(notification.data)
+          : notification.data;
+      } catch (error) {
+        console.error('Failed to parse notification data:', error);
+        notification.data = {};
+      }
+    }
+
+    return notification;
   }
 
   /**
@@ -144,7 +180,21 @@ export class NotificationRepository {
     `;
 
     const result = await pool.query(query, [userId]);
-    return result.rows;
+
+    // Parse JSON data for each notification
+    return result.rows.map(notification => {
+      if (notification.data) {
+        try {
+          notification.data = typeof notification.data === 'string'
+            ? JSON.parse(notification.data)
+            : notification.data;
+        } catch (error) {
+          console.error('Failed to parse notification data:', error);
+          notification.data = {};
+        }
+      }
+      return notification;
+    });
   }
 
   /**
@@ -165,9 +215,20 @@ export class NotificationRepository {
 
     const params: any[] = [userId, type];
 
-    // For visit notifications, check if same visitor within time window
+    // ✅ CORRECTION - Pour les notifications de visite, vérifier via les données JSON
     if (type === 'visit' && fromUserId) {
-      query += ` AND content ILIKE '%user_id:${fromUserId}%'`;
+      query += ` AND data->'visitor'->>'id' = $3`;
+      params.push(fromUserId.toString());
+    }
+    // Pour les autres types (like, unlike), vérifier via les données JSON
+    else if ((type === 'like' || type === 'unlike') && fromUserId) {
+      query += ` AND data->'from_user'->>'id' = $3`;
+      params.push(fromUserId.toString());
+    }
+    // Pour les notifications de match, vérifier via les données JSON
+    else if (type === 'match' && fromUserId) {
+      query += ` AND data->'match_user'->>'id' = $3`;
+      params.push(fromUserId.toString());
     }
 
     const result = await pool.query(query, params);
@@ -192,6 +253,19 @@ export class NotificationRepository {
 
     const row = result.rows[0];
 
+    // Parse JSON data if it exists
+    let parsedData = {};
+    if (row.data) {
+      try {
+        parsedData = typeof row.data === 'string'
+          ? JSON.parse(row.data)
+          : row.data;
+      } catch (error) {
+        console.error('Failed to parse notification data:', error);
+        parsedData = {};
+      }
+    }
+
     return {
       id: row.id,
       user_id: row.user_id,
@@ -199,7 +273,7 @@ export class NotificationRepository {
       content: row.content,
       is_read: row.is_read,
       created_at: row.created_at.toISOString(),
-      data: null // Pas de données supplémentaires dans cette version
+      data: parsedData
     };
   }
 

@@ -9,7 +9,7 @@ export interface NotificationUser {
 export interface Notification {
   id: number;
   user_id: number;
-  type: 'like' | 'match' | 'visit' | 'message';
+  type: 'like' | 'match' | 'visit' | 'message' | 'unlike';
   content: string;
   is_read: boolean;
   created_at: string;
@@ -19,6 +19,7 @@ export interface Notification {
     visitor?: NotificationUser;
     message_id?: number;
     conversation_id?: string;
+    was_match?: boolean;
   };
 }
 
@@ -32,6 +33,7 @@ export interface NotificationSocketEvents {
   'new-like': (data: { fromUser: NotificationUser; timestamp: string }) => void;
   'new-match': (data: { matchedUser: NotificationUser; timestamp: string }) => void;
   'profile-visit': (data: { visitor: NotificationUser; timestamp: string }) => void;
+  'unlike': (data: { fromUser: NotificationUser; wasMatch: boolean; timestamp: string }) => void;
   'notification-read': (data: { notificationId: number; unreadCount: number }) => void;
   'unread-count-update': (data: { unreadCount: number }) => void;
 }

@@ -30,10 +30,24 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ maxToasts = 5 }) => {
 
   // Expose methods globally for easy access
   React.useEffect(() => {
+    console.log('🎊 ToastContainer setting up listeners');
+
+    // Méthode principale - window.showToast
     (window as any).showToast = addToast;
     (window as any).clearToasts = clearAllToasts;
 
+    // Aussi écouter les événements personnalisés pour compatibilité
+    const handleShowToast = (event: CustomEvent) => {
+      console.log('🎊 ToastContainer received custom event:', event.detail);
+      addToast(event.detail);
+    };
+
+    window.addEventListener('show-toast', handleShowToast as EventListener);
+
+    console.log('🎊 ToastContainer ready - window.showToast available');
+
     return () => {
+      window.removeEventListener('show-toast', handleShowToast as EventListener);
       delete (window as any).showToast;
       delete (window as any).clearToasts;
     };
@@ -60,8 +74,21 @@ export default ToastContainer;
 
 // Helper functions for easier usage
 export const showToast = (toast: Omit<ToastData, 'id'>) => {
+  console.log('🎊 showToast called with:', toast.type, toast.title);
   if ((window as any).showToast) {
+    console.log('🎊 Using window.showToast');
     (window as any).showToast(toast);
+  } else {
+    console.log('🎊 window.showToast not available, using custom event');
+    if (typeof window !== 'undefined') {
+      const event = new CustomEvent('show-toast', {
+        detail: {
+          ...toast,
+          id: `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        }
+      });
+      window.dispatchEvent(event);
+    }
   }
 };
 
@@ -137,5 +164,22 @@ export const showInfoToast = (title: string, message: string) => {
     title,
     message,
     duration: 5000,
+  });
+};
+
+export const showUnlikeToast = (userName: string, wasMatch: boolean, userAvatar?: string, onClick?: () => void) => {
+  const title = wasMatch ? 'Match rompu 💔' : 'Like retiré';
+  const message = wasMatch
+    ? `${userName} a rompu votre match`
+    : `${userName} a retiré son like`;
+
+  showToast({
+    type: 'error',
+    title,
+    message,
+    userAvatar,
+    userName,
+    onClick,
+    duration: 6000,
   });
 };

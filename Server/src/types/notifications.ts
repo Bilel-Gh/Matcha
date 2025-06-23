@@ -1,7 +1,7 @@
 export interface Notification {
   id: number;
   user_id: number;
-  type: 'like' | 'match' | 'visit' | 'message';
+  type: 'like' | 'match' | 'visit' | 'message' | 'unlike';
   content: string;
   is_read: boolean;
   created_at: Date;
@@ -29,6 +29,7 @@ export interface Notification {
     };
     message_id?: number;
     conversation_id?: string;
+    was_match?: boolean;
   };
 }
 
@@ -40,7 +41,7 @@ export interface NotificationSummary {
 
 export interface CreateNotificationRequest {
   user_id: number;
-  type: 'like' | 'match' | 'visit' | 'message';
+  type: 'like' | 'match' | 'visit' | 'message' | 'unlike';
   content: string;
   data?: any;
 }

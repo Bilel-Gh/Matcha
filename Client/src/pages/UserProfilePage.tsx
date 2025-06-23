@@ -63,11 +63,11 @@ const UserProfilePage: React.FC = () => {
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
-    if (userId && token) {
+    if (userId) {
       loadUserProfile();
-      recordVisit();
+      loadLikeStatus();
     }
-  }, [userId, token]);
+  }, [userId]);
 
   const showMessage = (text: string, type: 'success' | 'error') => {
     setMessage({ text, type });
@@ -92,6 +92,9 @@ const UserProfilePage: React.FC = () => {
       const data = await response.json();
       setProfile(data.data);
 
+      // Record the visit (async, don't block loading)
+      recordVisit();
+
       // Load like status
       await loadLikeStatus();
     } catch (error) {
@@ -99,6 +102,25 @@ const UserProfilePage: React.FC = () => {
       showMessage('Failed to load user profile', 'error');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const recordVisit = async () => {
+    if (!token || !userId) return;
+
+    try {
+      console.log('📝 Recording visit to user:', userId);
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/visit/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('✅ Visit recorded successfully');
+    } catch (error) {
+      console.error('❌ Failed to record visit:', error);
+      // Don't show user message for visit errors as it's background operation
     }
   };
 
@@ -118,22 +140,6 @@ const UserProfilePage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to load like status:', error);
-    }
-  };
-
-  const recordVisit = async () => {
-    if (!token || !userId) return;
-
-    try {
-      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/visit/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-    } catch (error) {
-      console.error('Failed to record visit:', error);
     }
   };
 

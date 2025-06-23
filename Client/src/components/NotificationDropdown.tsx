@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaBell } from 'react-icons/fa';
 import { Notification } from '../types/notifications';
 import { useNotifications } from '../hooks/useNotifications';
-import { showLikeToast, showMatchToast, showVisitToast } from './ToastContainer';
+import { showLikeToast, showMatchToast, showVisitToast, showUnlikeToast } from './ToastContainer';
 import './NotificationDropdown.css';
 
 interface NotificationDropdownProps {
@@ -67,6 +67,14 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
           () => navigate(`/user/${data.visitor.id}`)
         );
       },
+      onUnlike: (data) => {
+        showUnlikeToast(
+          data.fromUser.firstname,
+          data.wasMatch,
+          data.fromUser.profile_picture_url,
+          () => navigate(`/user/${data.fromUser.id}`)
+        );
+      },
       onNewMessage: (data) => {
         import('./ToastContainer').then(({ showMessageToast }) => {
           showMessageToast(
@@ -125,6 +133,12 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         }
         break;
 
+      case 'unlike':
+        if (onViewProfile && notification.data?.from_user) {
+          onViewProfile(notification.data.from_user.id);
+        }
+        break;
+
       case 'message':
         if (onOpenChat && notification.data?.conversation_id) {
           onOpenChat(notification.data.conversation_id);
@@ -150,6 +164,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       case 'match': return '🎉';
       case 'visit': return '👀';
       case 'message': return '💬';
+      case 'unlike': return '💔';
       default: return '🔔';
     }
   };
@@ -164,6 +179,8 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         return 'Voir profil';
       case 'message':
         return 'Répondre';
+      case 'unlike':
+        return 'Voir profil';
       default:
         return 'Voir';
     }

@@ -1,5 +1,6 @@
 import pool from '../config/database';
 import { FameRatingService } from './FameRatingService';
+import { NotificationService } from './NotificationService';
 import { AppError } from '../utils/AppError';
 import { UserRepository } from '../repositories/UserRepository';
 
@@ -90,8 +91,6 @@ export class LikeService {
 
     // Create notifications
     try {
-      const { NotificationService } = await import('./NotificationService');
-
       if (isMatch) {
         // Create match notification for both users
         await NotificationService.createMatchNotification(likerId, likedId);
@@ -114,11 +113,21 @@ export class LikeService {
    * Remove a like
    */
   static async removeLike(likerId: number, likedId: number): Promise<void> {
+    // Vérifier d'abord si c'était un match avant de supprimer
+    const wasMatch = await this.checkForMatch(likerId, likedId);
+
     const query = 'DELETE FROM likes WHERE liker_id = $1 AND liked_id = $2';
     const result = await pool.query(query, [likerId, likedId]);
 
     if (result.rowCount === 0) {
       throw new AppError('Like not found', 404);
+    }
+
+    // ✅ NOTIFICATION EN TEMPS RÉEL - Créer notification d'unlike
+    try {
+      await NotificationService.createUnlikeNotification(likedId, likerId, wasMatch);
+    } catch (error) {
+      console.error('Failed to create notification after unlike:', error);
     }
 
     // Auto-update fame rating for the unliked user

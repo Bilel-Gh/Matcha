@@ -133,10 +133,9 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
   // Auto-record visit (but don't let errors block the response)
   try {
     if (req.user.id !== profileId) {
-      const hasRecentlyVisited = await VisitService.hasRecentlyVisited(req.user.id, profileId);
-      if (!hasRecentlyVisited) {
-        await VisitService.recordVisit(req.user.id, profileId);
-      }
+      // ✅ SUPPRIMÉ - Enlever la vérification hasRecentlyVisited pour permettre les notifications
+      // Laisser NotificationService gérer l'anti-spam pour les notifications
+      await VisitService.recordVisit(req.user.id, profileId);
     }
   } catch (error) {
     // Log error but don't fail the request

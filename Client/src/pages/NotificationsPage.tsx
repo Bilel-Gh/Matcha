@@ -57,6 +57,12 @@ const NotificationsPage: React.FC = () => {
         }
         break;
 
+      case 'unlike':
+        if (notification.data?.from_user) {
+          navigate(`/user/${notification.data.from_user.id}`);
+        }
+        break;
+
       case 'message':
         // This would open the chat widget
         console.log('Open chat for message notification');
@@ -75,6 +81,7 @@ const NotificationsPage: React.FC = () => {
       case 'match': return '🎉';
       case 'visit': return '👀';
       case 'message': return '💬';
+      case 'unlike': return '💔';
       default: return '🔔';
     }
   };
@@ -109,6 +116,7 @@ const NotificationsPage: React.FC = () => {
       case 'match': return 'Matches';
       case 'visit': return 'Visites';
       case 'message': return 'Messages';
+      case 'unlike': return 'Unlikes';
       default: return 'Tous';
     }
   };
@@ -123,6 +131,8 @@ const NotificationsPage: React.FC = () => {
         return 'Voir profil';
       case 'message':
         return 'Répondre';
+      case 'unlike':
+        return 'Voir profil';
       default:
         return 'Voir';
     }
@@ -160,7 +170,7 @@ const NotificationsPage: React.FC = () => {
           >
             Toutes
           </button>
-          {['like', 'match', 'visit', 'message'].map(type => (
+          {['like', 'match', 'visit', 'message', 'unlike'].map(type => (
             <button
               key={type}
               className={`filter-btn ${selectedType === type ? 'active' : ''}`}

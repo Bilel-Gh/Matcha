@@ -11,20 +11,22 @@ export const useNotifications = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const callbacksRef = useRef({
-    onNewLike: (data: { fromUser: any; timestamp: string }) => {},
-    onNewMatch: (data: { matchedUser: any; timestamp: string }) => {},
-    onProfileVisit: (data: { visitor: any; timestamp: string }) => {},
-    onNewMessage: (data: { sender: any; messageId: number; content: string }) => {},
-  });
+  const callbacksRef = useRef<{
+    onNewLike?: (data: { fromUser: any; timestamp: string }) => void;
+    onNewMatch?: (data: { matchedUser: any; timestamp: string }) => void;
+    onProfileVisit?: (data: { visitor: any; timestamp: string }) => void;
+    onNewMessage?: (data: { sender: any; messageId: number; content: string }) => void;
+    onUnlike?: (data: { fromUser: any; timestamp: string; wasMatch: boolean }) => void;
+  }>({});
 
-  // Load notifications function
+  // Load notifications from API
   const loadNotifications = useCallback(async (page: number = 1, type?: string) => {
     if (!token) return;
 
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
       const data = await NotificationService.getNotifications(token, page, 20, type);
 
       if (page === 1) {
@@ -34,107 +36,82 @@ export const useNotifications = () => {
       }
 
       setUnreadCount(data.unread_count);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load notifications:', err);
-      setError('Failed to load notifications');
+      setError(err.message || 'Failed to load notifications');
     } finally {
       setLoading(false);
     }
   }, [token]);
 
-  // Gestionnaires pour les événements de notifications via le socket de chat
-  const handleNewLike = useCallback((data: any) => {
-    console.log('New like notification received:', data);
+  // ✅ NOTIFICATION EN TEMPS RÉEL - Handler ultra-rapide pour tous les types
+  const handleNewNotification = useCallback((notification: Notification) => {
+    // AJOUT IMMÉDIAT - performance optimisée
+    setNotifications(prev => {
+      // Éviter les doublons de manière optimisée
+      const exists = prev.some(n => n.id === notification.id);
+      if (exists) return prev;
 
-    // Créer une notification temporaire pour l'affichage immédiat
-    const newNotification: Notification = {
-      id: Date.now(), // ID temporaire
-      user_id: user?.id || 0,
-      type: 'like',
-      content: `${data.fromUser.firstname} vous a liké`,
-      is_read: false,
-      created_at: new Date().toISOString(),
-      data: {
-        from_user: data.fromUser
-      }
+      return [notification, ...prev];
+    });
+
+    // MISE À JOUR IMMÉDIATE du compteur si non lu
+    if (!notification.is_read) {
+      setUnreadCount(prev => prev + 1);
+    }
+
+    // Déclencher les callbacks pour les toasts - performance optimisée
+    const callbackData = {
+      timestamp: notification.created_at
     };
 
-    // Ajouter immédiatement à la liste
-    setNotifications(prev => [newNotification, ...prev]);
-    setUnreadCount(prev => prev + 1);
+    switch (notification.type) {
+      case 'like':
+        if (callbacksRef.current.onNewLike && notification.data?.from_user) {
+          callbacksRef.current.onNewLike({
+            fromUser: notification.data.from_user,
+            ...callbackData
+          });
+        }
+        break;
 
-    // Déclencher le callback pour les toasts
-    callbacksRef.current.onNewLike(data);
+      case 'match':
+        if (callbacksRef.current.onNewMatch && notification.data?.match_user) {
+          callbacksRef.current.onNewMatch({
+            matchedUser: notification.data.match_user,
+            ...callbackData
+          });
+        }
+        break;
 
-    // Rafraîchir pour avoir la vraie notification depuis le serveur
-    setTimeout(() => loadNotifications(), 2000);
-  }, [user?.id, loadNotifications]);
+      case 'visit':
+        if (callbacksRef.current.onProfileVisit && notification.data?.visitor) {
+          callbacksRef.current.onProfileVisit({
+            visitor: notification.data.visitor,
+            ...callbackData
+          });
+        }
+        break;
 
-  const handleNewMatch = useCallback((data: any) => {
-    console.log('New match notification received:', data);
+      case 'unlike':
+        if (callbacksRef.current.onUnlike && notification.data?.from_user) {
+          callbacksRef.current.onUnlike({
+            fromUser: notification.data.from_user,
+            wasMatch: notification.data.was_match || false,
+            ...callbackData
+          });
+        }
+        break;
+    }
+  }, []);
 
-    // Créer une notification temporaire pour l'affichage immédiat
-    const newNotification: Notification = {
-      id: Date.now(), // ID temporaire
-      user_id: user?.id || 0,
-      type: 'match',
-      content: `🎉 Nouveau match avec ${data.matchedUser.firstname}!`,
-      is_read: false,
-      created_at: new Date().toISOString(),
-      data: {
-        match_user: data.matchedUser
-      }
-    };
-
-    // Ajouter immédiatement à la liste
-    setNotifications(prev => [newNotification, ...prev]);
-    setUnreadCount(prev => prev + 1);
-
-    // Déclencher le callback pour les toasts
-    callbacksRef.current.onNewMatch(data);
-
-    // Rafraîchir pour avoir la vraie notification depuis le serveur
-    setTimeout(() => loadNotifications(), 2000);
-  }, [user?.id, loadNotifications]);
-
-  const handleProfileVisit = useCallback((data: any) => {
-    console.log('Profile visit notification received:', data);
-
-    // Créer une notification temporaire pour l'affichage immédiat
-    const newNotification: Notification = {
-      id: Date.now(), // ID temporaire
-      user_id: user?.id || 0,
-      type: 'visit',
-      content: `${data.visitor.firstname} a visité votre profil`,
-      is_read: false,
-      created_at: new Date().toISOString(),
-      data: {
-        visitor: data.visitor
-      }
-    };
-
-    // Ajouter immédiatement à la liste
-    setNotifications(prev => [newNotification, ...prev]);
-    setUnreadCount(prev => prev + 1);
-
-    // Déclencher le callback pour les toasts
-    callbacksRef.current.onProfileVisit(data);
-
-    // Rafraîchir pour avoir la vraie notification depuis le serveur
-    setTimeout(() => loadNotifications(), 2000);
-  }, [user?.id, loadNotifications]);
-
+  // ✅ NOTIFICATION EN TEMPS RÉEL - Handler pour les messages
   const handleNewMessage = useCallback((data: any) => {
-    console.log('New message notification received:', data);
-
-    // Vérifier si la conversation est ouverte avant d'afficher le toast ET d'ajouter la notification
-    const isConversationOpen = (window as any).isConversationOpen?.(data.sender.id);
-
-    console.log('Is conversation open with user', data.sender.id, ':', isConversationOpen);
+    // Vérifier si une conversation est ouverte avec cet utilisateur
+    const isConversationOpen = (window as any).isConversationOpen?.(data.sender.id) || false;
 
     // Si la conversation est ouverte, ne pas créer de notification du tout
     if (isConversationOpen) {
-      console.log('Conversation is open, skipping notification creation');
       return;
     }
 
@@ -166,43 +143,83 @@ export const useNotifications = () => {
     setTimeout(() => loadNotifications(), 2000);
   }, [user?.id, loadNotifications]);
 
-  // Utiliser le socket de chat pour écouter les notifications
+  // ✅ NOTIFICATION EN TEMPS RÉEL - Configuration des événements socket
   const { socket } = useChatSocket(token, {
-    onNewMessage: () => {}, // Géré par ChatWidget
-    onMessageRead: () => {}, // Géré par ChatWidget
-    onUserOnline: () => {}, // Géré par ChatWidget
-    onUserOffline: () => {}, // Géré par ChatWidget
+    onNewMessage: handleNewMessage
   });
 
-  // Écouter les événements de notifications sur le socket de chat
   useEffect(() => {
     if (!socket || !user) return;
 
-    const handleNewLikeEvent = (data: any) => handleNewLike(data);
-    const handleNewMatchEvent = (data: any) => handleNewMatch(data);
-    const handleProfileVisitEvent = (data: any) => handleProfileVisit(data);
-    const handleNewMessageEvent = (data: any) => handleNewMessage(data);
-    const handleUnreadCountUpdate = (data: { unreadCount: number }) => {
-      console.log('Unread count update:', data);
-      setUnreadCount(data.unreadCount);
+    // ✅ ÉVÉNEMENTS EN TEMPS RÉEL - Configuration des listeners
+    const handleNewNotificationEvent = (notification: Notification) => {
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
     };
 
-    // Ajouter les listeners
+    const handleUnreadCountUpdate = (data: { count: number }) => {
+      setUnreadCount(data.count);
+    };
+
+    // ✅ NOUVEAU - Gestionnaire pour les événements de visite de profil
+    const handleProfileVisitEvent = (data: any) => {
+      // Appeler le callback si défini
+      if (callbacksRef.current.onProfileVisit) {
+        callbacksRef.current.onProfileVisit({
+          visitor: data.visitor,
+          timestamp: data.timestamp
+        });
+      }
+    };
+
+    // ✅ NOUVEAU - Gestionnaire pour les événements d'unlike
+    const handleUnlikeEvent = (data: any) => {
+      // Appeler le callback si défini
+      if (callbacksRef.current.onUnlike) {
+        callbacksRef.current.onUnlike({
+          fromUser: data.fromUser,
+          wasMatch: data.wasMatch,
+          timestamp: data.timestamp
+        });
+      }
+    };
+
+    const handleNewLikeEvent = (data: any) => {
+      if (callbacksRef.current.onNewLike) {
+        callbacksRef.current.onNewLike({
+          fromUser: data.fromUser,
+          timestamp: data.timestamp
+        });
+      }
+    };
+
+    const handleNewMatchEvent = (data: any) => {
+      if (callbacksRef.current.onNewMatch) {
+        callbacksRef.current.onNewMatch({
+          matchedUser: data.matchedUser,
+          timestamp: data.timestamp
+        });
+      }
+    };
+
+    // Écouter les événements
+    socket.on('new-notification', handleNewNotificationEvent);
+    socket.on('unread-count-update', handleUnreadCountUpdate);
     socket.on('new-like', handleNewLikeEvent);
     socket.on('new-match', handleNewMatchEvent);
     socket.on('profile-visit', handleProfileVisitEvent);
-    socket.on('new-message-notification', handleNewMessageEvent);
-    socket.on('unread-count-update', handleUnreadCountUpdate);
+    socket.on('unlike', handleUnlikeEvent);
 
+    // Cleanup
     return () => {
-      // Retirer les listeners
+      socket.off('new-notification', handleNewNotificationEvent);
+      socket.off('unread-count-update', handleUnreadCountUpdate);
       socket.off('new-like', handleNewLikeEvent);
       socket.off('new-match', handleNewMatchEvent);
       socket.off('profile-visit', handleProfileVisitEvent);
-      socket.off('new-message-notification', handleNewMessageEvent);
-      socket.off('unread-count-update', handleUnreadCountUpdate);
+      socket.off('unlike', handleUnlikeEvent);
     };
-  }, [socket, user, handleNewLike, handleNewMatch, handleProfileVisit, handleNewMessage]);
+  }, [socket, user, handleNewMessage]);
 
   // Load unread count
   const loadUnreadCount = useCallback(async () => {
@@ -223,7 +240,7 @@ export const useNotifications = () => {
     try {
       await NotificationService.markAsRead(token, notificationId);
 
-      // Update local state
+      // Update local state IMMÉDIATEMENT
       setNotifications(prev =>
         prev.map(notif =>
           notif.id === notificationId
@@ -251,7 +268,7 @@ export const useNotifications = () => {
     try {
       await NotificationService.markAllAsRead(token);
 
-      // Update local state
+      // Update local state IMMÉDIATEMENT
       setNotifications(prev =>
         prev.map(notif => ({ ...notif, is_read: true }))
       );
@@ -268,42 +285,41 @@ export const useNotifications = () => {
     }
   }, [token, socket]);
 
-  // Delete notification (real deletion via API)
+  // Delete notification
   const deleteNotification = useCallback(async (notificationId: number) => {
     if (!token) return;
 
     try {
       await NotificationService.deleteNotification(token, notificationId);
 
-      // Update local state after successful deletion
+      // Update local state IMMÉDIATEMENT
       setNotifications(prev => {
         const notificationToDelete = prev.find(notif => notif.id === notificationId);
         if (notificationToDelete && !notificationToDelete.is_read) {
-          // Update unread count if the notification was unread
           setUnreadCount(prevCount => Math.max(0, prevCount - 1));
         }
         return prev.filter(notif => notif.id !== notificationId);
       });
-
-      console.log('Notification deleted successfully:', notificationId);
     } catch (err) {
       console.error('Failed to delete notification:', err);
       setError('Failed to delete notification');
     }
   }, [token]);
 
-  // Set event callbacks
+  // Set event callbacks pour les toasts
   const setEventCallbacks = useCallback((callbacks: {
     onNewLike?: (data: { fromUser: any; timestamp: string }) => void;
     onNewMatch?: (data: { matchedUser: any; timestamp: string }) => void;
     onProfileVisit?: (data: { visitor: any; timestamp: string }) => void;
     onNewMessage?: (data: { sender: any; messageId: number; content: string }) => void;
+    onUnlike?: (data: { fromUser: any; timestamp: string; wasMatch: boolean }) => void;
   }) => {
     callbacksRef.current = {
       onNewLike: callbacks.onNewLike || callbacksRef.current.onNewLike,
       onNewMatch: callbacks.onNewMatch || callbacksRef.current.onNewMatch,
       onProfileVisit: callbacks.onProfileVisit || callbacksRef.current.onProfileVisit,
       onNewMessage: callbacks.onNewMessage || callbacksRef.current.onNewMessage,
+      onUnlike: callbacks.onUnlike || callbacksRef.current.onUnlike,
     };
   }, []);
 
