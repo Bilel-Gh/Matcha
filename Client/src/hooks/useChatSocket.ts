@@ -54,62 +54,56 @@ export const useChatSocket = (
       return;
     }
 
-    console.log('Initializing socket connection...');
-
     const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001', {
       auth: {
         token: token
       },
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'], // WebSocket seulement pour vitesse maximale
       reconnection: true,
       reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 20000
+      reconnectionDelay: 100, // Reconnexion ultra rapide
+      reconnectionDelayMax: 1000,
+      timeout: 5000, // Timeout plus court
+      forceNew: false,
+      upgrade: false, // Pas d'upgrade nécessaire si on force WebSocket
+      rememberUpgrade: false
     });
 
     socketRef.current = socket;
 
     // Gestionnaires de connexion
     socket.on('connect', () => {
-      console.log('Connected to chat server');
       setIsConnected(true);
     });
 
-    socket.on('disconnect', (reason) => {
-      console.log('Disconnected from chat server:', reason);
+    socket.on('disconnect', () => {
       setIsConnected(false);
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
+    socket.on('connect_error', () => {
       setIsConnected(false);
       callbacksRef.current.onError?.('Connection failed');
     });
 
-    // Gestionnaires de messages
+    // Gestionnaires de messages - ULTRA RAPIDES
     socket.on('new-message', (message) => {
-      console.log('New message received:', message);
       callbacksRef.current.onNewMessage?.(message);
     });
 
     socket.on('message-sent', (data) => {
-      console.log('Message sent confirmation:', data);
-      // Optionnel: gérer la confirmation d'envoi
+      // Confirmation d'envoi - traitement minimal
     });
 
     socket.on('message-read-update', (data) => {
-      console.log('Message read update:', data);
       callbacksRef.current.onMessageRead?.(data);
     });
 
     // Gestionnaires de statut utilisateur
     socket.on('user-online', (data) => {
-      console.log('User online:', data);
       callbacksRef.current.onUserOnline?.(data.userId);
     });
 
     socket.on('user-offline', (data) => {
-      console.log('User offline:', data);
       callbacksRef.current.onUserOffline?.(data.userId);
     });
 
@@ -124,24 +118,19 @@ export const useChatSocket = (
 
     // Gestionnaire d'erreurs
     socket.on('error', (error) => {
-      console.error('Socket error:', error);
       callbacksRef.current.onError?.(error.message || 'An error occurred');
     });
 
     return () => {
-      console.log('Cleaning up socket connection...');
       socket.disconnect();
       socketRef.current = null;
       setIsConnected(false);
     };
   }, [token]); // Seulement dépendant du token, pas des callbacks
 
-  // Envoyer un message
+  // Envoyer un message - ULTRA RAPIDE
   const sendMessage = useCallback((receiverId: number, content: string, tempId?: string) => {
-    if (!socketRef.current || !isConnected) {
-      console.error('Socket not connected');
-      return;
-    }
+    if (!socketRef.current || !isConnected) return;
 
     socketRef.current.emit('send-message', {
       receiverId,
@@ -150,32 +139,23 @@ export const useChatSocket = (
     });
   }, [isConnected]);
 
-  // Marquer un message comme lu
+  // Marquer un message comme lu - ULTRA RAPIDE
   const markAsRead = useCallback((messageId: number) => {
-    if (!socketRef.current || !isConnected) {
-      console.error('Socket not connected');
-      return;
-    }
+    if (!socketRef.current || !isConnected) return;
 
     socketRef.current.emit('message-read', { messageId });
   }, [isConnected]);
 
-  // Marquer tous les messages d'un expéditeur comme lus
+  // Marquer tous les messages d'un expéditeur comme lus - ULTRA RAPIDE
   const markAllAsRead = useCallback((senderId: number) => {
-    if (!socketRef.current || !isConnected) {
-      console.error('Socket not connected');
-      return;
-    }
+    if (!socketRef.current || !isConnected) return;
 
     socketRef.current.emit('mark-all-read', { senderId });
   }, [isConnected]);
 
   // Rejoindre une conversation
   const joinConversation = useCallback((userId: number) => {
-    if (!socketRef.current || !isConnected) {
-      console.error('Socket not connected');
-      return;
-    }
+    if (!socketRef.current || !isConnected) return;
 
     const conversationId = `chat-${Math.min(parseInt(token!), userId)}-${Math.max(parseInt(token!), userId)}`;
     socketRef.current.emit('join-conversation', { conversationId });
@@ -183,10 +163,7 @@ export const useChatSocket = (
 
   // Quitter une conversation
   const leaveConversation = useCallback((userId: number) => {
-    if (!socketRef.current || !isConnected) {
-      console.error('Socket not connected');
-      return;
-    }
+    if (!socketRef.current || !isConnected) return;
 
     const conversationId = `chat-${Math.min(parseInt(token!), userId)}-${Math.max(parseInt(token!), userId)}`;
     socketRef.current.emit('leave-conversation', { conversationId });

@@ -9,6 +9,10 @@ const server = http.createServer(app);
 // Initialize Socket.IO
 const socketManager = new SocketManager(server);
 
+// Initialize NotificationService with SocketManager
+import { NotificationService } from './services/NotificationService';
+NotificationService.setSocketManager(socketManager);
+
 const PORT = config.SERVER_PORT;
 
 server.listen(PORT, () => {

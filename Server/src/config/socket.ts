@@ -131,17 +131,56 @@ export class SocketManager {
 
         const conversationId = this.getConversationId(userId, receiverId);
 
-        // Emit to sender (confirmation)
+        // Emit to sender (confirmation ET le message complet pour l'affichage)
         socket.emit('message-sent', {
           message: result.message,
           tempId
         });
+
+        // IMPORTANT: Émettre aussi 'new-message' à l'expéditeur pour qu'il voit son propre message
+        socket.emit('new-message', result.message);
 
         // Emit to receiver if online
         socket.to(conversationId).emit('new-message', result.message);
 
         // Also emit directly to receiver's sockets if they're in a different conversation
         this.emitToUser(receiverId, 'new-message', result.message);
+
+        // Create notification for the receiver only if they don't have the chat open
+        const receiverSockets = this.connectedUsers[receiverId] || [];
+        let hasConversationOpen = false;
+
+        // Check if any of the receiver's sockets are in this conversation room
+        for (const socketId of receiverSockets) {
+          const receiverSocket = this.io.sockets.sockets.get(socketId);
+          if (receiverSocket && receiverSocket.rooms.has(conversationId)) {
+            hasConversationOpen = true;
+            break;
+          }
+        }
+
+        // Only send notification if the conversation is not open
+        if (!hasConversationOpen) {
+          try {
+            const { NotificationService } = await import('../services/NotificationService');
+            await NotificationService.createMessageNotification(
+              receiverId,
+              userId,
+              result.message.id,
+              content
+            );
+
+            // Émettre un événement de notification de message séparé pour les toasts
+            this.emitToUser(receiverId, 'new-message-notification', {
+              sender: result.message.sender,
+              messageId: result.message.id,
+              content: content
+            });
+          } catch (notifError) {
+            console.error('Error creating message notification:', notifError);
+            // Don't fail the message sending if notification fails
+          }
+        }
 
         console.log(`Message sent from ${userId} to ${receiverId}`);
       } catch (error) {
@@ -230,6 +269,27 @@ export class SocketManager {
         console.error('Error handling typing stop:', error);
       }
     });
+
+    // Notification events
+    socket.on('mark-notification-read', async (data: { notificationId: number }) => {
+      try {
+        const { NotificationService } = await import('../services/NotificationService');
+        await NotificationService.markAsRead(data.notificationId, userId);
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+        socket.emit('error', { message: 'Failed to mark notification as read' });
+      }
+    });
+
+    socket.on('mark-all-notifications-read', async () => {
+      try {
+        const { NotificationService } = await import('../services/NotificationService');
+        await NotificationService.markAllAsRead(userId);
+      } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+        socket.emit('error', { message: 'Failed to mark all notifications as read' });
+      }
+    });
   }
 
   /**
@@ -244,7 +304,7 @@ export class SocketManager {
   /**
    * Emit event to all sockets of a specific user
    */
-  private emitToUser(userId: number, event: string, data: any) {
+  public emitToUser(userId: number, event: string, data: any) {
     const userSockets = this.connectedUsers[userId];
     if (userSockets) {
       userSockets.forEach(socketId => {

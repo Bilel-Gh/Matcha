@@ -88,6 +88,21 @@ export class LikeService {
       console.error('Failed to update fame rating after like:', error);
     }
 
+    // Create notifications
+    try {
+      const { NotificationService } = await import('./NotificationService');
+
+      if (isMatch) {
+        // Create match notification for both users
+        await NotificationService.createMatchNotification(likerId, likedId);
+      } else {
+        // Create like notification for the liked user
+        await NotificationService.createLikeNotification(likedId, likerId);
+      }
+    } catch (error) {
+      console.error('Failed to create notification after like:', error);
+    }
+
     return {
       success: true,
       match: isMatch,

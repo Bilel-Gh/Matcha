@@ -13,6 +13,7 @@ import fameRatingRoutes from './routes/fameRating';
 import browsingRoutes from './routes/browsing';
 import interactionRoutes from './routes/interactions';
 import chatRoutes from './routes/chat';
+import notificationRoutes from './routes/notifications';
 import { protect } from './middlewares/auth';
 import { errorHandler } from './middlewares/errorHandler';
 import { swaggerOptions } from './config/swagger';
@@ -60,6 +61,7 @@ app.use('/api/browse', browsingRoutes);
 app.use('/api/search', browsingRoutes);
 app.use('/api/interactions', interactionRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Protected test route
 app.get('/api/protected', protect, (req, res) => {

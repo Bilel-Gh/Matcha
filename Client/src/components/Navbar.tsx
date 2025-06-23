@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { FaSignOutAlt, FaSearch } from 'react-icons/fa';
 import UserIcon from './UserIcon';
 import ThemeSelector from './ThemeSelector';
+import NotificationDropdown from './NotificationDropdown';
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout, refreshUser, token } = useAuth();
@@ -49,6 +50,13 @@ const Navbar: React.FC = () => {
               <FaSearch style={{ marginRight: '8px' }} />
               Browse
             </Link>
+            <NotificationDropdown
+              onViewProfile={(userId) => navigate(`/user/${userId}`)}
+              onOpenChat={(conversationId) => {
+                // This will be handled by the ChatWidget component
+                console.log('Open chat for conversation:', conversationId);
+              }}
+            />
             <Link to="/profile" className="nav-username">
               <UserIcon
                 profilePictureUrl={profilePictureUrl}

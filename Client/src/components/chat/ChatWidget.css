@@ -2,11 +2,7 @@
 
 /* Container pour les onglets de chat */
 .chat-tabs-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  pointer-events: none;
+  position: relative;
 }
 
 .chat-tabs-container > * {
@@ -376,21 +372,22 @@
 /* Onglets de chat */
 .chat-tab {
   position: fixed;
+  bottom: 20px;
   width: 300px;
+  height: 400px;
   background: var(--glass-bg);
-  backdrop-filter: var(--glass-backdrop);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  box-shadow: var(--shadow-lg);
-  transition: all 0.3s ease;
-  max-height: 400px;
+  border-radius: 1rem 1rem 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition: right 0.3s ease, height 0.3s ease;
   display: flex;
   flex-direction: column;
 }
 
 .chat-tab.minimized {
-  max-height: 50px;
+  height: 50px;
 }
 
 .chat-tab-header {
@@ -523,6 +520,7 @@
 .message {
   display: flex;
   flex-direction: column;
+  transition: opacity 0.2s ease;
 }
 
 .message.my-message {
@@ -547,6 +545,9 @@
   font-size: 14px;
   line-height: 1.4;
   word-wrap: break-word;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .my-message .message-bubble {
@@ -618,6 +619,35 @@
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+.sending-indicator {
+  font-size: 12px;
+  opacity: 0.7;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 1rem;
+}
+
+.loading-messages .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-color);
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-messages p {
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 /* Responsive */

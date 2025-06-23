@@ -35,3 +35,6 @@ export const protect = asyncHandler(async (req: Request, res: Response, next: Ne
   req.user = user;
   next();
 });
+
+// Alias for backward compatibility
+export const authenticateToken = protect;

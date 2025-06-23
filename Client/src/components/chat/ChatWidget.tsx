@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { useChatSocket } from '../../hooks/useChatSocket';
-import ConversationsList from './ConversationsList';
 import ChatTab from './ChatTab';
+import ConversationsList from './ConversationsList';
 import './ChatWidget.css';
 
 interface Conversation {
@@ -40,17 +40,27 @@ const ChatWidget: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const widgetRef = useRef<HTMLDivElement>(null);
 
-  // Charger les conversations
+  // Référence pour stocker les callbacks des nouveaux messages par onglet
+  const messageCallbacksRef = useRef<Map<number, (message: any) => void>>(new Map());
+
+  // Charger les conversations (optimisé)
   const loadConversations = useCallback(async () => {
     if (!token) return;
 
     setLoading(true);
     try {
+      // Timeout plus court pour éviter l'attente
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/chat/conversations`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
@@ -58,7 +68,9 @@ const ChatWidget: React.FC = () => {
         setTotalUnreadCount(data.data.total_unread || 0);
       }
     } catch (error) {
-      console.error('Failed to load conversations:', error);
+      if (error.name !== 'AbortError') {
+        console.error('Failed to load conversations:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -84,12 +96,45 @@ const ChatWidget: React.FC = () => {
     }
   }, [token]);
 
-  // Gestionnaires Socket.IO stables
+  // Gestionnaires Socket.IO ULTRA RAPIDES
   const handleNewMessage = useCallback((message: any) => {
-    // Mettre à jour les conversations
-    loadConversations();
+    // APPEL IMMÉDIAT des callbacks - pas de logs pour plus de vitesse
+    messageCallbacksRef.current.forEach((callback) => {
+      callback(message);
+    });
 
-    // Ouvrir l'onglet si la conversation était ouverte
+    // Mettre à jour les conversations de manière optimisée
+    setConversations(prev => {
+      const updatedConversations = prev.map(conv => {
+        if (conv.user.id === message.sender_id || conv.user.id === message.receiver_id) {
+          return {
+            ...conv,
+            last_message: {
+              id: message.id,
+              content: message.content,
+              sent_at: message.sent_at,
+              sender_id: message.sender_id
+            },
+            unread_count: conv.user.id === message.sender_id ? conv.unread_count + 1 : conv.unread_count
+          };
+        }
+        return conv;
+      });
+
+      // Si la conversation n'existe pas encore, la charger immédiatement
+      const conversationExists = prev.some(conv =>
+        conv.user.id === message.sender_id || conv.user.id === message.receiver_id
+      );
+
+      if (!conversationExists) {
+        // Charger les conversations immédiatement
+        loadConversations();
+      }
+
+      return updatedConversations;
+    });
+
+    // Ouvrir l'onglet si la conversation était ouverte mais minimisée
     setOpenTabs(prev => {
       const existingTab = prev.find(tab => tab.userId === message.sender_id);
       if (existingTab && existingTab.isMinimized) {
@@ -101,15 +146,24 @@ const ChatWidget: React.FC = () => {
       }
       return prev;
     });
-
-    // Son de notification désactivé
   }, [loadConversations]);
 
   const handleMessageRead = useCallback((data: any) => {
-    loadConversations();
-  }, [loadConversations]);
+    console.log('Message read update:', data);
+    // Mettre à jour de manière optimisée sans recharger toutes les conversations
+    setConversations(prev => prev.map(conv => {
+      if (conv.last_message?.id === data.messageId) {
+        return {
+          ...conv,
+          unread_count: Math.max(0, conv.unread_count - 1)
+        };
+      }
+      return conv;
+    }));
+  }, []);
 
   const handleUserOnline = useCallback((userId: number) => {
+    console.log('User online:', userId);
     setConversations(prev => prev.map(conv =>
       conv.user.id === userId
         ? { ...conv, user: { ...conv.user, is_online: true } }
@@ -124,6 +178,7 @@ const ChatWidget: React.FC = () => {
   }, []);
 
   const handleUserOffline = useCallback((userId: number) => {
+    console.log('User offline:', userId);
     setConversations(prev => prev.map(conv =>
       conv.user.id === userId
         ? { ...conv, user: { ...conv.user, is_online: false } }
@@ -149,6 +204,46 @@ const ChatWidget: React.FC = () => {
     onUserOnline: handleUserOnline,
     onUserOffline: handleUserOffline
   });
+
+  // Ouvrir une conversation par ID utilisateur (pour les notifications)
+  const openConversationByUserId = useCallback(async (userId: number) => {
+    if (!token) return;
+
+    try {
+      // Chercher d'abord dans les conversations existantes
+      const existingConversation = conversations.find(conv => conv.user.id === userId);
+
+      if (existingConversation) {
+        openConversation(existingConversation);
+        return;
+      }
+
+      // Si pas trouvé, charger les informations de l'utilisateur
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/chat/partner/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const userInfo = data.data.user;
+
+        // Créer une conversation temporaire
+        const tempConversation: Conversation = {
+          user: userInfo,
+          unread_count: 0
+        };
+
+        openConversation(tempConversation);
+
+        // Recharger les conversations pour mettre à jour
+        loadConversations();
+      }
+    } catch (error) {
+      console.error('Failed to open conversation:', error);
+    }
+  }, [token, conversations, loadConversations]);
 
   // Ouvrir une conversation
   const openConversation = (conversation: Conversation) => {
@@ -188,6 +283,8 @@ const ChatWidget: React.FC = () => {
   // Fermer un onglet
   const closeTab = (userId: number) => {
     setOpenTabs(prev => prev.filter(tab => tab.userId !== userId));
+    // Retirer le callback pour cet onglet
+    messageCallbacksRef.current.delete(userId);
     saveTabsToStorage(openTabs.filter(tab => tab.userId !== userId));
   };
 
@@ -218,31 +315,43 @@ const ChatWidget: React.FC = () => {
     }
   };
 
-  // Son de notification désactivé
-  // const playNotificationSound = () => {
-  //   try {
-  //     const audio = new Audio('/notification.mp3');
-  //     audio.volume = 0.3;
-  //     audio.play().catch(() => {
-  //       // Ignore si le son ne peut pas être joué
-  //     });
-  //   } catch (error) {
-  //     // Ignore les erreurs de son
-  //   }
-  // };
+  // Fonction pour enregistrer un callback de message pour un onglet spécifique
+  const registerMessageCallback = useCallback((userId: number, callback: (message: any) => void) => {
+    messageCallbacksRef.current.set(userId, callback);
+  }, []);
 
-  // Filtrer les conversations
-  const filteredConversations = conversations.filter(conv => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      conv.user.firstname.toLowerCase().includes(query) ||
-      conv.user.lastname.toLowerCase().includes(query) ||
-      conv.user.username.toLowerCase().includes(query)
-    );
-  });
+  // Fonction pour vérifier si une conversation est ouverte
+  const isConversationOpen = useCallback((userId: number) => {
+    const hasOpenTab = openTabs.some(tab => tab.userId === userId && !tab.isMinimized);
+    return hasOpenTab;
+  }, [openTabs]);
 
-  // Gérer les clics à l'extérieur
+  // Exposer la fonction globalement pour useNotifications
+  useEffect(() => {
+    (window as any).isConversationOpen = isConversationOpen;
+    (window as any).openChatWithUser = openConversationByUserId;
+
+    return () => {
+      delete (window as any).isConversationOpen;
+      delete (window as any).openChatWithUser;
+    };
+  }, [isConversationOpen, openConversationByUserId]);
+
+  // Charger les données initiales
+  useEffect(() => {
+    if (token && user) {
+      loadConversations();
+      loadUnreadCount();
+      loadTabsFromStorage();
+    }
+  }, [token, user, loadConversations, loadUnreadCount]);
+
+  // Sauvegarder les onglets quand ils changent
+  useEffect(() => {
+    saveTabsToStorage(openTabs);
+  }, [openTabs]);
+
+  // Fermer le widget quand on clique à l'extérieur
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (widgetRef.current && !widgetRef.current.contains(event.target as Node)) {
@@ -259,55 +368,55 @@ const ChatWidget: React.FC = () => {
     };
   }, [isOpen]);
 
-  // Charger les données initiales
-  useEffect(() => {
-    if (token && user) {
-      loadConversations();
-      loadUnreadCount();
-      loadTabsFromStorage();
-    }
-  }, [token, user, loadConversations, loadUnreadCount]);
+  // PAS DE POLLING - 100% temps réel via Socket.IO
 
-  // Sauvegarder les onglets quand ils changent
-  useEffect(() => {
-    saveTabsToStorage(openTabs);
-  }, [openTabs]);
-
-  // Ne pas afficher sur les pages d'auth
-  const currentPath = window.location.pathname;
-  if (currentPath.includes('/login') ||
-      currentPath.includes('/register') ||
-      currentPath.includes('/forgot-password') ||
-      currentPath.includes('/reset-password') ||
-      currentPath.includes('/verify')) {
-    return null;
-  }
+  // Filtrer les conversations selon la recherche
+  const filteredConversations = conversations.filter(conv =>
+    conv.user.firstname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.user.lastname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.user.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (!token || !user) {
     return null;
   }
 
   return (
-    <>
-      {/* Onglets de conversation */}
-      <div className="chat-tabs-container">
-        {openTabs.map((tab, index) => (
-          <ChatTab
-            key={tab.userId}
-            user={tab.user}
-            isMinimized={tab.isMinimized}
-            position={index}
-            onClose={() => closeTab(tab.userId)}
-            onToggleMinimize={() => toggleMinimizeTab(tab.userId)}
-            token={token}
-            sendMessage={sendMessage}
-            markAsRead={markAsRead}
-          />
-        ))}
-      </div>
+    <div className="chat-tabs-container" ref={widgetRef}>
+      {/* Onglets de chat - position ajustée selon l'état du panel */}
+      {openTabs.map((tab, index) => (
+        <ChatTab
+          key={tab.userId}
+          user={tab.user}
+          isMinimized={tab.isMinimized}
+          position={index}
+          onClose={() => closeTab(tab.userId)}
+          onToggleMinimize={() => toggleMinimizeTab(tab.userId)}
+          token={token!}
+          sendMessage={sendMessage}
+          markAsRead={markAsRead}
+          onNewMessage={(callback) => {
+            // Enregistrement IMMÉDIAT du callback avec la bonne interface
+            registerMessageCallback(tab.userId, callback);
+          }}
+          chatPanelOpen={isOpen}
+        />
+      ))}
 
-      {/* Widget principal */}
+      {/* Widget de chat */}
       <div className="chat-widget" ref={widgetRef}>
+        <button
+          className={`chat-widget-button ${isOpen ? 'open' : ''}`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          💬
+          {totalUnreadCount > 0 && (
+            <span className="chat-widget-badge">
+              {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+            </span>
+          )}
+        </button>
+
         {isOpen && (
           <div className="chat-widget-panel">
             <ConversationsList
@@ -321,28 +430,8 @@ const ChatWidget: React.FC = () => {
             />
           </div>
         )}
-
-        {/* Bouton principal */}
-        <button
-          className={`chat-widget-button ${isOpen ? 'open' : ''}`}
-          onClick={() => setIsOpen(!isOpen)}
-          title="Messages"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
-              fill="currentColor"
-            />
-          </svg>
-
-          {totalUnreadCount > 0 && (
-            <span className="chat-widget-badge">
-              {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
-            </span>
-          )}
-        </button>
       </div>
-    </>
+    </div>
   );
 };
 

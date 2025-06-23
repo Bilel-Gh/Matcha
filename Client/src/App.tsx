@@ -9,7 +9,9 @@ import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import ProfilePage from './pages/ProfilePage';
 import BrowsePage from './pages/BrowsePage';
 import UserProfilePage from './pages/UserProfilePage';
+import NotificationsPage from './pages/NotificationsPage';
 import ChatWidget from './components/chat/ChatWidget';
+import ToastContainer from './components/ToastContainer';
 import { useAuth } from './contexts/AuthContext';
 import './index.css';
 
@@ -67,10 +69,21 @@ const AppRoutes: React.FC = () => {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/notifications"
+          element={
+            <PrivateRoute>
+              <NotificationsPage />
+            </PrivateRoute>
+          }
+        />
       </Routes>
 
       {/* Widget de chat flottant - présent sur toutes les pages sauf auth */}
       <ChatWidget />
+
+      {/* Container de notifications toast */}
+      <ToastContainer />
     </>
   );
 };

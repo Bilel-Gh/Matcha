@@ -52,6 +52,14 @@ export class VisitService {
       console.error('Failed to update fame rating after visit:', error);
     }
 
+    // Create visit notification
+    try {
+      const { NotificationService } = await import('./NotificationService');
+      await NotificationService.createVisitNotification(visitedId, visitorId);
+    } catch (error) {
+      console.error('Failed to create notification after visit:', error);
+    }
+
     return {
       visitor_id: result.rows[0].visitor_id,
       visited_id: result.rows[0].visited_id,
