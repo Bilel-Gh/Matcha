@@ -68,7 +68,6 @@ const ManualLocationEditor: React.FC<ManualLocationEditorProps> = ({
       const address = await locationService.getAddressFromCoords(token, lat, lng);
       setAddressPreview(`${address.city}, ${address.country}`);
     } catch (error) {
-      console.error('Failed to get address preview:', error);
       setAddressPreview('Address lookup failed');
     } finally {
       setIsLoadingAddress(false);
@@ -106,7 +105,6 @@ const ManualLocationEditor: React.FC<ManualLocationEditorProps> = ({
 
       onSave(updatedLocation);
     } catch (error) {
-      console.error('Failed to save manual location:', error);
       onError('Failed to save location. Please try again.');
     } finally {
       setIsSaving(false);

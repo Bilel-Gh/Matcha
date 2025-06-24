@@ -1,25 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-
-interface User {
-  id: number;
-  username: string;
-  firstname: string;
-  lastname: string;
-  age: number;
-  birth_date: string;
-  city: string;
-  country: string;
-  profile_picture_url: string;
-  biography: string;
-  distance_km: number;
-  fame_rating: number;
-  common_interests: number;
-  common_interests_count?: number;
-  common_interests_names?: string[];
-  is_online: boolean;
-  last_connection?: string;
-}
+import { showToastError, showToastSuccess } from '../utils/toastUtils';
+import { User } from '../types/user';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -51,16 +33,15 @@ const SearchResultCard: React.FC<{ user: User; searchQuery: string }> = ({ user,
 
       if (response.ok) {
         if (data.data?.match) {
-          alert(`🎉 It's a match with ${user.firstname}!`);
+          showToastSuccess(`🎉 It's a match with ${user.firstname}!`);
         } else {
-          alert('❤️ Like sent!');
+          showToastSuccess('❤️ Like sent!');
         }
       } else {
-        alert('Failed to like user');
+        showToastError('Failed to like user', data.message);
       }
     } catch (error) {
-      console.error('Failed to like user:', error);
-      alert('Failed to like user');
+      showToastError('Failed to like user', error);
     }
   };
 
@@ -203,13 +184,13 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
       const data = await response.json();
 
       if (response.ok) {
-      setSearchResults(data.data?.users || []);
+        setSearchResults(data.data?.users || []);
       } else {
-        console.error('Search failed:', data.message);
+        showToastError('Search failed', data.message);
         setSearchResults([]);
       }
     } catch (error) {
-      console.error('Search failed:', error);
+      showToastError('Search failed', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);

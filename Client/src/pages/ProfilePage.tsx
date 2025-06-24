@@ -47,7 +47,6 @@ const ProfilePage: React.FC = () => {
       const profileData = await profileService.getProfile(token!);
       setProfile(profileData);
     } catch (error) {
-      console.error('Failed to load profile:', error);
       showErrorMessage('Failed to load profile. Please try again.');
     } finally {
       setIsLoadingProfile(false);
@@ -79,9 +78,8 @@ const ProfilePage: React.FC = () => {
         });
       }
 
-            showSuccessMessage('Profile updated successfully!');
+      showSuccessMessage('Profile updated successfully!');
     } catch (error) {
-      console.error('Failed to update profile:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to update profile. Please try again.';
         showErrorMessage(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
@@ -99,9 +97,8 @@ const ProfilePage: React.FC = () => {
       setErrorMessage('');
 
       await profileService.changePassword(token!, data);
-            showSuccessMessage('Password changed successfully!');
+      showSuccessMessage('Password changed successfully!');
     } catch (error) {
-      console.error('Failed to change password:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to change password. Please try again.';
         showErrorMessage(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);

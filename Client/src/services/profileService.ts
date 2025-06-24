@@ -60,7 +60,6 @@ const profileService = {
       });
       return response.data.data;
     } catch (error) {
-      console.error('Get profile service error:', error);
       throw error;
     }
   },
@@ -91,7 +90,6 @@ const profileService = {
         profile_picture_url: profile.profile_picture_url ? getFullImageUrl(profile.profile_picture_url) : undefined,
       };
     } catch (error) {
-      console.error('Get user info service error:', error);
       throw error;
     }
   },
@@ -106,7 +104,6 @@ const profileService = {
       });
       return response.data.data;
     } catch (error) {
-      console.error('Update profile service error:', error);
       throw error;
     }
   },
@@ -120,7 +117,6 @@ const profileService = {
         },
       });
     } catch (error) {
-      console.error('Change password service error:', error);
       throw error;
     }
   },

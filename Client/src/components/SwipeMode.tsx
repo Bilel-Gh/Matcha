@@ -3,26 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import SwipeCard from './SwipeCard';
 import BlockUserModal from './BlockUserModal';
 import ReportUserModal from './ReportUserModal';
-
-interface User {
-  id: number;
-  username: string;
-  firstname: string;
-  lastname: string;
-  age?: number;
-  birth_date?: string;
-  city: string;
-  country: string;
-  profile_picture_url: string;
-  biography: string;
-  distance_km: number;
-  fame_rating: number;
-  common_interests: number;
-  common_interests_count?: number;
-  common_interests_names?: string[];
-  is_online?: boolean;
-  last_connection?: string;
-}
+import { User } from '../types/user';
 
 interface SwipeModeProps {
   users: User[];
@@ -129,7 +110,6 @@ const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate, onUserRemov
         }
       }
     } catch (error) {
-      console.error('Failed to like user:', error);
       onShowMessage?.('❌ Network error. Please check your connection', 'error');
       setRemovingCardId(null);
     } finally {
@@ -140,7 +120,6 @@ const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate, onUserRemov
   const handleSwipeLeft = (user: User) => {
     if (removingCardId) return;
 
-    console.log('Passed on', user.firstname);
     setRemovingCardId(user.id);
     onShowMessage?.(`👎 You passed on ${user.firstname}`, 'success');
 
@@ -208,7 +187,6 @@ const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate, onUserRemov
         onShowMessage?.(data.message || 'Failed to block user', 'error');
       }
     } catch (error) {
-      console.error('Failed to block user:', error);
       onShowMessage?.('Failed to block user', 'error');
     } finally {
       setIsBlocking(false);
@@ -244,7 +222,6 @@ const SwipeMode: React.FC<SwipeModeProps> = ({ users, onUsersUpdate, onUserRemov
         onShowMessage?.(data.message || 'Failed to report user', 'error');
       }
     } catch (error) {
-      console.error('Failed to report user:', error);
       onShowMessage?.('Failed to report user', 'error');
     } finally {
       setIsReporting(false);

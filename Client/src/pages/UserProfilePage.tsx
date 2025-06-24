@@ -5,6 +5,7 @@ import useTheme from '../hooks/useTheme';
 import { FaArrowLeft, FaHeart, FaBan, FaFlag, FaMapMarkerAlt, FaStar, FaUser, FaGlobe } from 'react-icons/fa';
 import BlockUserModal from '../components/BlockUserModal';
 import ReportUserModal from '../components/ReportUserModal';
+import { showToastError, showToastSuccess } from '../utils/toastUtils';
 import './BrowsePage.css';
 
 interface UserProfile {
@@ -60,7 +61,6 @@ const UserProfilePage: React.FC = () => {
   const [isReporting, setIsReporting] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     if (userId) {
@@ -68,11 +68,6 @@ const UserProfilePage: React.FC = () => {
       loadLikeStatus();
     }
   }, [userId]);
-
-  const showMessage = (text: string, type: 'success' | 'error') => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage(null), 4000);
-  };
 
   const loadUserProfile = async () => {
     if (!token || !userId) return;
@@ -98,8 +93,7 @@ const UserProfilePage: React.FC = () => {
       // Load like status
       await loadLikeStatus();
     } catch (error) {
-      console.error('Failed to load user profile:', error);
-      showMessage('Failed to load user profile', 'error');
+      showToastError('Failed to load user profile', error);
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +103,6 @@ const UserProfilePage: React.FC = () => {
     if (!token || !userId) return;
 
     try {
-      console.log('📝 Recording visit to user:', userId);
       await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/interactions/visit/${userId}`, {
         method: 'POST',
         headers: {
@@ -117,9 +110,7 @@ const UserProfilePage: React.FC = () => {
           'Content-Type': 'application/json'
         }
       });
-      console.log('✅ Visit recorded successfully');
     } catch (error) {
-      console.error('❌ Failed to record visit:', error);
       // Don't show user message for visit errors as it's background operation
     }
   };
@@ -139,7 +130,6 @@ const UserProfilePage: React.FC = () => {
         setLikeStatus(data.data);
       }
     } catch (error) {
-      console.error('Failed to load like status:', error);
     }
   };
 
@@ -160,17 +150,16 @@ const UserProfilePage: React.FC = () => {
 
       if (response.ok) {
         if (data.data?.match) {
-          showMessage(`🎉 It's a match with ${profile?.firstname}!`, 'success');
+          showToastSuccess(`🎉 It's a match with ${profile?.firstname}!`);
         } else {
-          showMessage(`❤️ You liked ${profile?.firstname}!`, 'success');
+          showToastSuccess(`❤️ You liked ${profile?.firstname}!`);
         }
         await loadLikeStatus();
       } else {
-        showMessage(data.message || 'Failed to like user', 'error');
+        showToastError(data.message || 'Failed to like user');
       }
     } catch (error) {
-      console.error('Failed to like user:', error);
-      showMessage('Failed to like user', 'error');
+      showToastError('Failed to like user', error);
     } finally {
       setIsLiking(false);
     }
@@ -189,15 +178,14 @@ const UserProfilePage: React.FC = () => {
       });
 
       if (response.ok) {
-        showMessage(`You unliked ${profile?.firstname}`, 'success');
+        showToastSuccess(`You unliked ${profile?.firstname}`);
         await loadLikeStatus();
       } else {
         const data = await response.json();
-        showMessage(data.message || 'Failed to unlike user', 'error');
+        showToastError(data.message || 'Failed to unlike user');
       }
     } catch (error) {
-      console.error('Failed to unlike user:', error);
-      showMessage('Failed to unlike user', 'error');
+      showToastError('Failed to unlike user', error);
     } finally {
       setIsLiking(false);
     }
@@ -218,15 +206,14 @@ const UserProfilePage: React.FC = () => {
       });
 
       if (response.ok) {
-        showMessage(`${profile?.firstname} has been blocked`, 'success');
+        showToastSuccess(`${profile?.firstname} has been blocked`);
         setTimeout(() => navigate('/browse'), 2000);
       } else {
         const data = await response.json();
-        showMessage(data.message || 'Failed to block user', 'error');
+        showToastError(data.message || 'Failed to block user');
       }
     } catch (error) {
-      console.error('Failed to block user:', error);
-      showMessage('Failed to block user', 'error');
+      showToastError('Failed to block user', error);
     } finally {
       setIsBlocking(false);
       setShowBlockModal(false);
@@ -248,14 +235,13 @@ const UserProfilePage: React.FC = () => {
       });
 
       if (response.ok) {
-        showMessage(`${profile?.firstname} has been reported`, 'success');
+        showToastSuccess(`${profile?.firstname} has been reported`);
       } else {
         const data = await response.json();
-        showMessage(data.message || 'Failed to report user', 'error');
+        showToastError(data.message || 'Failed to report user');
       }
     } catch (error) {
-      console.error('Failed to report user:', error);
-      showMessage('Failed to report user', 'error');
+      showToastError('Failed to report user', error);
     } finally {
       setIsReporting(false);
       setShowReportModal(false);
@@ -288,9 +274,9 @@ const UserProfilePage: React.FC = () => {
     const openChatFunction = (window as { openChatWithUser?: (userId: number) => void }).openChatWithUser;
     if (openChatFunction) {
       openChatFunction(profile.id);
-      showMessage('Chat opened!', 'success');
+      showToastSuccess('Chat opened!');
     } else {
-      showMessage('Chat is not available right now', 'error');
+      showToastError('Chat is not available right now');
     }
   };
 
@@ -336,13 +322,6 @@ const UserProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Message */}
-        {message && (
-          <div className={`global-message ${message.type}-message`}>
-            {message.text}
-          </div>
-        )}
 
         {/* Profile Content */}
         <div className="user-profile-content">

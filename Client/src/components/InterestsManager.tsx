@@ -47,7 +47,6 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
         setUserInterests([]);
       }
     } catch (error) {
-      console.error('Failed to load user interests:', error);
       setUserInterests([]);
       onError?.('Failed to load your interests. Please try again.');
     } finally {
@@ -67,7 +66,6 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
         setPopularInterests([]);
       }
     } catch (error) {
-      console.error('Failed to load popular interests:', error);
       setPopularInterests([]);
       // Don't show error for popular interests as it's not critical
     }
@@ -84,7 +82,6 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
       const results = await interestService.searchInterests(token, query);
       setSearchResults(results);
     } catch (error) {
-      console.error('Failed to search interests:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -119,7 +116,6 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
       onSuccess?.(`Added "${interest.name}" to your interests!`);
       onProfileUpdate?.();
     } catch (error) {
-      console.error('Failed to add interest:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to add interest. Please try again.';
         onError?.(errorMsg);
@@ -157,7 +153,6 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
       onSuccess?.(`Added "${trimmedName}" to your interests!`);
       onProfileUpdate?.();
     } catch (error) {
-      console.error('Failed to create and add interest:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || error.response?.data?.details || 'Failed to add interest. Please try again.';
         onError?.(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
@@ -196,7 +191,6 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
       onSuccess?.(`Removed "${interestName}" from your interests.`);
       onProfileUpdate?.();
     } catch (error) {
-      console.error('Failed to remove interest:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to remove interest. Please try again.';
         onError?.(errorMsg);

@@ -25,7 +25,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
       setIsSettingProfile(true);
       await onSetProfile(photo.id);
     } catch (error) {
-      console.error('Failed to set profile picture:', error);
+      // Error is handled by the parent component (PhotoManagement)
     } finally {
       setIsSettingProfile(false);
     }
@@ -37,7 +37,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
       await onDelete(photo.id);
       setShowDeleteModal(false);
     } catch (error) {
-      console.error('Failed to delete photo:', error);
+      // Error is handled by the parent component (PhotoManagement)
       setIsDeleting(false);
     }
   };

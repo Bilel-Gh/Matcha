@@ -37,7 +37,6 @@ const PhotoManagement: React.FC<PhotoManagementProps> = ({
       const userPhotos = await photoService.getUserPhotos(token);
       setPhotos(userPhotos || []); // Ensure we always have an array
     } catch (error) {
-      console.error('Failed to load photos:', error);
       setPhotos([]); // Set empty array on error
       onError?.('Failed to load photos. Please try again.');
     } finally {
@@ -63,8 +62,6 @@ const PhotoManagement: React.FC<PhotoManagementProps> = ({
 
       onSuccess?.(successMessage);
     } catch (error) {
-      console.error('Upload failed:', error);
-
       let errorMessage = 'Failed to upload photos. Please try again.';
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || errorMessage;
@@ -92,15 +89,12 @@ const PhotoManagement: React.FC<PhotoManagementProps> = ({
       onSuccess?.('Profile picture updated successfully!');
       onProfileUpdate?.();
     } catch (error) {
-      console.error('Failed to set profile picture:', error);
-
       let errorMessage = 'Failed to set profile picture. Please try again.';
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || errorMessage;
       }
 
       onError?.(errorMessage);
-      throw error; // Re-throw to handle in PhotoCard
     }
   };
 
@@ -123,15 +117,12 @@ const PhotoManagement: React.FC<PhotoManagementProps> = ({
       onSuccess?.('Photo deleted successfully!');
       onProfileUpdate?.();
     } catch (error) {
-      console.error('Failed to delete photo:', error);
-
       let errorMessage = 'Failed to delete photo. Please try again.';
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || errorMessage;
       }
 
       onError?.(errorMessage);
-      throw error; // Re-throw to handle in PhotoCard
     }
   };
 

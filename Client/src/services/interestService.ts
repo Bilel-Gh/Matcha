@@ -53,7 +53,6 @@ const interestService = {
         return [];
       }
     } catch (error) {
-      console.error('Get all interests service error:', error);
       throw error;
     }
   },
@@ -69,7 +68,6 @@ const interestService = {
       });
       return response.data.data.interests;
     } catch (error) {
-      console.error('Search interests service error:', error);
       throw error;
     }
   },
@@ -88,7 +86,6 @@ const interestService = {
       );
       return response.data.data;
     } catch (error) {
-      console.error('Create interest service error:', error);
       throw error;
     }
   },
@@ -113,7 +110,6 @@ const interestService = {
         return [];
       }
     } catch (error) {
-      console.error('Get user interests service error:', error);
       throw error;
     }
   },
@@ -132,7 +128,6 @@ const interestService = {
       );
       return response.data.data.interests;
     } catch (error) {
-      console.error('Update user interests service error:', error);
       throw error;
     }
   },
@@ -146,7 +141,6 @@ const interestService = {
         },
       });
     } catch (error) {
-      console.error('Add user interest service error:', error);
       throw error;
     }
   },
@@ -160,7 +154,6 @@ const interestService = {
         },
       });
     } catch (error) {
-      console.error('Remove user interest service error:', error);
       throw error;
     }
   },
@@ -178,7 +171,6 @@ const interestService = {
         }
       );
     } catch (error) {
-      console.error('Add interest by name service error:', error);
       throw error;
     }
   },

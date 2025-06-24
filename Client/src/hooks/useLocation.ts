@@ -31,7 +31,6 @@ export const useLocation = (
       const currentLocation = await locationService.getCurrentLocation(token);
       setLocation(currentLocation);
     } catch (error) {
-      console.error('Failed to load location:', error);
       setLocation(null);
       // Don't show error for missing location - it's expected for new users
     } finally {
@@ -47,7 +46,6 @@ export const useLocation = (
       onSuccess?.(`✅ Location updated to ${updatedLocation.city || 'your area'}`);
       return updatedLocation;
     } catch (error) {
-      console.error('GPS update failed:', error);
       const errorMessage = 'GPS update failed. Please check your browser permissions.';
       onError?.(errorMessage);
       throw error;
@@ -68,7 +66,6 @@ export const useLocation = (
       onSuccess?.(`✅ Location changed to ${updatedLocation.city || 'your area'}`);
       return updatedLocation;
     } catch (error) {
-      console.error('Manual location update failed:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to save location. Please try again.';
         onError?.(errorMsg);
@@ -88,7 +85,6 @@ export const useLocation = (
       onSuccess?.(`📍 Location set to ${ipLocation.city || 'your area'}`);
       return ipLocation;
     } catch (error) {
-      console.error('IP location setup failed:', error);
       const errorMessage = 'Failed to get location. Please try again.';
       onError?.(errorMessage);
       throw error;
@@ -108,7 +104,6 @@ export const useLocation = (
       onSuccess?.(sourceMessages[result.source]);
       return result;
     } catch (error) {
-      console.error('Location setup flow failed:', error);
       const errorMessage = 'Failed to set up location. Please try again.';
       onError?.(errorMessage);
       throw error;

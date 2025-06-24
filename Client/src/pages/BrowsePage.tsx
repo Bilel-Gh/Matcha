@@ -9,23 +9,10 @@ import SearchModal from '../components/AdvancedSearchModal';
 import FilterBar from '../components/FilterBar';
 import MatchesModal from '../components/MatchesModal';
 import ActivityModal from '../components/ActivityModal';
+import { showToastError, showToastSuccess } from '../utils/toastUtils';
 import './BrowsePage.css';
-
-interface User {
-  id: number;
-  username: string;
-  firstname: string;
-  lastname: string;
-  age: number;
-  city: string;
-  country: string;
-  profile_picture_url: string;
-  biography: string;
-  distance_km: number;
-  fame_rating: number;
-  common_interests: number;
-  common_interests_names?: string[];
-}
+import { User } from '../types/user';
+import { FilterParams } from '../types/filter';
 
 const BrowsePage: React.FC = () => {
   const { token } = useAuth();
@@ -43,11 +30,7 @@ const BrowsePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [matchCount, setMatchCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [appliedFilters, setAppliedFilters] = useState<any>({});
-
-  // Global message state
-  const [globalMessage, setGlobalMessage] = useState<string | null>(null);
-  const [globalMessageType, setGlobalMessageType] = useState<'success' | 'error' | null>(null);
+  const [appliedFilters, setAppliedFilters] = useState<FilterParams>({});
 
   // Load initial data
   useEffect(() => {
@@ -83,8 +66,8 @@ const BrowsePage: React.FC = () => {
         throw new Error(data.message || 'Failed to load users');
       }
     } catch (error) {
-      console.error('Failed to load users:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load users');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load users';
+      showToastError('Failed to load users', errorMessage);
       setUsers([]);
     } finally {
       setLoading(false);
@@ -112,7 +95,6 @@ const BrowsePage: React.FC = () => {
         setMatchCount(data.data.matches?.length || 0);
       }
     } catch (error) {
-      console.error('Failed to load match count:', error);
       setMatchCount(0);
     }
   };
@@ -122,22 +104,9 @@ const BrowsePage: React.FC = () => {
     loadMatchCount();
   };
 
-  // Global message handler
-  const showGlobalMessage = (message: string, type: 'success' | 'error') => {
-    setGlobalMessage(message);
-    setGlobalMessageType(type);
-    // Auto-hide message after 4 seconds
-    setTimeout(() => {
-      setGlobalMessage(null);
-      setGlobalMessageType(null);
-    }, 4000);
-  };
-
   // Clear messages when switching modes
   const handleViewModeChange = (mode: 'swipe' | 'grid' | 'matches') => {
     setViewMode(mode);
-    setGlobalMessage(null);
-    setGlobalMessageType(null);
   };
 
   // Remove user from local list (for immediate UI update)
@@ -165,10 +134,10 @@ const BrowsePage: React.FC = () => {
   };
 
   // Handle filter application
-  const handleFiltersApply = (filteredUsers: User[], filterParams: any) => {
+  const handleFiltersApply = (filteredUsers: User[], filterParams: FilterParams) => {
     setUsers(filteredUsers);
     setAppliedFilters(filterParams);
-    showGlobalMessage(`Found ${filteredUsers.length} users matching your filters`, 'success');
+    showToastSuccess(`Found ${filteredUsers.length} users matching your filters`);
   };
 
   return (
@@ -274,15 +243,7 @@ const BrowsePage: React.FC = () => {
 
         {/* Main Content */}
         <div className="browse-content">
-          {error ? (
-            <div className="error-state">
-              <h3>Error Loading Users</h3>
-              <p>{error}</p>
-              <button className="btn btn-primary" onClick={handleRefresh}>
-                Try Again
-              </button>
-            </div>
-          ) : loading ? (
+          {loading ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
               <p>Loading users...</p>
@@ -295,19 +256,19 @@ const BrowsePage: React.FC = () => {
                   onUsersUpdate={handleRefresh}
                   onUserRemoved={handleUserRemoved}
                   onUserLiked={handleUserLiked}
-                  onShowMessage={showGlobalMessage}
+                  onShowMessage={(message, type) => type === 'success' ? showToastSuccess(message) : showToastError(message)}
                 />
               ) : viewMode === 'grid' ? (
                 <GridMode
                   users={users}
                   onUsersUpdate={handleRefresh}
-                  onShowMessage={showGlobalMessage}
+                  onShowMessage={(message, type) => type === 'success' ? showToastSuccess(message) : showToastError(message)}
                   onUserRemoved={handleUserRemoved}
                   onUserLiked={handleUserLiked}
                 />
               ) : (
                 <MatchesMode
-                  onShowMessage={showGlobalMessage}
+                  onShowMessage={(message, type) => type === 'success' ? showToastSuccess(message) : showToastError(message)}
                   onMatchCountChange={setMatchCount}
                   onUserUnliked={handleUserUnliked}
                 />
@@ -316,13 +277,6 @@ const BrowsePage: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Global Message Notification */}
-      {globalMessage && (
-        <div className={`message-notification ${globalMessageType === 'success' ? 'success' : 'error'}`}>
-          {globalMessage}
-        </div>
-      )}
 
       {/* Search Modal */}
       <SearchModal

@@ -4,6 +4,7 @@ import { useChatSocket } from '../../hooks/useChatSocket';
 import ChatTab from './ChatTab';
 import ConversationsList from './ConversationsList';
 import './ChatWidget.css';
+import { showToastError } from '../../utils/toastUtils';
 
 interface Conversation {
   user: {
@@ -69,7 +70,7 @@ const ChatWidget: React.FC = () => {
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        console.error('Failed to load conversations:', error);
+        showToastError('Failed to load conversations', error);
       }
     } finally {
       setLoading(false);
@@ -92,7 +93,7 @@ const ChatWidget: React.FC = () => {
         setTotalUnreadCount(data.data.unread_count || 0);
       }
     } catch (error) {
-      console.error('Failed to load unread count:', error);
+      showToastError('Failed to load unread count', error);
     }
   }, [token]);
 
@@ -149,7 +150,6 @@ const ChatWidget: React.FC = () => {
   }, [loadConversations]);
 
   const handleMessageRead = useCallback((data: any) => {
-    console.log('Message read update:', data);
     // Mettre à jour de manière optimisée sans recharger toutes les conversations
     setConversations(prev => prev.map(conv => {
       if (conv.last_message?.id === data.messageId) {
@@ -163,7 +163,6 @@ const ChatWidget: React.FC = () => {
   }, []);
 
   const handleUserOnline = useCallback((userId: number) => {
-    console.log('User online:', userId);
     setConversations(prev => prev.map(conv =>
       conv.user.id === userId
         ? { ...conv, user: { ...conv.user, is_online: true } }
@@ -178,7 +177,6 @@ const ChatWidget: React.FC = () => {
   }, []);
 
   const handleUserOffline = useCallback((userId: number) => {
-    console.log('User offline:', userId);
     setConversations(prev => prev.map(conv =>
       conv.user.id === userId
         ? { ...conv, user: { ...conv.user, is_online: false } }
@@ -202,7 +200,10 @@ const ChatWidget: React.FC = () => {
     onNewMessage: handleNewMessage,
     onMessageRead: handleMessageRead,
     onUserOnline: handleUserOnline,
-    onUserOffline: handleUserOffline
+    onUserOffline: handleUserOffline,
+    onError: (error) => {
+      showToastError('Chat error', error);
+    }
   });
 
   // Ouvrir une conversation par ID utilisateur (pour les notifications)
@@ -241,7 +242,7 @@ const ChatWidget: React.FC = () => {
         loadConversations();
       }
     } catch (error) {
-      console.error('Failed to open conversation:', error);
+      showToastError('Failed to open conversation', error);
     }
   }, [token, conversations, loadConversations]);
 
@@ -311,7 +312,7 @@ const ChatWidget: React.FC = () => {
         setOpenTabs(tabs);
       }
     } catch (error) {
-      console.error('Failed to load tabs from storage:', error);
+      showToastError('Failed to load tabs from storage', error);
     }
   };
 

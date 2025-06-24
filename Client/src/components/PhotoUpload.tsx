@@ -81,7 +81,8 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
           setErrors([]);
         }
       } catch (error) {
-        console.error('Upload failed:', error);
+        // This error is caught and handled in the parent component (PhotoManagement)
+        // which will display a toast notification.
       }
     }
   };

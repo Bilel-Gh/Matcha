@@ -54,8 +54,12 @@ const Navbar: React.FC = () => {
             <NotificationDropdown
               onViewProfile={(userId) => navigate(`/user/${userId}`)}
               onOpenChat={(conversationId) => {
-                // This will be handled by the ChatWidget component
-                console.log('Open chat for conversation:', conversationId);
+                if (chatContext) {
+                  chatContext.openConversation(conversationId);
+                }
+              }}
+              onShowMessage={(message, type) => {
+                // Handle showing message
               }}
             />
             <Link to="/profile" className="nav-username">

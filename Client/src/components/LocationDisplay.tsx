@@ -74,7 +74,6 @@ const LocationDisplay: React.FC<LocationDisplayProps> = ({
       const updatedLocation = await locationService.updateLocationFromGPS(token);
       onLocationUpdate(updatedLocation);
     } catch (error) {
-      console.error('GPS update failed:', error);
       onError('GPS update failed. Please check your browser permissions.');
     } finally {
       setIsUpdatingGPS(false);

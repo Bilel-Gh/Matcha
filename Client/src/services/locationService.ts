@@ -51,7 +51,6 @@ const locationService = {
       });
       return response.data.data;
     } catch (error) {
-      console.error('Get location service error:', error);
       throw error;
     }
   },
@@ -67,7 +66,6 @@ const locationService = {
       });
       return response.data.data;
     } catch (error) {
-      console.error('Update location service error:', error);
       throw error;
     }
   },
@@ -82,7 +80,6 @@ const locationService = {
       });
       return response.data.data;
     } catch (error) {
-      console.error('Get IP location service error:', error);
       throw error;
     }
   },
@@ -97,7 +94,6 @@ const locationService = {
       });
       return response.data.data;
     } catch (error) {
-      console.error('Set IP location service error:', error);
       throw error;
     }
   },
@@ -113,7 +109,6 @@ const locationService = {
       });
       return response.data.data;
     } catch (error) {
-      console.error('Reverse geocode service error:', error);
       throw error;
     }
   },
@@ -135,7 +130,6 @@ const locationService = {
       });
       return response.data.data;
     } catch (error) {
-      console.error('Calculate distance service error:', error);
       throw error;
     }
   },
@@ -185,7 +179,6 @@ const locationService = {
         source: 'gps'
       });
     } catch (error) {
-      console.error('Update location from GPS error:', error);
       throw error;
     }
   },
@@ -197,13 +190,11 @@ const locationService = {
       const location = await this.updateLocationFromGPS(token);
       return { location, source: 'gps' };
     } catch (gpsError) {
-      console.log('GPS failed, falling back to IP location:', gpsError);
       // Fallback to IP location
       try {
         const location = await this.setLocationFromIP(token);
         return { location, source: 'ip' };
       } catch (ipError) {
-        console.error('Both GPS and IP location failed:', ipError);
         throw new Error('Unable to determine location');
       }
     }
@@ -283,7 +274,6 @@ const locationService = {
       const address = await this.getAddressFromCoords(token, latitude, longitude);
       return { city: address.city, country: address.country };
     } catch (error) {
-      console.warn('Failed to get address for coordinates:', error);
       return {};
     }
   }

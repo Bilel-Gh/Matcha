@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { showToastError } from '../../utils/toastUtils';
 
 interface User {
   id: number;
@@ -66,8 +67,8 @@ const ChatTab: React.FC<ChatTabProps> = ({
           const payload = JSON.parse(atob(tokenParts[1]));
           currentUserIdRef.current = payload.id;
         }
-      } catch (error) {
-        console.error('Failed to parse token:', error);
+      } catch {
+        // This should not happen in normal use.
       }
     }
   }, [token]);
@@ -138,8 +139,8 @@ const ChatTab: React.FC<ChatTabProps> = ({
         });
       }
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Failed to load messages:', error);
+      if ((error as Error).name !== 'AbortError') {
+        showToastError('Failed to load messages', (error as Error).message);
       }
     } finally {
       setLoading(false);
@@ -225,8 +226,8 @@ const ChatTab: React.FC<ChatTabProps> = ({
         setCanChat(data.data.can_chat);
       }
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        console.error('Failed to check chat permission:', error);
+      if ((error as Error).name !== 'AbortError') {
+        showToastError('Failed to check chat permission', (error as Error).message);
       }
     }
   }, [token, user.id]);
@@ -249,30 +250,18 @@ const ChatTab: React.FC<ChatTabProps> = ({
       is_read: false
     };
 
+    // Afficher le message temporaire
+    setMessages(prev => [...prev, tempMessage].sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()));
     setNewMessage('');
-    setSending(true);
-
-    // Ajouter le message temporaire immédiatement
-    setMessages(prev => {
-      const newMessages = [...prev, tempMessage];
-      return newMessages.sort((a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime());
-    });
-
-    // Scroll immédiat
+    shouldScrollRef.current = true;
     setTimeout(() => scrollToBottomIfNeeded(), 0);
 
-    try {
-      // Envoyer via Socket.IO
-      sendMessage(user.id, messageContent, tempId);
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      // Retirer le message temporaire en cas d'erreur
-      setMessages(prev => prev.filter(m => m.id !== tempMessage.id));
-      setNewMessage(messageContent); // Remettre le message dans l'input
-    } finally {
-      setSending(false);
-    }
-  }, [newMessage, sending, canChat, user.id, sendMessage, scrollToBottomIfNeeded]);
+    // Envoyer le message via le socket
+    setSending(true);
+    sendMessage(user.id, messageContent, tempId);
+    setSending(false);
+
+  }, [newMessage, sending, canChat, token, user.id, sendMessage, scrollToBottomIfNeeded]);
 
   // Gérer l'envoi avec Enter
   const handleKeyPress = useCallback((e: React.KeyboardEvent) => {

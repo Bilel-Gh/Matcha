@@ -36,7 +36,6 @@ const authService = {
       const response = await axios.post(`${API_URL}/api/auth/login`, credentials);
       return response;
     } catch (error) {
-      console.error('Login service error:', error);
       throw error;
     }
   },
@@ -46,7 +45,6 @@ const authService = {
       const response = await axios.post(`${API_URL}/api/auth/register`, data);
       return response;
     } catch (error) {
-      console.error('Register service error:', error);
       throw error;
     }
   },
@@ -55,7 +53,6 @@ const authService = {
     try {
       await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
     } catch (error) {
-      console.error('Forgot password service error:', error);
       throw error;
     }
   },
@@ -64,7 +61,6 @@ const authService = {
     try {
       await axios.post(`${API_URL}/api/auth/reset-password`, { password, token });
     } catch (error) {
-      console.error('Reset password service error:', error);
       throw error;
     }
   },
@@ -73,7 +69,6 @@ const authService = {
     try {
       await axios.get(`${API_URL}/api/auth/verify/${token}`);
     } catch (error) {
-      console.error('Email verification service error:', error);
       throw error;
     }
   },

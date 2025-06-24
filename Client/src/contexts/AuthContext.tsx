@@ -44,7 +44,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(JSON.parse(savedUser));
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
         // Clear corrupted data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -130,7 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...userInfo,
       });
     } catch (error) {
-      console.error('Failed to refresh user info:', error);
     }
   };
 

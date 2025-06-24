@@ -42,7 +42,6 @@ const LocationManager: React.FC<LocationManagerProps> = ({
       const currentLocation = await locationService.getCurrentLocation(token);
       setLocation(currentLocation);
     } catch (error) {
-      console.error('Failed to load current location:', error);
       // Don't show error for missing location - it's expected for new users
       setLocation(null);
     } finally {

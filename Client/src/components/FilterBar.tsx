@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { showToastError } from '../utils/toastUtils'
+import { User } from '../types/user';
+import { FilterParams } from '../types/filter';
 
 interface FilterBarProps {
   isOpen: boolean;
   onClose: () => void;
-  onFiltersApply: (users: any[], filterParams: any) => void;
-  currentFilters?: any;
+  onFiltersApply: (users: User[], filterParams: FilterParams) => void;
+  currentFilters?: FilterParams;
 }
 
 
@@ -86,7 +88,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         throw new Error(data.message || 'Failed to apply filters');
       }
     } catch (error) {
-      showToastError("Failed to like user", error);
+      showToastError("Failed to apply filters", error);
     } finally {
       setLoading(false);
     }
@@ -125,8 +127,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         throw new Error(data.message || 'Failed to reset filters');
       }
     } catch (error) {
-      console.error('Failed to reset filters:', error);
-      alert('Failed to reset filters. Please try again.');
+      showToastError('Failed to reset filters. Please try again.', error);
     } finally {
       setLoading(false);
     }

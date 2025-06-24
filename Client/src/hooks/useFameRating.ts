@@ -37,7 +37,6 @@ export const useFameRating = (
 
       return { fame_rating: newRating };
     } catch (error) {
-      console.error('Failed to update fame rating:', error);
       const errorMessage = axios.isAxiosError(error)
         ? error.response?.data?.message || 'Failed to update fame rating'
         : 'Failed to update fame rating';

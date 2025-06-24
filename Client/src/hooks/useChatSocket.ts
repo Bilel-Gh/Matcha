@@ -155,7 +155,8 @@ export const useChatSocket = (
     } catch (error) {
       // Ignorer silencieusement les erreurs de socket fermé
       if (!(error as Error)?.message?.includes('closed')) {
-        console.warn('Failed to send message:', error);
+        // This is a developer warning, not a user-facing error.
+        // The onError callback should be used for user-facing errors.
       }
     }
   }, [isConnected]);

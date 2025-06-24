@@ -1,6 +1,15 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ToastNotification, { ToastData } from './ToastNotification';
 import './ToastContainer.css';
+
+type ToastOptions = Omit<ToastData, 'id'>;
+
+declare global {
+  interface Window {
+    isToastContainerReady?: boolean;
+    showToast: (options: ToastOptions) => void;
+  }
+}
 
 interface ToastContainerProps {
   maxToasts?: number;
@@ -15,7 +24,6 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ maxToasts = 5 }) => {
 
     setToasts(prevToasts => {
       const updatedToasts = [newToast, ...prevToasts];
-      // Keep only the max number of toasts
       return updatedToasts.slice(0, maxToasts);
     });
   }, [maxToasts]);
@@ -28,30 +36,22 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ maxToasts = 5 }) => {
     setToasts([]);
   }, []);
 
-  // Expose methods globally for easy access
-  React.useEffect(() => {
-    console.log('🎊 ToastContainer setting up listeners');
-
-    // Méthode principale - window.showToast
-    (window as any).showToast = addToast;
-    (window as any).clearToasts = clearAllToasts;
-
-    // Aussi écouter les événements personnalisés pour compatibilité
-    const handleShowToast = (event: CustomEvent) => {
-      console.log('🎊 ToastContainer received custom event:', event.detail);
+  useEffect(() => {
+    const handleNewToast = (event: CustomEvent<ToastOptions>) => {
       addToast(event.detail);
     };
 
-    window.addEventListener('show-toast', handleShowToast as EventListener);
+    window.addEventListener('new-toast', handleNewToast as EventListener);
 
-    console.log('🎊 ToastContainer ready - window.showToast available');
+    window.showToast = addToast;
+    window.isToastContainerReady = true;
+    window.dispatchEvent(new Event('toast-container-ready'));
 
     return () => {
-      window.removeEventListener('show-toast', handleShowToast as EventListener);
-      delete (window as any).showToast;
-      delete (window as any).clearToasts;
+      window.removeEventListener('new-toast', handleNewToast as EventListener);
+      window.isToastContainerReady = false;
     };
-  }, [addToast, clearAllToasts]);
+  }, [addToast]);
 
   if (toasts.length === 0) {
     return null;
@@ -74,18 +74,12 @@ export default ToastContainer;
 
 // Helper functions for easier usage
 export const showToast = (toast: Omit<ToastData, 'id'>) => {
-  console.log('🎊 showToast called with:', toast.type, toast.title);
-  if ((window as any).showToast) {
-    console.log('🎊 Using window.showToast');
-    (window as any).showToast(toast);
+  if (window.showToast) {
+    window.showToast(toast);
   } else {
-    console.log('🎊 window.showToast not available, using custom event');
     if (typeof window !== 'undefined') {
-      const event = new CustomEvent('show-toast', {
-        detail: {
-          ...toast,
-          id: `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        }
+      const event = new CustomEvent('new-toast', {
+        detail: toast,
       });
       window.dispatchEvent(event);
     }

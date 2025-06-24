@@ -42,7 +42,6 @@ export const useInterests = (
       const interests = await interestService.getUserInterests(token);
       setUserInterests(interests);
     } catch (error) {
-      console.error('Failed to load user interests:', error);
       onError?.('Failed to load your interests. Please try again.');
     } finally {
       setIsLoading(false);
@@ -60,7 +59,6 @@ export const useInterests = (
       const results = await interestService.searchInterests(token, query);
       setSearchResults(results);
     } catch (error) {
-      console.error('Failed to search interests:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -94,7 +92,6 @@ export const useInterests = (
       setUserInterests(prev => [...prev, newUserInterest]);
       onSuccess?.(`Added "${interest.name}" to your interests!`);
     } catch (error) {
-      console.error('Failed to add interest:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to add interest. Please try again.';
         onError?.(errorMsg);
@@ -131,7 +128,6 @@ export const useInterests = (
       await loadUserInterests();
       onSuccess?.(`Added "${trimmedName}" to your interests!`);
     } catch (error) {
-      console.error('Failed to create and add interest:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to add interest. Please try again.';
         onError?.(errorMsg);
@@ -157,7 +153,6 @@ export const useInterests = (
       setUserInterests(prev => prev.filter(ui => ui.interest_id !== interestId));
       onSuccess?.(`Removed "${interestToRemove.interest.name}" from your interests.`);
     } catch (error) {
-      console.error('Failed to remove interest:', error);
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to remove interest. Please try again.';
         onError?.(errorMsg);

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { FaMapMarkerAlt, FaGlobe, FaSpinner } from 'react-icons/fa';
-import locationService from '../services/locationService';
+import locationService, { LocationData } from '../services/locationService';
 
 interface LocationRequestModalProps {
   show: boolean;
   token: string;
-  onLocationSet: (location: any) => void;
+  onLocationSet: (location: LocationData) => void;
   onError: (message: string) => void;
 }
 
@@ -34,7 +34,6 @@ const LocationRequestModal: React.FC<LocationRequestModalProps> = ({
         onLocationSet(result.location);
       }
     } catch (error) {
-      console.error('Location setup failed:', error);
       onError('Failed to set up location. Please try again.');
     } finally {
       setIsLoading(false);
@@ -50,7 +49,6 @@ const LocationRequestModal: React.FC<LocationRequestModalProps> = ({
       const location = await locationService.setLocationFromIP(token);
       onLocationSet(location);
     } catch (error) {
-      console.error('IP location failed:', error);
       onError('Failed to get location. Please try again.');
     } finally {
       setIsLoading(false);

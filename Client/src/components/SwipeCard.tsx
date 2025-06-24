@@ -100,7 +100,6 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
         animateSwipeExit('left', onSwipeLeft);
       }
     } else {
-      console.log('Snap back - insufficient swipe distance');
       snapBack();
     }
 
@@ -218,8 +217,6 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
   const handleTouchStart = (e: React.TouchEvent) => {
     handleStart(e.touches[0].clientX);
   };
-
-
 
   const handleTouchEnd = () => {
     handleEnd();

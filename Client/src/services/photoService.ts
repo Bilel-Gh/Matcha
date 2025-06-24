@@ -40,7 +40,6 @@ const photoService = {
         url: getFullImageUrl(photo.url)
       }));
     } catch (error) {
-      console.error('Get photos service error:', error);
       throw error;
     }
   },
@@ -63,7 +62,6 @@ const photoService = {
         url: getFullImageUrl(photo.url)
       };
     } catch (error) {
-      console.error('Upload photo service error:', error);
       throw error;
     }
   },
@@ -76,7 +74,6 @@ const photoService = {
         },
       });
     } catch (error) {
-      console.error('Set profile picture service error:', error);
       throw error;
     }
   },
@@ -89,7 +86,6 @@ const photoService = {
         },
       });
     } catch (error) {
-      console.error('Delete photo service error:', error);
       throw error;
     }
   },

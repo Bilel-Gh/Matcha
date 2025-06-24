@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-
-interface Match {
-  id: number;
-  username: string;
-  firstname: string;
-  lastname: string;
-  age?: number;
-  birth_date?: string;
-  profile_picture_url: string;
-  fame_rating: number;
-  is_online: boolean;
-  match_date: string;
-  created_at?: string;
-}
+import { showToastSuccess, showToastError } from '../utils/toastUtils';
+import { User } from '../types/user';
 
 interface MatchesModalProps {
   isOpen: boolean;
@@ -21,7 +9,7 @@ interface MatchesModalProps {
 }
 
 const MatchCard: React.FC<{
-  match: Match;
+  match: User;
   onStartChat: () => void;
   onViewProfile: () => void;
   onUnmatch: () => void;
@@ -99,7 +87,7 @@ const MatchCard: React.FC<{
 
 const MatchesModal: React.FC<MatchesModalProps> = ({ isOpen, onClose }) => {
   const { token } = useAuth();
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -121,8 +109,7 @@ const MatchesModal: React.FC<MatchesModalProps> = ({ isOpen, onClose }) => {
       const data = await response.json();
       setMatches(data.data?.matches || data.matches || []);
     } catch (error) {
-      console.error('Failed to load matches:', error);
-      alert('Failed to load matches');
+      showToastError('Failed to load matches', error);
     } finally {
       setLoading(false);
     }
@@ -133,12 +120,12 @@ const MatchesModal: React.FC<MatchesModalProps> = ({ isOpen, onClose }) => {
     alert(`Starting chat with user ${matchId} (Chat feature coming soon)`);
   };
 
-  const handleViewProfile = (match: Match) => {
+  const handleViewProfile = (match: User) => {
     // Navigate to user profile page - visit will be recorded there
     window.location.href = `/user/${match.id}`;
   };
 
-  const handleUnmatch = async (match: Match) => {
+  const handleUnmatch = async (match: User) => {
     const confirmed = window.confirm(`Are you sure you want to unmatch with ${match.firstname}? This action cannot be undone.`);
     if (!confirmed || !token) return;
 
@@ -151,14 +138,14 @@ const MatchesModal: React.FC<MatchesModalProps> = ({ isOpen, onClose }) => {
       });
 
       if (response.ok) {
-        alert('✅ Unmatched successfully');
+        showToastSuccess('Unmatched successfully');
         loadMatches(); // Reload matches
       } else {
-        alert('❌ Failed to unmatch user');
+        const data = await response.json();
+        showToastError('Failed to unmatch user', data.message);
       }
     } catch (error) {
-      console.error('Failed to unmatch:', error);
-      alert('❌ Failed to unmatch user');
+      showToastError('Failed to unmatch user', error);
     }
   };
 

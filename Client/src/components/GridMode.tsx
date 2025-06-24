@@ -2,26 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ReportUserModal from './ReportUserModal';
 import BlockUserModal from './BlockUserModal';
-
-interface User {
-  id: number;
-  username: string;
-  firstname: string;
-  lastname: string;
-  age?: number;
-  birth_date?: string;
-  city: string;
-  country: string;
-  profile_picture_url: string;
-  biography: string;
-  distance_km: number;
-  fame_rating: number;
-  common_interests: number;
-  common_interests_count?: number;
-  common_interests_names?: string[];
-  is_online?: boolean;
-  last_connection?: string;
-}
+import { User } from '../types/user';
 
 interface LikeStatus {
   i_liked_them: boolean;
@@ -76,7 +57,7 @@ const GridUserCard: React.FC<GridUserCardProps> = ({ user, onUserUpdate, onShowM
         setLikeStatus(data.data || data);
       }
     } catch (error) {
-      console.error('Failed to load like status:', error);
+      // Error is not critical for the UI, so we just fail silently.
     }
   };
 
@@ -139,7 +120,6 @@ const GridUserCard: React.FC<GridUserCardProps> = ({ user, onUserUpdate, onShowM
         }
       }
     } catch (error) {
-      console.error('Failed to like/unlike user:', error);
       onShowMessage('❌ Failed to update like status', 'error');
     } finally {
       setIsLiking(false);
@@ -183,7 +163,6 @@ const GridUserCard: React.FC<GridUserCardProps> = ({ user, onUserUpdate, onShowM
         onShowMessage(`❌ ${data.message || 'Failed to block user'}`, 'error');
       }
     } catch (error) {
-      console.error('Failed to block user:', error);
       onShowMessage('❌ Network error. Failed to block user', 'error');
     } finally {
       setIsBlocking(false);
@@ -220,7 +199,6 @@ const GridUserCard: React.FC<GridUserCardProps> = ({ user, onUserUpdate, onShowM
         onShowMessage(`❌ ${data.message || 'Failed to report user. Please try again.'}`, 'error');
       }
     } catch (error) {
-      console.error('❌ Network error while reporting user:', error);
       onShowMessage('❌ Network error. Please check your connection and try again.', 'error');
     } finally {
       setIsReporting(false);

@@ -40,7 +40,6 @@ export const useNotifications = () => {
 
       setUnreadCount(data.unread_count);
     } catch (err: any) {
-      console.error('Failed to load notifications:', err);
       setError(err.message || 'Failed to load notifications');
     } finally {
       setLoading(false);
@@ -125,7 +124,6 @@ export const useNotifications = () => {
 
     // Si un événement similaire s'est produit dans les dernières 2 secondes, l'ignorer
     if (lastEventTime && (now - lastEventTime) < 2000) {
-      console.log('🔗 Ignoring duplicate message event');
       return;
     }
 
@@ -187,8 +185,6 @@ export const useNotifications = () => {
 
     // ✅ NOUVEAU - Gestionnaire pour les événements de visite de profil avec déduplication
     const handleProfileVisitEvent = (data: any) => {
-      console.log('🔗 Socket: Received profile-visit event:', data);
-
       // Créer une clé unique pour cet événement
       const eventKey = `visit-${data.visitor.id}-${user?.id}`;
       const now = Date.now();
@@ -196,7 +192,6 @@ export const useNotifications = () => {
 
       // Si un événement similaire s'est produit dans les dernières 2 secondes, l'ignorer
       if (lastEventTime && (now - lastEventTime) < 2000) {
-        console.log('🔗 Ignoring duplicate profile-visit event');
         return;
       }
 
@@ -221,15 +216,12 @@ export const useNotifications = () => {
 
     // ✅ NOUVEAU - Gestionnaire pour les événements d'unlike avec déduplication
     const handleUnlikeEvent = (data: any) => {
-      console.log('🔗 Socket: Received unlike event:', data);
-
       // Déduplication pour les unlikes
       const eventKey = `unlike-${data.fromUser.id}-${user?.id}`;
       const now = Date.now();
       const lastEventTime = recentEventsRef.current.get(eventKey);
 
       if (lastEventTime && (now - lastEventTime) < 2000) {
-        console.log('🔗 Ignoring duplicate unlike event');
         return;
       }
 
@@ -246,15 +238,12 @@ export const useNotifications = () => {
     };
 
     const handleNewLikeEvent = (data: any) => {
-      console.log('🔗 Socket: Received new-like event:', data);
-
       // Déduplication pour les likes
       const eventKey = `like-${data.fromUser.id}-${user?.id}`;
       const now = Date.now();
       const lastEventTime = recentEventsRef.current.get(eventKey);
 
       if (lastEventTime && (now - lastEventTime) < 2000) {
-        console.log('🔗 Ignoring duplicate like event');
         return;
       }
 
@@ -269,15 +258,12 @@ export const useNotifications = () => {
     };
 
     const handleNewMatchEvent = (data: any) => {
-      console.log('🔗 Socket: Received new-match event:', data);
-
       // Déduplication pour les matches
       const eventKey = `match-${data.matchedUser.id}-${user?.id}`;
       const now = Date.now();
       const lastEventTime = recentEventsRef.current.get(eventKey);
 
       if (lastEventTime && (now - lastEventTime) < 2000) {
-        console.log('🔗 Ignoring duplicate match event');
         return;
       }
 
@@ -318,7 +304,6 @@ export const useNotifications = () => {
       const count = await NotificationService.getUnreadCount(token);
       setUnreadCount(count);
     } catch (err) {
-      console.error('Failed to load unread count:', err);
     }
   }, [token]);
 
@@ -345,7 +330,6 @@ export const useNotifications = () => {
         socket.emit('mark-notification-read', { notificationId });
       }
     } catch (err) {
-      console.error('Failed to mark notification as read:', err);
       setError('Failed to mark notification as read');
     }
   }, [token, socket]);
@@ -369,7 +353,6 @@ export const useNotifications = () => {
         socket.emit('mark-all-notifications-read');
       }
     } catch (err) {
-      console.error('Failed to mark all notifications as read:', err);
       setError('Failed to mark all notifications as read');
     }
   }, [token, socket]);
@@ -390,7 +373,6 @@ export const useNotifications = () => {
         return prev.filter(notif => notif.id !== notificationId);
       });
     } catch (err) {
-      console.error('Failed to delete notification:', err);
       setError('Failed to delete notification');
     }
   }, [token]);

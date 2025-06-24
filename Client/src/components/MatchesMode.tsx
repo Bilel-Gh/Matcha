@@ -98,7 +98,6 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         setVisitsReceived(visitsData.data?.visits || []);
       }
     } catch (error) {
-      console.error('Failed to load matches/likes:', error);
       setError('Failed to load data');
       if (onShowMessage) {
         onShowMessage('Failed to load matches and likes', 'error');
@@ -155,7 +154,6 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         }
       }
     } catch (error) {
-      console.error('Failed to like user:', error);
       if (onShowMessage) {
         onShowMessage('Network error. Failed to like user', 'error');
       }
@@ -174,7 +172,7 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         }
       });
 
-            if (response.ok) {
+      if (response.ok) {
         // Check if this user was also in matches before removing
         const wasMatch = matches.some(match => match.id === user.id);
 
@@ -208,7 +206,6 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
         }
       }
     } catch (error) {
-      console.error('Failed to unlike user:', error);
       if (onShowMessage) {
         onShowMessage('Network error. Failed to unlike user', 'error');
       }

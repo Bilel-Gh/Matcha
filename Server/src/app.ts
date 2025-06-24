@@ -35,9 +35,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files for photos
-app.use('/uploads/photos', express.static(path.join(process.cwd(), 'uploads', 'photos')));
-app.use('/uploads/default', express.static(path.join(process.cwd(), 'uploads', 'default')));
+// Serve static files for photos with custom headers for CORS policy
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  setHeaders: function (res, path, stat) {
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { showToastSuccess, showToastError } from '../utils/toastUtils';
 
 interface ActivityUser {
   id: number;
@@ -209,8 +210,7 @@ const ActivityModal: React.FC<ActivityModalProps> = ({ isOpen, onClose }) => {
         setVisitsReceived(data.data?.visits || data.visits || []);
       }
     } catch (error) {
-      console.error('Failed to load activity:', error);
-      alert('Failed to load activity data');
+      showToastError('Failed to load activity data', error);
     } finally {
       setLoading(false);
     }
@@ -232,18 +232,17 @@ const ActivityModal: React.FC<ActivityModalProps> = ({ isOpen, onClose }) => {
 
       if (response.ok) {
         if (data.data?.match) {
-          alert(`🎉 It's a match with ${user.firstname}!`);
+          showToastSuccess(`🎉 It's a match with ${user.firstname}!`);
         } else {
-          alert('❤️ Like sent!');
+          showToastSuccess('❤️ Like sent!');
         }
 
         loadActivityData(); // Reload to update status
       } else {
-        alert('❌ Failed to like user');
+        showToastError(data.message || 'Failed to like user');
       }
     } catch (error) {
-      console.error('Failed to like user:', error);
-      alert('❌ Failed to like user');
+      showToastError('Failed to like user', error);
     }
   };
 
