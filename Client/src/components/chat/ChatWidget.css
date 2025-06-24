@@ -118,20 +118,6 @@
   gap: 8px;
 }
 
-.refresh-btn, .close-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6c757d;
-  transition: all 0.2s ease;
-}
-
 .refresh-btn:hover, .close-btn:hover {
   background: var(--hover-bg);
   color: var(--text-primary);
@@ -693,10 +679,6 @@
 
   .conversations-header h3 {
     color: var(--primary-text);
-  }
-
-  .refresh-btn, .close-btn {
-    color: rgba(255, 255, 255, 0.8);
   }
 
   .refresh-btn:hover, .close-btn:hover {

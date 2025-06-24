@@ -26,9 +26,12 @@ interface SwipeCardProps {
   isActive: boolean;
   onSwipeRight: () => void;
   onSwipeLeft: () => void;
+  onViewProfile?: () => void;
+  onBlock?: () => void;
+  onReport?: () => void;
 }
 
-const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRight, onSwipeLeft }) => {
+const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRight, onSwipeLeft, onViewProfile, onBlock, onReport }) => {
   const [dragState, setDragState] = useState({
     isDragging: false,
     startX: 0,
@@ -293,10 +296,25 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
     return `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${url}`;
   };
 
-  const handleImageClick = (e: React.MouseEvent) => {
+  const handleViewProfile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Navigate to user profile page - visit will be recorded there
-    window.location.href = `/user/${user.id}`;
+    if (onViewProfile) {
+      onViewProfile();
+    }
+  };
+
+  const handleBlock = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onBlock) {
+      onBlock();
+    }
+  };
+
+  const handleReport = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onReport) {
+      onReport();
+    }
   };
 
   const age = calculateAge(user.birth_date || user.age);
@@ -314,7 +332,7 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="card-image" onClick={handleImageClick}>
+      <div className="card-image">
         <img
           src={getFullImageUrl(user.profile_picture_url)}
           alt={user.firstname}
@@ -358,6 +376,31 @@ const SwipeCard: React.FC<SwipeCardProps> = ({ user, index, isActive, onSwipeRig
 
         <div className="bio-preview">
           <p>{user.biography ? (user.biography.length > 120 ? user.biography.substring(0, 120) + '...' : user.biography) : 'No bio available'}</p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="card-actions">
+          <button
+            className="card-action-btn view-btn"
+            onClick={handleViewProfile}
+            title="View Profile"
+          >
+            👁️
+          </button>
+          <button
+            className="card-action-btn block-btn"
+            onClick={handleBlock}
+            title="Block User"
+          >
+            🚫
+          </button>
+          <button
+            className="card-action-btn report-btn"
+            onClick={handleReport}
+            title="Report User"
+          >
+            🚩
+          </button>
         </div>
       </div>
     </div>

@@ -281,6 +281,19 @@ const UserProfilePage: React.FC = () => {
     return date.toLocaleDateString();
   };
 
+  const handleOpenChat = () => {
+    if (!profile?.id) return;
+
+    // Check if openChatWithUser function is available from ChatWidget
+    const openChatFunction = (window as { openChatWithUser?: (userId: number) => void }).openChatWithUser;
+    if (openChatFunction) {
+      openChatFunction(profile.id);
+      showMessage('Chat opened!', 'success');
+    } else {
+      showMessage('Chat is not available right now', 'error');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="user-profile-page">
@@ -440,8 +453,13 @@ const UserProfilePage: React.FC = () => {
 
               {/* Match Status */}
               {likeStatus?.is_match && (
-                <div className="match-status">
-                  💝 You're a match! Start a conversation
+                <div
+                  className="match-status"
+                  onClick={handleOpenChat}
+                  style={{ cursor: 'pointer' }}
+                  title="Click to start a conversation"
+                >
+                  💝 You're a match! Click to start a conversation
                 </div>
               )}
             </div>

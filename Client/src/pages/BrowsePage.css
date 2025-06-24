@@ -784,6 +784,51 @@
   overflow: hidden;
 }
 
+/* Action Buttons for Swipe Cards */
+.card-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 0 20px;
+}
+
+.card-action-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 20px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card-action-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.card-action-btn.view-btn:hover {
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+}
+
+.card-action-btn.block-btn:hover {
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+}
+
+.card-action-btn.report-btn:hover {
+  background: rgba(245, 158, 11, 0.9);
+  color: white;
+}
+
 /* Swipe Actions - Nouveau design */
 .swipe-actions {
   display: flex;
@@ -1473,21 +1518,26 @@
 }
 
 .refresh-btn {
-  padding: 12px 24px;
-  background: var(--bg-secondary);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-primary);
   color: var(--text-primary);
-  border: 2px solid var(--border-color);
-  border-radius: 25px;
+  padding: 10px 18px;
+  border-radius: 12px;
   cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
+  transition: var(--transition-normal);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
 }
 
 .refresh-btn:hover:not(:disabled) {
-  background: var(--primary-color);
-  color: white;
-  border-color: var(--primary-color);
+  background: var(--surface-tertiary);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .refresh-btn:disabled {
@@ -4235,6 +4285,14 @@
   box-shadow: var(--shadow-large);
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-profile-page .match-status:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(255, 107, 157, 0.5);
+  background: linear-gradient(135deg, #ff5285, #b83c5a);
 }
 
 .user-profile-page .match-status::before {
