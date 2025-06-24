@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { showToastError } from '../utils/toastUtils'
 
 interface FilterBarProps {
   isOpen: boolean;
@@ -85,8 +86,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         throw new Error(data.message || 'Failed to apply filters');
       }
     } catch (error) {
-      console.error('Failed to apply filters:', error);
-      alert('Failed to apply filters. Please try again.');
+      showToastError("Failed to like user", error);
     } finally {
       setLoading(false);
     }

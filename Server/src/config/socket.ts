@@ -171,6 +171,7 @@ export class SocketManager {
             );
 
             // Émettre un événement de notification de message séparé pour les toasts
+            console.log(`📡 Emitting new-message-notification event to user ${receiverId}`);
             this.emitToUser(receiverId, 'new-message-notification', {
               sender: result.message.sender,
               messageId: result.message.id,

@@ -183,3 +183,108 @@ export const showUnlikeToast = (userName: string, wasMatch: boolean, userAvatar?
     duration: 6000,
   });
 };
+
+// ✅ SYSTÈME DE TOASTS CUSTOM POUR ERREURS ET AUTRES MESSAGES
+
+/**
+ * Affiche un toast d'erreur personnalisé
+ * @param title - Titre de l'erreur
+ * @param error - Objet d'erreur ou message (optionnel)
+ * @param duration - Durée d'affichage en ms (défaut: 6000)
+ *
+ * Exemple: showToastError("Failed to like user", error)
+ */
+export const showToastError = (title: string, error?: any, duration: number = 6000) => {
+  let errorMessage = '';
+
+  if (error) {
+    if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    } else if (error?.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error?.data?.message) {
+      errorMessage = error.data.message;
+    } else if (error?.error) {
+      errorMessage = error.error;
+    } else {
+      errorMessage = 'Une erreur inattendue s\'est produite';
+    }
+  }
+
+  showToast({
+    type: 'error',
+    title: `❌ ${title}`,
+    message: errorMessage,
+    duration
+  });
+};
+
+/**
+ * Affiche un toast de succès personnalisé
+ * @param title - Titre du succès
+ * @param message - Message (optionnel)
+ * @param duration - Durée d'affichage en ms (défaut: 4000)
+ *
+ * Exemple: showToastSuccess("User liked successfully", "John Doe liked!")
+ */
+export const showToastSuccess = (title: string, message: string = '', duration: number = 4000) => {
+  showToast({
+    type: 'success',
+    title: `✅ ${title}`,
+    message,
+    duration
+  });
+};
+
+/**
+ * Affiche un toast d'avertissement personnalisé
+ * @param title - Titre de l'avertissement
+ * @param message - Message (optionnel)
+ * @param duration - Durée d'affichage en ms (défaut: 5000)
+ *
+ * Exemple: showToastWarning("Profile incomplete", "Please add more photos")
+ */
+export const showToastWarning = (title: string, message: string = '', duration: number = 5000) => {
+  showToast({
+    type: 'info', // Utilise le type info avec un style warning
+    title: `⚠️ ${title}`,
+    message,
+    duration
+  });
+};
+
+/**
+ * Affiche un toast d'information personnalisé
+ * @param title - Titre de l'information
+ * @param message - Message (optionnel)
+ * @param duration - Durée d'affichage en ms (défaut: 4000)
+ *
+ * Exemple: showToastInfo("Profile updated", "Changes saved successfully")
+ */
+export const showToastCustomInfo = (title: string, message: string = '', duration: number = 4000) => {
+  showToast({
+    type: 'info',
+    title: `ℹ️ ${title}`,
+    message,
+    duration
+  });
+};
+
+/**
+ * Affiche un toast de chargement personnalisé
+ * @param title - Titre du chargement
+ * @param message - Message (optionnel, défaut: "Chargement...")
+ * @param duration - Durée d'affichage en ms (défaut: 3000)
+ *
+ * Exemple: showToastLoading("Uploading photo", "Please wait...")
+ */
+export const showToastLoading = (title: string, message: string = 'Chargement...', duration: number = 3000) => {
+  showToast({
+    type: 'info',
+    title: `⏳ ${title}`,
+    message,
+    duration
+  });
+};

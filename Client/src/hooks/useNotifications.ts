@@ -19,6 +19,9 @@ export const useNotifications = () => {
     onUnlike?: (data: { fromUser: any; timestamp: string; wasMatch: boolean }) => void;
   }>({});
 
+  // ✅ DÉDUPLICATION - Éviter les toasts en double
+  const recentEventsRef = useRef<Map<string, number>>(new Map());
+
   // Load notifications from API
   const loadNotifications = useCallback(async (page: number = 1, type?: string) => {
     if (!token) return;
@@ -105,7 +108,7 @@ export const useNotifications = () => {
     }
   }, []);
 
-  // ✅ NOTIFICATION EN TEMPS RÉEL - Handler pour les messages
+  // ✅ NOTIFICATION EN TEMPS RÉEL - Handler pour les messages avec déduplication
   const handleNewMessage = useCallback((data: any) => {
     // Vérifier si une conversation est ouverte avec cet utilisateur
     const isConversationOpen = (window as any).isConversationOpen?.(data.sender.id) || false;
@@ -113,6 +116,27 @@ export const useNotifications = () => {
     // Si la conversation est ouverte, ne pas créer de notification du tout
     if (isConversationOpen) {
       return;
+    }
+
+    // ✅ DÉDUPLICATION pour les messages
+    const eventKey = `message-${data.sender.id}-${user?.id}-${data.messageId}`;
+    const now = Date.now();
+    const lastEventTime = recentEventsRef.current.get(eventKey);
+
+    // Si un événement similaire s'est produit dans les dernières 2 secondes, l'ignorer
+    if (lastEventTime && (now - lastEventTime) < 2000) {
+      console.log('🔗 Ignoring duplicate message event');
+      return;
+    }
+
+    // Enregistrer cet événement
+    recentEventsRef.current.set(eventKey, now);
+
+    // Nettoyer les anciens événements (plus de 5 secondes)
+    for (const [key, timestamp] of recentEventsRef.current.entries()) {
+      if (now - timestamp > 5000) {
+        recentEventsRef.current.delete(key);
+      }
     }
 
     // Créer une notification temporaire pour l'affichage immédiat
@@ -161,8 +185,31 @@ export const useNotifications = () => {
       setUnreadCount(data.count);
     };
 
-    // ✅ NOUVEAU - Gestionnaire pour les événements de visite de profil
+    // ✅ NOUVEAU - Gestionnaire pour les événements de visite de profil avec déduplication
     const handleProfileVisitEvent = (data: any) => {
+      console.log('🔗 Socket: Received profile-visit event:', data);
+
+      // Créer une clé unique pour cet événement
+      const eventKey = `visit-${data.visitor.id}-${user?.id}`;
+      const now = Date.now();
+      const lastEventTime = recentEventsRef.current.get(eventKey);
+
+      // Si un événement similaire s'est produit dans les dernières 2 secondes, l'ignorer
+      if (lastEventTime && (now - lastEventTime) < 2000) {
+        console.log('🔗 Ignoring duplicate profile-visit event');
+        return;
+      }
+
+      // Enregistrer cet événement
+      recentEventsRef.current.set(eventKey, now);
+
+      // Nettoyer les anciens événements (plus de 5 secondes)
+      for (const [key, timestamp] of recentEventsRef.current.entries()) {
+        if (now - timestamp > 5000) {
+          recentEventsRef.current.delete(key);
+        }
+      }
+
       // Appeler le callback si défini
       if (callbacksRef.current.onProfileVisit) {
         callbacksRef.current.onProfileVisit({
@@ -172,8 +219,22 @@ export const useNotifications = () => {
       }
     };
 
-    // ✅ NOUVEAU - Gestionnaire pour les événements d'unlike
+    // ✅ NOUVEAU - Gestionnaire pour les événements d'unlike avec déduplication
     const handleUnlikeEvent = (data: any) => {
+      console.log('🔗 Socket: Received unlike event:', data);
+
+      // Déduplication pour les unlikes
+      const eventKey = `unlike-${data.fromUser.id}-${user?.id}`;
+      const now = Date.now();
+      const lastEventTime = recentEventsRef.current.get(eventKey);
+
+      if (lastEventTime && (now - lastEventTime) < 2000) {
+        console.log('🔗 Ignoring duplicate unlike event');
+        return;
+      }
+
+      recentEventsRef.current.set(eventKey, now);
+
       // Appeler le callback si défini
       if (callbacksRef.current.onUnlike) {
         callbacksRef.current.onUnlike({
@@ -185,6 +246,20 @@ export const useNotifications = () => {
     };
 
     const handleNewLikeEvent = (data: any) => {
+      console.log('🔗 Socket: Received new-like event:', data);
+
+      // Déduplication pour les likes
+      const eventKey = `like-${data.fromUser.id}-${user?.id}`;
+      const now = Date.now();
+      const lastEventTime = recentEventsRef.current.get(eventKey);
+
+      if (lastEventTime && (now - lastEventTime) < 2000) {
+        console.log('🔗 Ignoring duplicate like event');
+        return;
+      }
+
+      recentEventsRef.current.set(eventKey, now);
+
       if (callbacksRef.current.onNewLike) {
         callbacksRef.current.onNewLike({
           fromUser: data.fromUser,
@@ -194,6 +269,20 @@ export const useNotifications = () => {
     };
 
     const handleNewMatchEvent = (data: any) => {
+      console.log('🔗 Socket: Received new-match event:', data);
+
+      // Déduplication pour les matches
+      const eventKey = `match-${data.matchedUser.id}-${user?.id}`;
+      const now = Date.now();
+      const lastEventTime = recentEventsRef.current.get(eventKey);
+
+      if (lastEventTime && (now - lastEventTime) < 2000) {
+        console.log('🔗 Ignoring duplicate match event');
+        return;
+      }
+
+      recentEventsRef.current.set(eventKey, now);
+
       if (callbacksRef.current.onNewMatch) {
         callbacksRef.current.onNewMatch({
           matchedUser: data.matchedUser,
@@ -202,7 +291,7 @@ export const useNotifications = () => {
       }
     };
 
-    // Écouter les événements
+    // Écouter les événements (sans new-message-notification car géré par useChatSocket)
     socket.on('new-notification', handleNewNotificationEvent);
     socket.on('unread-count-update', handleUnreadCountUpdate);
     socket.on('new-like', handleNewLikeEvent);

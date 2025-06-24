@@ -1,7 +1,7 @@
 import http from 'http';
 import app from './app';
 import config from './config/config';
-import SocketManager from './config/socket';
+import { SocketManager } from './config/socket';
 
 // Create HTTP server
 const server = http.createServer(app);

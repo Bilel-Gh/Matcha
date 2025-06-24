@@ -42,7 +42,12 @@ export const useChatSocket = (
     if (!token) {
       // Nettoyer la connexion existante si pas de token
       if (socketRef.current) {
-        socketRef.current.disconnect();
+        const socket = socketRef.current;
+        // Fermeture propre pour éviter les warnings
+        if (socket.connected) {
+          socket.removeAllListeners();
+          socket.disconnect();
+        }
         socketRef.current = null;
         setIsConnected(false);
       }
@@ -80,7 +85,12 @@ export const useChatSocket = (
       setIsConnected(false);
     });
 
-    socket.on('connect_error', () => {
+    socket.on('connect_error', (error) => {
+      // Ignorer les erreurs de fermeture de WebSocket pour éviter les warnings
+      if (error?.message?.includes('WebSocket is closed') ||
+          error?.message?.includes('closed before the connection is established')) {
+        return; // Ne pas propager ces erreurs
+      }
       setIsConnected(false);
       callbacksRef.current.onError?.('Connection failed');
     });
@@ -122,7 +132,11 @@ export const useChatSocket = (
     });
 
     return () => {
-      socket.disconnect();
+      // Cleanup propre pour éviter les warnings WebSocket
+      if (socket && socket.connected) {
+        socket.removeAllListeners();
+        socket.disconnect();
+      }
       socketRef.current = null;
       setIsConnected(false);
     };
@@ -130,27 +144,42 @@ export const useChatSocket = (
 
   // Envoyer un message - ULTRA RAPIDE
   const sendMessage = useCallback((receiverId: number, content: string, tempId?: string) => {
-    if (!socketRef.current || !isConnected) return;
+    if (!socketRef.current || !isConnected || !socketRef.current.connected) return;
 
-    socketRef.current.emit('send-message', {
-      receiverId,
-      content,
-      tempId
-    });
+    try {
+      socketRef.current.emit('send-message', {
+        receiverId,
+        content,
+        tempId
+      });
+    } catch (error) {
+      // Ignorer silencieusement les erreurs de socket fermé
+      if (!(error as Error)?.message?.includes('closed')) {
+        console.warn('Failed to send message:', error);
+      }
+    }
   }, [isConnected]);
 
   // Marquer un message comme lu - ULTRA RAPIDE
   const markAsRead = useCallback((messageId: number) => {
-    if (!socketRef.current || !isConnected) return;
+    if (!socketRef.current || !isConnected || !socketRef.current.connected) return;
 
-    socketRef.current.emit('message-read', { messageId });
+    try {
+      socketRef.current.emit('message-read', { messageId });
+    } catch (error) {
+      // Ignorer silencieusement les erreurs de socket fermé
+    }
   }, [isConnected]);
 
   // Marquer tous les messages d'un expéditeur comme lus - ULTRA RAPIDE
   const markAllAsRead = useCallback((senderId: number) => {
-    if (!socketRef.current || !isConnected) return;
+    if (!socketRef.current || !isConnected || !socketRef.current.connected) return;
 
-    socketRef.current.emit('mark-all-read', { senderId });
+    try {
+      socketRef.current.emit('mark-all-read', { senderId });
+    } catch (error) {
+      // Ignorer silencieusement les erreurs de socket fermé
+    }
   }, [isConnected]);
 
   // Rejoindre une conversation

@@ -45,8 +45,10 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
   // Set up notification event callbacks
   useEffect(() => {
+    console.log('🔔 NotificationDropdown: Setting up event callbacks');
     setEventCallbacks({
       onNewLike: (data) => {
+        console.log('💝 Like notification received:', data);
         showLikeToast(
           data.fromUser.firstname,
           data.fromUser.profile_picture_url,
@@ -54,6 +56,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         );
       },
       onNewMatch: (data) => {
+        console.log('🎉 Match notification received:', data);
         showMatchToast(
           data.matchedUser.firstname,
           data.matchedUser.profile_picture_url,
@@ -61,6 +64,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         );
       },
       onProfileVisit: (data) => {
+        console.log('👀 Visit notification received:', data);
         showVisitToast(
           data.visitor.firstname,
           data.visitor.profile_picture_url,
@@ -68,6 +72,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         );
       },
       onUnlike: (data) => {
+        console.log('💔 Unlike notification received:', data);
         showUnlikeToast(
           data.fromUser.firstname,
           data.wasMatch,
@@ -76,6 +81,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         );
       },
       onNewMessage: (data) => {
+        console.log('💬 Message notification received:', data);
         import('./ToastContainer').then(({ showMessageToast }) => {
           showMessageToast(
             data.sender.firstname,
