@@ -143,8 +143,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = async (token: string, password: string) => {
     try {
       await authService.resetPassword(password, token);
-    } catch (error) {
-      throw error;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'An unexpected error occurred.';
+      // Handle cases where server returns an array of error messages
+      const finalMessage = Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage;
+      throw new Error(finalMessage);
     }
   };
 

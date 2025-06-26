@@ -170,20 +170,14 @@ export const forgotPassword = async (req: Request, res: Response) => {
     await AuthService.requestPasswordReset(req.body.email);
     res.status(200).json({
       status: 'success',
-      message: 'Password reset email sent',
+      message: 'If an account with this email exists, a password reset link has been sent.',
     });
   } catch (error) {
-    if (error instanceof AppError) {
-      res.status(error.statusCode).json({
-        status: 'error',
-        message: error.message,
-      });
-    } else {
-      res.status(500).json({
-        status: 'error',
-        message: 'Internal server error',
-      });
-    }
+    console.error('Forgot password error:', error);
+    res.status(200).json({
+      status: 'success',
+      message: 'If an account with this email exists, a password reset link has been sent.',
+    });
   }
 };
 
@@ -192,7 +186,7 @@ export const resetPassword = async (req: Request, res: Response) => {
     await AuthService.resetPassword(req.body.token, req.body.new_password);
     res.status(200).json({
       status: 'success',
-      message: 'Password reset successful',
+      message: 'Password has been reset successfully.',
     });
   } catch (error) {
     if (error instanceof AppError) {

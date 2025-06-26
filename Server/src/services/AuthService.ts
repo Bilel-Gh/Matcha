@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 import { UserRepository } from '../repositories/UserRepository';
 import { User } from '../types/user';
 import { AppError } from '../utils/AppError';
@@ -166,24 +167,37 @@ export class AuthService {
     const user = await UserRepository.findByEmail(email);
 
     if (user) {
-      const resetToken = uuidv4();
-      const expires = new Date(Date.now() + config.PASSWORD_RESET_EXPIRES_HOURS * 3600000);
+      // Generate a secure, URL-safe token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expires = new Date(Date.now() + config.PASSWORD_RESET_EXPIRES_HOURS * 3600000); // 1 hour
+
+      // In a real app, you might want to hash the token before storing it
+      // const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
       await UserRepository.updatePasswordResetToken(user.id, resetToken, expires);
 
-      // TODO: Send password reset email
-      console.log(`Password reset token for ${email}: ${resetToken}`);
+      try {
+        await emailService.sendPasswordResetEmail(user.email, user.username, resetToken);
+      } catch (error) {
+        // As per requirements, log the error but don't expose it to the user.
+        console.error(`Failed to send password reset email to ${user.email}:`, error);
+      }
     }
+    // If the user does not exist, we do nothing but still return a success response
+    // to prevent email enumeration attacks.
   }
 
   static async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await UserRepository.findByPasswordResetToken(token);
 
-    if (!user) {
+    if (!user || !user.password_reset_expires || user.password_reset_expires < new Date()) {
       throw new AppError('Invalid or expired password reset token', 400);
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, config.BCRYPT_SALT_ROUNDS);
     await UserRepository.updatePassword(user.id, hashedPassword);
+
+    // Invalidate the token after use
+    await UserRepository.updatePasswordResetToken(user.id, null, null);
   }
 }

@@ -32,45 +32,25 @@ interface AuthResponse {
 
 const authService = {
   async login(credentials: LoginCredentials): Promise<{ data: AuthResponse }> {
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, credentials);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    const response = await axios.post(`${API_URL}/api/auth/login`, credentials);
+    return response;
   },
 
   async register(data: RegisterData): Promise<{ data: AuthResponse }> {
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, data);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    const response = await axios.post(`${API_URL}/api/auth/register`, data);
+    return response;
   },
 
   async forgotPassword(email: string): Promise<void> {
-    try {
-      await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
-    } catch (error) {
-      throw error;
-    }
+    await axios.post(`${API_URL}/api/auth/forgot-password`, { email });
   },
 
   async resetPassword(password: string, token: string): Promise<void> {
-    try {
-      await axios.post(`${API_URL}/api/auth/reset-password`, { password, token });
-    } catch (error) {
-      throw error;
-    }
+    await axios.post(`${API_URL}/api/auth/reset-password`, { new_password: password, token });
   },
 
   async verify(token: string): Promise<void> {
-    try {
-      await axios.get(`${API_URL}/api/auth/verify/${token}`);
-    } catch (error) {
-      throw error;
-    }
+    await axios.get(`${API_URL}/api/auth/verify/${token}`);
   },
 };
 

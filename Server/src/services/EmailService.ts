@@ -47,6 +47,42 @@ class EmailService {
       throw new Error('Failed to send verification email');
     }
   }
+
+  async sendPasswordResetEmail(email: string, username: string, token: string): Promise<void> {
+    const resetUrl = `${config.FRONTEND_URL}/reset-password/${token}`;
+
+    const mailOptions = {
+      from: config.EMAIL_FROM,
+      to: email,
+      subject: 'Réinitialisation de votre mot de passe - Matcha',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+          <h2 style="color: #fd297b;">Réinitialisation de votre mot de passe</h2>
+          <p>Bonjour ${username},</p>
+          <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
+          <p>Cliquez sur le bouton ci-dessous pour créer un nouveau mot de passe :</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}"
+               style="background-color: #fd297b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+              Réinitialiser le mot de passe
+            </a>
+          </div>
+          <p>Ce lien expirera dans ${config.PASSWORD_RESET_EXPIRES_HOURS} heure(s).</p>
+          <p>Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email en toute sécurité.</p>
+          <hr style="border: none; border-top: 1px solid #eee;" />
+          <p style="font-size: 0.9em; color: #888;">Cordialement,<br/>L'équipe Matcha</p>
+        </div>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      // We don't throw an error to the user, as per requirements.
+      // The calling service should handle this gracefully.
+    }
+  }
 }
 
 export default new EmailService();

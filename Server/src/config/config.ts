@@ -12,6 +12,7 @@ interface Config {
   BCRYPT_SALT_ROUNDS: number;
   PASSWORD_RESET_EXPIRES_HOURS: number;
   CORS_ORIGIN: string;
+  FRONTEND_URL: string;
   EMAIL_FROM: string;
   EMAIL_SERVICE?: string;
   EMAIL_HOST?: string;
@@ -33,6 +34,7 @@ const config: Config = {
   BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10),
   PASSWORD_RESET_EXPIRES_HOURS: parseInt(process.env.PASSWORD_RESET_EXPIRES_HOURS || '1', 10),
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:8080',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:8080',
   EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@matcha.com',
   EMAIL_SERVICE: process.env.EMAIL_SERVICE,
   EMAIL_HOST: process.env.EMAIL_HOST,

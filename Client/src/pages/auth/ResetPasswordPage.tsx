@@ -1,28 +1,63 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaLock, FaKey } from 'react-icons/fa';
+import { FaLock, FaCheckCircle, FaExclamationCircle, FaArrowLeft } from 'react-icons/fa';
+import axios from 'axios';
 
 const ResetPasswordPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
   const { token } = useParams<{ token: string }>();
+  const navigate = useNavigate();
   const { resetPassword } = useAuth();
+
+  useEffect(() => {
+    if (password) {
+      validatePassword(password);
+    } else {
+      setPasswordErrors([]);
+    }
+  }, [password]);
+
+  const validatePassword = (pwd: string) => {
+    const errors: string[] = [];
+    if (pwd.length < 8) {
+      errors.push('Password must be at least 8 characters long.');
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      errors.push('Password must contain at least one uppercase letter.');
+    }
+    if (!/[a-z]/.test(pwd)) {
+      errors.push('Password must contain at least one lowercase letter.');
+    }
+    if (!/[0-9]/.test(pwd)) {
+      errors.push('Password must contain at least one number.');
+    }
+    setPasswordErrors(errors);
+    return errors.length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setMessage('');
+
+    if (!validatePassword(password)) {
+      setError('Please fix the errors in your password.');
+      return;
+    }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match.');
       return;
     }
 
     if (!token) {
-      setError('Invalid reset token');
+      setError('No reset token found. Please request a new link.');
       return;
     }
 
@@ -30,9 +65,15 @@ const ResetPasswordPage: React.FC = () => {
 
     try {
       await resetPassword(token, password);
-      navigate('/login');
-    } catch (err) {
-      setError('Failed to reset password. Please try again.');
+      setMessage('Password has been reset successfully! Redirecting to login...');
+      setTimeout(() => navigate('/login'), 3000);
+    } catch (error: any) {
+      const errorMessage = error.message || 'An unexpected error occurred.';
+      if (errorMessage.toLowerCase().includes('token')) {
+        setError('This reset link is invalid or has expired. Please request a new one.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -40,8 +81,12 @@ const ResetPasswordPage: React.FC = () => {
 
   return (
     <div className="auth-container">
-      <h2>Set New Password</h2>
+      <div className="auth-header">
+        <h1>Set a New Password</h1>
+      </div>
+
       {error && <div className="error-message">{error}</div>}
+      {message && <div className="success-message">{message}</div>}
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
@@ -54,37 +99,61 @@ const ResetPasswordPage: React.FC = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter new password"
+            placeholder="Enter your new password"
             required
           />
         </div>
 
+        {passwordErrors.length > 0 && (
+          <div className="password-requirements">
+            {passwordErrors.map((err, index) => (
+              <p key={index} className="error-text">
+                <FaExclamationCircle style={{ marginRight: '5px' }} />
+                {err}
+              </p>
+            ))}
+          </div>
+        )}
+
         <div className="form-group">
           <label htmlFor="confirmPassword">
             <FaLock style={{ marginRight: '8px' }} />
-            Confirm Password
+            Confirm New Password
           </label>
           <input
             id="confirmPassword"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm new password"
+            placeholder="Confirm your new password"
             required
           />
         </div>
 
-        <button type="submit" disabled={isLoading}>
+        <button type="submit" disabled={isLoading || !!message || passwordErrors.length > 0}>
           {isLoading ? (
             'Resetting...'
           ) : (
             <>
-              <FaKey style={{ marginRight: '8px' }} />
+              <FaCheckCircle style={{ marginRight: '8px' }} />
               Reset Password
             </>
           )}
         </button>
       </form>
+
+      {error.toLowerCase().includes('token') && (
+        <p className="auth-link">
+          <Link to="/forgot-password">Request a new reset link</Link>
+        </p>
+      )}
+
+      <p className="auth-link">
+        <Link to="/login">
+          <FaArrowLeft style={{ marginRight: '5px' }} />
+          Back to Login
+        </Link>
+      </p>
     </div>
   );
 };
