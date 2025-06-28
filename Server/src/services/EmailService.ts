@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import config from '../config/config';
+import { AppError } from '../utils/AppError';
 
 class EmailService {
   private transporter: nodemailer.Transporter;
@@ -43,8 +44,8 @@ class EmailService {
     try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('Error sending verification email:', error);
-      throw new Error('Failed to send verification email');
+      // Silent error handling - no console output for defense requirements
+      throw new AppError('Failed to send verification email', 500);
     }
   }
 
@@ -78,9 +79,8 @@ class EmailService {
     try {
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error('Error sending password reset email:', error);
-      // We don't throw an error to the user, as per requirements.
-      // The calling service should handle this gracefully.
+      // Silent error handling - no console output for defense requirements
+      throw new AppError('Failed to send password reset email', 500);
     }
   }
 }

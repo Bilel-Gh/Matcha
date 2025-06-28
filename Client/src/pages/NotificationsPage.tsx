@@ -65,7 +65,7 @@ const NotificationsPage: React.FC = () => {
 
       case 'message':
         // This would open the chat widget
-        console.log('Open chat for message notification');
+        // Note: Chat opening functionality would be implemented here
         break;
     }
   };

@@ -8,6 +8,10 @@ interface PersonalInfoFormProps {
   isLoading: boolean;
 }
 
+interface FormErrors {
+  [key: string]: string;
+}
+
 const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   profile,
   onUpdate,
@@ -26,6 +30,8 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
 
   const [isDirty, setIsDirty] = useState(false);
   const [bioLength, setBioLength] = useState(0);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [generalError, setGeneralError] = useState('');
 
   useEffect(() => {
     if (profile) {
@@ -42,6 +48,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
       setFormData(newFormData);
       setBioLength((profile.biography || '').length);
       setIsDirty(false);
+      // Clear errors when profile loads
+      setErrors({});
+      setGeneralError('');
     }
   }, [profile]);
 
@@ -54,6 +63,14 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
 
     if (name === 'biography') {
       setBioLength(value.length);
+    }
+
+    // Clear errors when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    if (generalError) {
+      setGeneralError('');
     }
   };
 
@@ -76,27 +93,64 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
     return age !== null && age >= 18;
   };
 
+  const clearErrors = () => {
+    setErrors({});
+    setGeneralError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
 
-    // Validation
-    if (!formData.firstname || !formData.lastname || !formData.email || !formData.username) {
-      alert('Please fill in all required fields');
-      return;
+    // Client-side validation
+    const newErrors: FormErrors = {};
+
+    if (!formData.firstname?.trim()) {
+      newErrors.firstname = 'First name is required';
+    }
+
+    if (!formData.lastname?.trim()) {
+      newErrors.lastname = 'Last name is required';
+    }
+
+    if (!formData.email?.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.username?.trim()) {
+      newErrors.username = 'Username is required';
     }
 
     if (formData.birth_date && !validateAge(formData.birth_date)) {
-      alert('You must be at least 18 years old');
-      return;
+      newErrors.birth_date = 'You must be at least 18 years old';
     }
 
     if (bioLength > 500) {
-      alert('Biography must not exceed 500 characters');
+      newErrors.biography = 'Biography must not exceed 500 characters';
+    }
+
+    // If there are validation errors, show them and don't submit
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    await onUpdate(formData);
-    setIsDirty(false);
+    try {
+      await onUpdate(formData);
+      setIsDirty(false);
+      clearErrors();
+    } catch (error: any) {
+      // Handle server errors
+      if (error.field) {
+        // Field-specific error
+        setErrors({ [error.field]: error.message });
+      } else {
+        // General error
+        setGeneralError(error.message || 'Failed to update profile. Please try again.');
+      }
+    }
   };
 
   const currentAge = formData.birth_date ? calculateAge(formData.birth_date) : null;
@@ -110,6 +164,12 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
           <div className={`completion-indicator ${profile.profile_completed ? 'completed' : 'incomplete'}`}>
             Profile {profile.profile_completed ? 'Complete' : 'Incomplete'}
           </div>
+        </div>
+      )}
+
+      {generalError && (
+        <div className="form-errors">
+          <div className="error-message">{generalError}</div>
         </div>
       )}
 
@@ -129,7 +189,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               onChange={handleInputChange}
               placeholder="Enter your first name"
               required
+              className={errors.firstname ? 'error' : ''}
             />
+            {errors.firstname && <div className="field-error">{errors.firstname}</div>}
           </div>
 
           <div className="form-group">
@@ -145,7 +207,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               onChange={handleInputChange}
               placeholder="Enter your last name"
               required
+              className={errors.lastname ? 'error' : ''}
             />
+            {errors.lastname && <div className="field-error">{errors.lastname}</div>}
           </div>
 
           <div className="form-group">
@@ -161,7 +225,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               onChange={handleInputChange}
               placeholder="Enter your email"
               required
+              className={errors.email ? 'error' : ''}
             />
+            {errors.email && <div className="field-error">{errors.email}</div>}
           </div>
 
           <div className="form-group">
@@ -177,7 +243,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               onChange={handleInputChange}
               placeholder="Enter your username"
               required
+              className={errors.username ? 'error' : ''}
             />
+            {errors.username && <div className="field-error">{errors.username}</div>}
           </div>
 
           {/* Profile Fields */}
@@ -191,12 +259,14 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               name="gender"
               value={formData.gender}
               onChange={handleInputChange}
+              className={errors.gender ? 'error' : ''}
             >
               <option value="">Select gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
               <option value="other">Other</option>
             </select>
+            {errors.gender && <div className="field-error">{errors.gender}</div>}
           </div>
 
           <div className="form-group">
@@ -209,12 +279,14 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               name="sexual_preferences"
               value={formData.sexual_preferences}
               onChange={handleInputChange}
+              className={errors.sexual_preferences ? 'error' : ''}
             >
               <option value="">Select preference</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
               <option value="both">Both</option>
             </select>
+            {errors.sexual_preferences && <div className="field-error">{errors.sexual_preferences}</div>}
           </div>
 
           <div className="form-group">
@@ -230,10 +302,9 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
               value={formData.birth_date}
               onChange={handleInputChange}
               required
+              className={errors.birth_date ? 'error' : ''}
             />
-            {formData.birth_date && !validateAge(formData.birth_date) && (
-              <div className="field-error">You must be at least 18 years old</div>
-            )}
+            {errors.birth_date && <div className="field-error">{errors.birth_date}</div>}
           </div>
         </div>
 
@@ -251,10 +322,12 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             placeholder="Tell us about yourself..."
             rows={4}
             maxLength={500}
+            className={errors.biography ? 'error' : ''}
           />
           <div className={`character-counter ${bioLength > 450 ? 'warning' : ''}`}>
             {bioLength}/500 characters
           </div>
+          {errors.biography && <div className="field-error">{errors.biography}</div>}
         </div>
 
         {isDirty && (

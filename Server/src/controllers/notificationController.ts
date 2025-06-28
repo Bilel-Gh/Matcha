@@ -30,10 +30,10 @@ export class NotificationController {
         }
       });
     } catch (error) {
-      console.error('Error getting notifications:', error);
-      res.status(500).json({
+      res.status(200).json({
         success: false,
-        message: 'Failed to get notifications'
+        message: 'Failed to get notifications',
+        error: 'NOTIFICATIONS_FETCH_ERROR'
       });
     }
   }
@@ -55,10 +55,10 @@ export class NotificationController {
         }
       });
     } catch (error) {
-      console.error('Error getting recent notifications:', error);
-      res.status(500).json({
+      res.status(200).json({
         success: false,
-        message: 'Failed to get recent notifications'
+        message: 'Failed to get recent notifications',
+        error: 'RECENT_NOTIFICATIONS_ERROR'
       });
     }
   }
@@ -87,15 +87,16 @@ export class NotificationController {
       });
     } catch (error) {
       if (error instanceof AppError) {
-        res.status(error.statusCode).json({
+        res.status(200).json({
           success: false,
-          message: error.message
+          message: error.message,
+          error: 'VALIDATION_ERROR'
         });
       } else {
-        console.error('Error marking notification as read:', error);
-        res.status(500).json({
+        res.status(200).json({
           success: false,
-          message: 'Failed to mark notification as read'
+          message: 'Failed to mark notification as read',
+          error: 'MARK_READ_ERROR'
         });
       }
     }
@@ -114,10 +115,10 @@ export class NotificationController {
         data: { marked_count: count }
       });
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-      res.status(500).json({
+      res.status(200).json({
         success: false,
-        message: 'Failed to mark all notifications as read'
+        message: 'Failed to mark all notifications as read',
+        error: 'MARK_ALL_READ_ERROR'
       });
     }
   }
@@ -135,10 +136,10 @@ export class NotificationController {
         data: { unread_count: count }
       });
     } catch (error) {
-      console.error('Error getting unread count:', error);
-      res.status(500).json({
+      res.status(200).json({
         success: false,
-        message: 'Failed to get unread count'
+        message: 'Failed to get unread count',
+        error: 'UNREAD_COUNT_ERROR'
       });
     }
   }
@@ -156,10 +157,10 @@ export class NotificationController {
         data: { deleted_count: count }
       });
     } catch (error) {
-      console.error('Error cleaning old notifications:', error);
-      res.status(500).json({
+      res.status(200).json({
         success: false,
-        message: 'Failed to clean old notifications'
+        message: 'Failed to clean old notifications',
+        error: 'CLEAN_NOTIFICATIONS_ERROR'
       });
     }
   }
@@ -184,15 +185,16 @@ export class NotificationController {
       });
     } catch (error) {
       if (error instanceof AppError) {
-        res.status(error.statusCode).json({
+        res.status(200).json({
           success: false,
-          message: error.message
+          message: error.message,
+          error: 'VALIDATION_ERROR'
         });
       } else {
-        console.error('Error deleting notification:', error);
-        res.status(500).json({
+        res.status(200).json({
           success: false,
-          message: 'Failed to delete notification'
+          message: 'Failed to delete notification',
+          error: 'DELETE_NOTIFICATION_ERROR'
         });
       }
     }

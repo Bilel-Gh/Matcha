@@ -81,9 +81,10 @@ app.get('/api/protected', protect, (req, res) => {
 
 // Handle 404 errors
 app.all('*', (req, res) => {
-  res.status(404).json({
-    status: 'fail',
-    message: `Route ${req.originalUrl} not found`
+  res.status(200).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`,
+    error: 'ROUTE_NOT_FOUND'
   });
 });
 

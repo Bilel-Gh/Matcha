@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaUserTie, FaCalendarAlt } from 'react-icons/fa';
-import axios from 'axios';
+import { FaUser, FaEnvelope, FaLock, FaCalendar, FaUserPlus } from 'react-icons/fa';
+import { getErrorMessage, getSuccessMessage, formatFieldError, ApiError } from '../../utils/errorMessages';
+
+interface FormErrors {
+  [key: string]: string;
+}
 
 const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -13,6 +17,7 @@ const RegisterPage: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -25,13 +30,63 @@ const RegisterPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  const clearErrors = () => {
+    setError('');
+    setFieldErrors({});
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearErrors();
     setSuccess('');
 
+    // Client-side validation
+    const newFieldErrors: FormErrors = {};
+
+    if (!username.trim()) {
+      newFieldErrors.username = 'Username is required';
+    } else if (username.trim().length < 3) {
+      newFieldErrors.username = 'Username must be at least 3 characters long';
+    }
+
+    if (!email.trim()) {
+      newFieldErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newFieldErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!password) {
+      newFieldErrors.password = 'Password is required';
+    } else if (password.length < 8) {
+      newFieldErrors.password = 'Password must be at least 8 characters long';
+    }
+
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      newFieldErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (!firstName.trim()) {
+      newFieldErrors.firstName = 'First name is required';
+    }
+
+    if (!lastName.trim()) {
+      newFieldErrors.lastName = 'Last name is required';
+    }
+
+    if (!birthDate) {
+      newFieldErrors.birthDate = 'Birth date is required';
+    } else {
+      const birth = new Date(birthDate);
+      const today = new Date();
+      const age = today.getFullYear() - birth.getFullYear();
+
+      if (age < 18) {
+        newFieldErrors.birthDate = 'You must be at least 18 years old to register';
+      }
+    }
+
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
       return;
     }
 
@@ -39,16 +94,20 @@ const RegisterPage: React.FC = () => {
 
     try {
       await register(username, email, password, firstName, lastName, birthDate);
-      setSuccess('Registration successful! Please check your email to verify your account.');
+      setSuccess(getSuccessMessage('REGISTRATION_SUCCESS'));
       setTimeout(() => {
         navigate('/login');
       }, 3000);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || err.response?.data?.details || 'Registration failed. Please try again.';
-        setError(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+
+      // Handle field-specific errors
+      if (apiError.field) {
+        const fieldError = formatFieldError(apiError);
+        setFieldErrors({ [fieldError.field!]: fieldError.message });
       } else {
-        setError('Registration failed. Please try again.');
+        // Handle general errors
+        setError(getErrorMessage(apiError));
       }
     } finally {
       setIsLoading(false);
@@ -61,11 +120,49 @@ const RegisterPage: React.FC = () => {
         <h1>Matcha</h1>
       </div>
       <h2>Create Account</h2>
+
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
+      {Object.keys(fieldErrors).length > 0 && (
+        <div className="error-message">
+          {Object.values(fieldErrors).map((err, idx) => (
+            <div key={idx}>{err}</div>
+          ))}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="form-grid">
+          <div className="form-group">
+            <label htmlFor="firstName">
+              <FaUser style={{ marginRight: '8px' }} />
+              First Name
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Enter your first name"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="lastName">
+              <FaUser style={{ marginRight: '8px' }} />
+              Last Name
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Enter your last name"
+              required
+            />
+          </div>
+
           <div className="form-group">
             <label htmlFor="username">
               <FaUser style={{ marginRight: '8px' }} />
@@ -97,38 +194,8 @@ const RegisterPage: React.FC = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="firstName">
-              <FaUserTie style={{ marginRight: '8px' }} />
-              First Name
-            </label>
-            <input
-              id="firstName"
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Enter your first name"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="lastName">
-              <FaUserTie style={{ marginRight: '8px' }} />
-              Last Name
-            </label>
-            <input
-              id="lastName"
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Enter your last name"
-              required
-            />
-          </div>
-
-          <div className="form-group">
             <label htmlFor="birthDate">
-              <FaCalendarAlt style={{ marginRight: '8px' }} />
+              <FaCalendar style={{ marginRight: '8px' }} />
               Birth Date
             </label>
             <input

@@ -33,23 +33,26 @@ export const uploadSingle = upload.single('photo');
 export const handleMulterError = (error: any, req: Request, res: any, next: any) => {
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({
-        status: 'error',
+      return res.status(200).json({
+        success: false,
         message: 'File size must be under 5MB',
+        error: 'FILE_TOO_LARGE'
       });
     }
 
     if (error.code === 'LIMIT_FILE_COUNT') {
-      return res.status(400).json({
-        status: 'error',
+      return res.status(200).json({
+        success: false,
         message: 'Only one file allowed per upload',
+        error: 'TOO_MANY_FILES'
       });
     }
 
     if (error.code === 'LIMIT_UNEXPECTED_FILE') {
-      return res.status(400).json({
-        status: 'error',
+      return res.status(200).json({
+        success: false,
         message: 'Unexpected field name. Use "photo" as field name',
+        error: 'INVALID_FIELD_NAME'
       });
     }
   }

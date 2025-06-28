@@ -2,13 +2,24 @@ export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
   public readonly details?: string[];
+  public readonly field?: string;
+  public readonly code?: string;
 
-  constructor(message: string | string[], statusCode: number = 500, isOperational: boolean = true) {
+  constructor(
+    message: string | string[],
+    statusCode: number = 500,
+    isOperational: boolean = true,
+    field?: string,
+    code?: string
+  ) {
     const mainMessage = Array.isArray(message) ? 'Validation Error' : message;
     super(mainMessage);
 
     this.statusCode = statusCode;
     this.isOperational = isOperational;
+    this.field = field;
+    this.code = code;
+
     if (Array.isArray(message)) {
       this.details = message;
     }
@@ -19,14 +30,20 @@ export class AppError extends Error {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string | string[]) {
-    super(message, 400);
+  constructor(message: string | string[], field?: string) {
+    super(message, 400, true, field, 'VALIDATION_ERROR');
+  }
+}
+
+export class AuthenticationError extends AppError {
+  constructor(message: string = 'Authentication failed', code: string = 'AUTH_FAILED') {
+    super(message, 401, true, undefined, code);
   }
 }
 
 export class NotFoundError extends AppError {
   constructor(message: string = 'Resource not found') {
-    super(message, 404);
+    super(message, 404, true, undefined, 'NOT_FOUND');
   }
 }
 
@@ -43,7 +60,19 @@ export class ForbiddenError extends AppError {
 }
 
 export class ConflictError extends AppError {
-  constructor(message: string = 'Conflict') {
-    super(message, 409);
+  constructor(message: string, field?: string, code?: string) {
+    super(message, 409, true, field, code || 'CONFLICT');
+  }
+}
+
+export class EmailExistsError extends ConflictError {
+  constructor() {
+    super('Email already exists', 'email', 'EMAIL_EXISTS');
+  }
+}
+
+export class UsernameExistsError extends ConflictError {
+  constructor() {
+    super('Username already taken', 'username', 'USERNAME_TAKEN');
   }
 }

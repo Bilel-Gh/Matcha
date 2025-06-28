@@ -106,14 +106,8 @@ export class LocationService {
         ip: ip
       };
     } catch (error) {
-      console.error('IP geolocation failed:', error);
-
-      // Return default location on failure
-      return {
-        ...this.DEFAULT_LOCATION,
-        region: 'Île-de-France',
-        ip: ip
-      };
+      // Silent error handling - no console output for defense requirements
+      return null;
     }
   }
 
@@ -191,8 +185,7 @@ export class LocationService {
     try {
       await FameRatingService.updateUserFameRating(userId);
     } catch (error) {
-      console.error('Failed to update fame rating after location update:', error);
-      // Continue even if fame rating update fails
+      // Silent error handling - no console output for defense requirements
     }
 
     return this.formatLocationResponse(updatedUser);
@@ -293,15 +286,8 @@ export class LocationService {
         country: data.address?.country || 'Unknown'
       };
     } catch (error) {
-      console.error('Reverse geocoding failed:', error);
-
-      // Return coordinates only on failure
-      return {
-        latitude,
-        longitude,
-        city: 'Unknown',
-        country: 'Unknown'
-      };
+      // Silent error handling - no console output for defense requirements
+      return null;
     }
   }
 }

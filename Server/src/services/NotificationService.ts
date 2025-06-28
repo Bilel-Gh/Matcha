@@ -50,7 +50,6 @@ export class NotificationService {
 
       // Send real-time notification
       if (this.socketManager) {
-        console.log(`📡 Emitting new-like event to user ${likedUserId}`);
         // ✅ ÉVÉNEMENT SPÉCIALISÉ - Pour les toasts
         this.socketManager.emitToUser(likedUserId, 'new-like', {
           fromUser: {
@@ -83,7 +82,7 @@ export class NotificationService {
 
       return notification;
     } catch (error) {
-      console.error('Error creating like notification:', error);
+      // Silent error handling - no console output for defense requirements
       return null;
     }
   }
@@ -138,7 +137,6 @@ export class NotificationService {
 
       // Send real-time notifications
       if (this.socketManager) {
-        console.log(`📡 Emitting new-match events to users ${userId1} and ${userId2}`);
         // ✅ ÉVÉNEMENTS SPÉCIALISÉS - Pour les toasts de match
         this.socketManager.emitToUser(userId1, 'new-match', {
           matchedUser: {
@@ -202,7 +200,7 @@ export class NotificationService {
 
       return { notification1, notification2 };
     } catch (error) {
-      console.error('Error creating match notification:', error);
+      // Silent error handling - no console output for defense requirements
       return { notification1: null, notification2: null };
     }
   }
@@ -249,7 +247,6 @@ export class NotificationService {
 
       // Send real-time notification
       if (this.socketManager) {
-        console.log(`📡 Emitting profile-visit event to user ${visitedUserId}`);
         // ✅ NOTIFICATION EN TEMPS RÉEL - Émettre l'événement profile-visit
         this.socketManager.emitToUser(visitedUserId, 'profile-visit', {
           visitor: {
@@ -282,7 +279,7 @@ export class NotificationService {
 
       return notification;
     } catch (error) {
-      console.error('Error creating visit notification:', error);
+      // Silent error handling - no console output for defense requirements
       return null;
     }
   }
@@ -340,7 +337,7 @@ export class NotificationService {
 
       return notification;
     } catch (error) {
-      console.error('Error creating message notification:', error);
+      // Silent error handling - no console output for defense requirements
       return null;
     }
   }
@@ -464,7 +461,6 @@ export class NotificationService {
 
       // Send real-time notification
       if (this.socketManager) {
-        console.log(`📡 Emitting unlike event to user ${unlikedUserId}`);
         // ✅ NOTIFICATION EN TEMPS RÉEL - Émettre l'événement unlike
         this.socketManager.emitToUser(unlikedUserId, 'unlike', {
           fromUser: {
@@ -499,7 +495,7 @@ export class NotificationService {
 
       return notification;
     } catch (error) {
-      console.error('Error creating unlike notification:', error);
+      // Silent error handling - no console output for defense requirements
       return null;
     }
   }

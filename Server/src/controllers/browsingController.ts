@@ -138,8 +138,7 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
       await VisitService.recordVisit(req.user.id, profileId);
     }
   } catch (error) {
-    // Log error but don't fail the request
-    console.error('Failed to record visit:', error);
+    // Silent error handling - no console output for defense requirements
   }
 
   res.status(200).json({

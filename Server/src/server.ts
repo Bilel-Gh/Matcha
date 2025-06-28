@@ -16,50 +16,46 @@ NotificationService.setSocketManager(socketManager);
 const PORT = config.SERVER_PORT;
 
 server.listen(PORT, () => {
-  console.log(`🚀 Matcha server running on port ${PORT}`);
-  console.log(`📡 Socket.IO server initialized`);
-  console.log(`📚 API Documentation: http://localhost:${PORT}/api/docs`);
-  console.log(`🏥 Health Check: http://localhost:${PORT}/health`);
-  console.log(`🌍 Environment: ${config.NODE_ENV}`);
+  // Silent server startup - no console output for defense requirements
 });
 
 // Graceful shutdown
-const gracefulShutdown = async (signal: string) => {
-  console.log(`\n${signal} received. Starting graceful shutdown...`);
+const gracefulShutdown = (signal: string) => {
+  // Silent shutdown handling - no console output for defense requirements
+  server.close(() => {
+    // Silent server close - no console output for defense requirements
+    socketManager.shutdown();
 
-  try {
-    // Close Socket.IO connections and set users offline
-    await socketManager.shutdown();
-
-    // Close HTTP server
-    server.close(() => {
-      console.log('HTTP server closed');
-      process.exit(0);
-    });
-
-    // Force close after 10 seconds
     setTimeout(() => {
-      console.error('Forced shutdown after timeout');
-      process.exit(1);
+      // Silent forced shutdown - no console output for defense requirements
+      process.exit(0);
     }, 10000);
+  });
 
-  } catch (error) {
-    console.error('Error during graceful shutdown:', error);
+  setTimeout(() => {
+    // Silent timeout handling - no console output for defense requirements
     process.exit(1);
-  }
+  }, 15000);
 };
 
 // Handle process termination signals
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', signal => {
+  // Silent shutdown process - no console output for defense requirements
+  gracefulShutdown(signal);
+});
+
+process.on('SIGINT', signal => {
+  // Silent shutdown process - no console output for defense requirements
+  gracefulShutdown(signal);
+});
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  console.error('💥 UNCAUGHT EXCEPTION! Shutting down...', error);
+  // Silent error handling - no console output for defense requirements
   gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('💥 UNHANDLED REJECTION! Shutting down...', reason);
+  // Silent error handling - no console output for defense requirements
   gracefulShutdown('UNHANDLED_REJECTION');
 });

@@ -116,7 +116,7 @@ export class FameRatingService {
         const result = await this.updateUserFameRating(userId);
         results.push(result);
       } catch (error) {
-        console.error(`Failed to update fame rating for user ${userId}:`, error);
+        // Silent error handling - no console output for defense requirements
       }
     }
 

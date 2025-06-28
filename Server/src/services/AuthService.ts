@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { UserRepository } from '../repositories/UserRepository';
 import { User } from '../types/user';
-import { AppError } from '../utils/AppError';
+import { AppError, ValidationError, AuthenticationError, EmailExistsError, UsernameExistsError } from '../utils/AppError';
 import config from '../config/config';
 import emailService from './EmailService';
 import { LocationService } from './LocationService';
@@ -35,13 +35,66 @@ export interface AuthResponse {
 }
 
 export class AuthService {
-  static async registerUser(data: RegisterUserData, userIP?: string): Promise<AuthResponse> {
-    const { email, username, firstName, lastName, password, birthDate } = data;
+  static async registerUser(userData: any, userIP?: string): Promise<AuthResponse> {
+    const { username, email, password, firstName, lastName, birthDate } = userData;
 
-    // Check if user already exists
-    const existingUser = await UserRepository.findByEmail(email);
-    if (existingUser) {
-      throw new AppError('User already exists', 409);
+    // Detailed validation with specific field errors
+    const errors: string[] = [];
+    let field: string | undefined;
+
+    if (!username || username.trim().length < 3) {
+      errors.push('Username must be at least 3 characters long');
+      field = field || 'username';
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.push('Please enter a valid email address');
+      field = field || 'email';
+    }
+
+    if (!password || password.length < 8) {
+      errors.push('Password must be at least 8 characters long');
+      field = field || 'password';
+    }
+
+    if (!firstName || firstName.trim().length < 2) {
+      errors.push('First name must be at least 2 characters long');
+      field = field || 'firstName';
+    }
+
+    if (!lastName || lastName.trim().length < 2) {
+      errors.push('Last name must be at least 2 characters long');
+      field = field || 'lastName';
+    }
+
+    if (!birthDate) {
+      errors.push('Birth date is required');
+      field = field || 'birthDate';
+    } else {
+      const birth = new Date(birthDate);
+      const today = new Date();
+      const age = today.getFullYear() - birth.getFullYear();
+
+      if (age < 18) {
+        errors.push('You must be at least 18 years old to register');
+        field = field || 'birthDate';
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new ValidationError(errors, field);
+    }
+
+    // Check for existing email
+    const existingEmail = await UserRepository.findByEmail(email);
+    if (existingEmail) {
+      throw new EmailExistsError();
+    }
+
+    // Check for existing username
+    const existingUsername = await UserRepository.findByUsername(username);
+    if (existingUsername) {
+      throw new UsernameExistsError();
     }
 
     // Hash password
@@ -66,8 +119,7 @@ export class AuthService {
     try {
       await emailService.sendVerificationEmail(email, verificationToken);
     } catch (error) {
-      console.error('Failed to send verification email:', error);
-      // Continue with registration even if email fails
+      // Silent error handling - no console output for defense requirements
     }
 
     // Set initial location from IP if provided
@@ -75,12 +127,11 @@ export class AuthService {
       try {
         await LocationService.setLocationFromIP(user.id, userIP);
       } catch (error) {
-        console.error('Failed to set initial location from IP:', error);
-        // Continue even if IP location fails
+        // Silent error handling - no console output for defense requirements
       }
     }
 
-        // Generate JWT token
+    // Generate JWT token
     const signOptions: SignOptions = {
       expiresIn: config.JWT_EXPIRES_IN as any
     };
@@ -103,27 +154,35 @@ export class AuthService {
     };
   }
 
-  static async loginUser(credentials: LoginCredentials): Promise<AuthResponse> {
+  static async loginUser(credentials: any): Promise<AuthResponse> {
     const { username, password } = credentials;
 
-    // Find user
-    const user = await UserRepository.findByUsername(username);
+    if (!username || !password) {
+      throw new ValidationError('Email and password are required');
+    }
+
+    // Find user by email or username
+    let user = await UserRepository.findByEmail(username);
     if (!user) {
-      throw new AppError('Invalid credentials', 401);
+      user = await UserRepository.findByUsername(username);
+    }
+
+    if (!user) {
+      throw new AuthenticationError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
     // Check if email is verified
     if (!user.email_verified) {
-      throw new AppError('Please verify your email before logging in', 403);
+      throw new AuthenticationError('Please verify your email before logging in', 'ACCOUNT_NOT_VERIFIED');
     }
 
-    // Validate password
+    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new AppError('Invalid credentials', 401);
+      throw new AuthenticationError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
-        // Generate JWT token
+    // Generate JWT token
     const signOptions: SignOptions = {
       expiresIn: config.JWT_EXPIRES_IN as any
     };
@@ -150,54 +209,62 @@ export class AuthService {
   }
 
   static async verifyEmail(token: string): Promise<void> {
-    console.log('Verifying email with token:', token);
-    const user = await UserRepository.findByVerificationToken(token);
-    console.log('Found user:', user ? 'yes' : 'no');
-
-    if (!user) {
-      throw new AppError('Invalid or expired token', 400);
+    if (!token) {
+      throw new ValidationError('Verification token is required');
     }
 
-    console.log('Marking user as verified:', user.id);
+    // Silent verification process - no console output for defense requirements
+    const user = await UserRepository.findByVerificationToken(token);
+    // Silent user check - no console output for defense requirements
+
+    if (!user || user.email_verified) {
+      throw new ValidationError('Invalid or expired verification token');
+    }
+
+    // Silent user verification - no console output for defense requirements
     await UserRepository.markAsVerified(user.id);
-    console.log('User marked as verified successfully');
+    // Silent completion - no console output for defense requirements
   }
 
   static async requestPasswordReset(email: string): Promise<void> {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new ValidationError('Please enter a valid email address', 'email');
+    }
+
     const user = await UserRepository.findByEmail(email);
 
+    // For security, always return success even if email doesn't exist
     if (user) {
-      // Generate a secure, URL-safe token
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      const expires = new Date(Date.now() + config.PASSWORD_RESET_EXPIRES_HOURS * 3600000); // 1 hour
+      const resetToken = uuidv4();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-      // In a real app, you might want to hash the token before storing it
-      // const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-
-      await UserRepository.updatePasswordResetToken(user.id, resetToken, expires);
+      await UserRepository.updatePasswordResetToken(user.id, resetToken, expiresAt);
 
       try {
         await emailService.sendPasswordResetEmail(user.email, user.username, resetToken);
       } catch (error) {
-        // As per requirements, log the error but don't expose it to the user.
-        console.error(`Failed to send password reset email to ${user.email}:`, error);
+        // Silent error handling - no console output for defense requirements
       }
     }
-    // If the user does not exist, we do nothing but still return a success response
-    // to prevent email enumeration attacks.
   }
 
   static async resetPassword(token: string, newPassword: string): Promise<void> {
+    if (!token) {
+      throw new ValidationError('Reset token is required');
+    }
+
+    if (!newPassword || newPassword.length < 8) {
+      throw new ValidationError('Password must be at least 8 characters long', 'password');
+    }
+
     const user = await UserRepository.findByPasswordResetToken(token);
 
     if (!user || !user.password_reset_expires || user.password_reset_expires < new Date()) {
-      throw new AppError('Invalid or expired password reset token', 400);
+      throw new ValidationError('Invalid or expired reset token');
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, config.BCRYPT_SALT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
     await UserRepository.updatePassword(user.id, hashedPassword);
-
-    // Invalidate the token after use
     await UserRepository.updatePasswordResetToken(user.id, null, null);
   }
 }

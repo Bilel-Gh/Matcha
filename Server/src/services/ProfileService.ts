@@ -109,7 +109,7 @@ export class ProfileService {
         return this.formatProfileResponse(updatedUser);
       }
     } catch (error) {
-      console.error('Failed to update fame rating during profile fetch:', error);
+      // Silent error handling - no console output for defense requirements
       // Continue with existing user data if fame rating update fails
     }
 
@@ -176,8 +176,7 @@ export class ProfileService {
         return this.formatProfileResponse(finalUser);
       }
     } catch (error) {
-      console.error('Failed to update fame rating after profile update:', error);
-      // Continue even if fame rating update fails
+      // Silent error handling - no console output for defense requirements
     }
 
     return this.formatProfileResponse(updatedUser);

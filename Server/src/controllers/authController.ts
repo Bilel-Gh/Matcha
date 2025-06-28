@@ -8,21 +8,26 @@ export const register = async (req: Request, res: Response) => {
   try {
     const userIP = LocationService.getUserIP(req);
     const response = await AuthService.registerUser(req.body, userIP);
-    res.status(201).json({
-      status: 'success',
+    res.status(200).json({
+      success: true,
       data: response,
+      message: 'Registration successful'
     });
   } catch (error) {
     if (error instanceof AppError) {
-      res.status(error.statusCode).json({
-        status: 'error',
+      res.status(200).json({
+        success: false,
         message: error.message,
+        code: error.code || 'REGISTRATION_FAILED',
+        error: error.code || 'REGISTRATION_FAILED',
+        field: error.field,
+        details: error.details
       });
     } else {
-      console.error('Registration error:', error);
-      res.status(500).json({
-        status: 'error',
+      res.status(200).json({
+        success: false,
         message: 'Internal server error',
+        error: 'INTERNAL_ERROR'
       });
     }
   }
@@ -32,19 +37,22 @@ export const login = async (req: Request, res: Response) => {
   try {
     const response = await AuthService.loginUser(req.body);
     res.status(200).json({
-      status: 'success',
+      success: true,
       data: response,
+      message: 'Login successful'
     });
   } catch (error) {
     if (error instanceof AppError) {
-      res.status(error.statusCode).json({
-        status: 'error',
+      res.status(200).json({
+        success: false,
         message: error.message,
+        error: 'LOGIN_FAILED'
       });
     } else {
-      res.status(500).json({
-        status: 'error',
+      res.status(200).json({
+        success: false,
         message: 'Internal server error',
+        error: 'INTERNAL_ERROR'
       });
     }
   }
@@ -169,14 +177,15 @@ export const forgotPassword = async (req: Request, res: Response) => {
   try {
     await AuthService.requestPasswordReset(req.body.email);
     res.status(200).json({
-      status: 'success',
-      message: 'If an account with this email exists, a password reset link has been sent.',
+      success: true,
+      data: {},
+      message: 'If an account with this email exists, a password reset link has been sent.'
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
     res.status(200).json({
-      status: 'success',
-      message: 'If an account with this email exists, a password reset link has been sent.',
+      success: true,
+      data: {},
+      message: 'If an account with this email exists, a password reset link has been sent.'
     });
   }
 };
@@ -185,19 +194,22 @@ export const resetPassword = async (req: Request, res: Response) => {
   try {
     await AuthService.resetPassword(req.body.token, req.body.new_password);
     res.status(200).json({
-      status: 'success',
-      message: 'Password has been reset successfully.',
+      success: true,
+      data: {},
+      message: 'Password has been reset successfully.'
     });
   } catch (error) {
     if (error instanceof AppError) {
-      res.status(error.statusCode).json({
-        status: 'error',
+      res.status(200).json({
+        success: false,
         message: error.message,
+        error: 'PASSWORD_RESET_FAILED'
       });
     } else {
-      res.status(500).json({
-        status: 'error',
+      res.status(200).json({
+        success: false,
         message: 'Internal server error',
+        error: 'INTERNAL_ERROR'
       });
     }
   }

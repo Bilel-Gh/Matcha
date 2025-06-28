@@ -1,48 +1,70 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaEnvelope, FaArrowLeft } from 'react-icons/fa';
-import axios from 'axios';
+import authService from '../../services/authService';
+import { getErrorMessage, getSuccessMessage, formatFieldError, ApiError } from '../../utils/errorMessages';
+
+interface FormErrors {
+  [key: string]: string;
+}
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSent, setIsSent] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
-  const { forgotPassword } = useAuth();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
+  // Redirect if already authenticated when component mounts
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (cooldown > 0) {
-      timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+    if (isAuthenticated) {
+      navigate('/profile', { replace: true });
     }
-    return () => clearTimeout(timer);
-  }, [cooldown]);
+  }, [isAuthenticated, navigate]);
+
+  const clearErrors = () => {
+    setError('');
+    setFieldErrors({});
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (cooldown > 0) {
-      setError(`Please wait ${cooldown} seconds before trying again.`);
+    clearErrors();
+    setSuccess('');
+
+    // Client-side validation
+    const newFieldErrors: FormErrors = {};
+
+    if (!email.trim()) {
+      newFieldErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newFieldErrors.email = 'Please enter a valid email address';
+    }
+
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
       return;
     }
 
-    setError('');
-    setMessage('');
     setIsLoading(true);
 
     try {
-      await forgotPassword(email);
-      setMessage('If an account with this email exists, a password reset link has been sent.');
-      setIsSent(true);
-      setCooldown(60); // 60-second cooldown
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || 'Failed to send reset link.';
-        setError(errorMessage);
+      await authService.forgotPassword(email);
+      setSuccess(getSuccessMessage('PASSWORD_RESET_SENT'));
+      setEmail(''); // Clear the form
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+
+      // Handle field-specific errors
+      if (apiError.field) {
+        const fieldError = formatFieldError(apiError);
+        setFieldErrors({ [fieldError.field!]: fieldError.message });
       } else {
-        setError('An unexpected error occurred. Please try again.');
+        // Handle general errors
+        setError(getErrorMessage(apiError));
       }
     } finally {
       setIsLoading(false);
@@ -57,38 +79,35 @@ const ForgotPasswordPage: React.FC = () => {
       </div>
 
       {error && <div className="error-message">{error}</div>}
-      {message && <div className="success-message">{message}</div>}
-
-      {!isSent ? (
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">
-              <FaEnvelope style={{ marginRight: '8px' }} />
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
-              required
-            />
-          </div>
-
-          <button type="submit" disabled={isLoading || cooldown > 0}>
-            {isLoading
-              ? 'Sending Link...'
-              : cooldown > 0
-              ? `Resend in ${cooldown}s`
-              : 'Send Recovery Link'}
-          </button>
-        </form>
-      ) : (
-        <div className="resend-info">
-          <p>You can request another link in {cooldown} seconds.</p>
+      {success && <div className="success-message">{success}</div>}
+      {Object.keys(fieldErrors).length > 0 && (
+        <div className="error-message">
+          {Object.values(fieldErrors).map((err, idx) => (
+            <div key={idx}>{err}</div>
+          ))}
         </div>
       )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label htmlFor="email">
+            <FaEnvelope style={{ marginRight: '8px' }} />
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email address"
+            required
+          />
+        </div>
+
+        <button type="submit" disabled={isLoading}>
+          {isLoading ? 'Sending Link...' : 'Send Recovery Link'}
+        </button>
+      </form>
 
       <p className="auth-link">
         <Link to="/login">

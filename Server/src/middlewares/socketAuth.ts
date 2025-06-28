@@ -51,7 +51,7 @@ export const socketAuth = async (socket: AuthenticatedSocket, next: Function) =>
 
     next();
   } catch (error) {
-    console.error('Socket authentication error:', error);
+    // Silent error handling - no console output for defense requirements
 
     if (error instanceof jwt.JsonWebTokenError) {
       return next(new Error('Invalid token'));

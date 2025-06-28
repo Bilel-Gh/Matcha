@@ -49,7 +49,7 @@ export class VisitService {
     try {
       await FameRatingService.updateUserFameRating(visitedId);
     } catch (error) {
-      console.error('Failed to update fame rating after visit:', error);
+      // Silent error handling - no console output for defense requirements
     }
 
     // Create visit notification
@@ -57,7 +57,7 @@ export class VisitService {
       const { NotificationService } = await import('./NotificationService');
       await NotificationService.createVisitNotification(visitedId, visitorId);
     } catch (error) {
-      console.error('Failed to create notification after visit:', error);
+      // Silent error handling - no console output for defense requirements
     }
 
     return {

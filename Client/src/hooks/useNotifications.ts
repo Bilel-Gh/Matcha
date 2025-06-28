@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Notification, NotificationSummary } from '../types/notifications';
-import { NotificationService } from '../services/notificationService';
+import { Notification } from '../types/notifications';
+import notificationService from '../services/notificationService';
 import { useAuth } from './useAuth';
 import { useChatSocket } from './useChatSocket';
 
@@ -30,7 +30,7 @@ export const useNotifications = () => {
     setError(null);
 
     try {
-      const data = await NotificationService.getNotifications(token, page, 20, type);
+      const data = await notificationService.getNotifications(token, page, type);
 
       if (page === 1) {
         setNotifications(data.notifications);
@@ -301,7 +301,7 @@ export const useNotifications = () => {
     if (!token) return;
 
     try {
-      const count = await NotificationService.getUnreadCount(token);
+      const count = await notificationService.getUnreadCount(token);
       setUnreadCount(count);
     } catch (err) {
     }
@@ -312,7 +312,7 @@ export const useNotifications = () => {
     if (!token) return;
 
     try {
-      await NotificationService.markAsRead(token, notificationId);
+      await notificationService.markAsRead(token, notificationId);
 
       // Update local state IMMÉDIATEMENT
       setNotifications(prev =>
@@ -339,7 +339,7 @@ export const useNotifications = () => {
     if (!token) return;
 
     try {
-      await NotificationService.markAllAsRead(token);
+      await notificationService.markAllAsRead(token);
 
       // Update local state IMMÉDIATEMENT
       setNotifications(prev =>
@@ -362,7 +362,7 @@ export const useNotifications = () => {
     if (!token) return;
 
     try {
-      await NotificationService.deleteNotification(token, notificationId);
+      await notificationService.deleteNotification(token, notificationId);
 
       // Update local state IMMÉDIATEMENT
       setNotifications(prev => {

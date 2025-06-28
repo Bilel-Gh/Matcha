@@ -1,12 +1,5 @@
 import { Router } from 'express';
 import * as authController from '../controllers/authController';
-import { validateBody } from '../middlewares/validator';
-import {
-  validateRegister,
-  validateLogin,
-  validateForgotPassword,
-  validateResetPassword
-} from '../utils/validators';
 
 const router = Router();
 
@@ -51,7 +44,7 @@ const router = Router();
  *       400:
  *         description: Invalid input data
  */
-router.post('/register', validateBody(validateRegister), authController.register);
+router.post('/register', authController.register);
 
 /**
  * @swagger
@@ -86,7 +79,7 @@ router.post('/register', validateBody(validateRegister), authController.register
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', validateBody(validateLogin), authController.login);
+router.post('/login', authController.login);
 
 /**
  * @swagger
@@ -132,7 +125,7 @@ router.get('/verify/:token', authController.verifyEmail);
  *       404:
  *         description: User not found
  */
-router.post('/forgot-password', validateBody(validateForgotPassword), authController.forgotPassword);
+router.post('/forgot-password', authController.forgotPassword);
 
 /**
  * @swagger
@@ -161,6 +154,6 @@ router.post('/forgot-password', validateBody(validateForgotPassword), authContro
  *       400:
  *         description: Invalid or expired token
  */
-router.post('/reset-password', validateBody(validateResetPassword), authController.resetPassword);
+router.post('/reset-password', authController.resetPassword);
 
 export default router;

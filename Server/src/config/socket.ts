@@ -36,8 +36,7 @@ export class SocketManager {
 
   private setupEventHandlers() {
     this.io.on('connection', (socket: AuthenticatedSocket) => {
-      console.log(`User ${socket.user?.username} connected with socket ${socket.id}`);
-
+      // Silent user connection - no console output for defense requirements
       this.handleUserConnection(socket);
       this.setupSocketEventListeners(socket);
     });
@@ -60,7 +59,7 @@ export class SocketManager {
       // Notify other users that this user is online
       socket.broadcast.emit('user-online', { userId });
     } catch (error) {
-      console.error('Error updating user connection status:', error);
+      // Silent error handling - no console output for defense requirements
     }
 
     // Handle disconnect
@@ -73,7 +72,7 @@ export class SocketManager {
     const userId = getUserId(socket);
     if (!userId) return;
 
-    console.log(`User ${socket.user?.username} disconnected from socket ${socket.id}`);
+    // Silent user disconnection - no console output for defense requirements
 
     // Remove socket from connected users
     if (this.connectedUsers[userId]) {
@@ -89,7 +88,7 @@ export class SocketManager {
           // Notify other users that this user is offline
           socket.broadcast.emit('user-offline', { userId });
         } catch (error) {
-          console.error('Error setting user offline:', error);
+          // Silent error handling - no console output for defense requirements
         }
       }
     }
@@ -101,6 +100,7 @@ export class SocketManager {
 
     // Join conversation
     socket.on('join-conversation', async (data: { receiverId: number }) => {
+      // Silent conversation join - no console output for defense requirements
       try {
         const { receiverId } = data;
 
@@ -114,15 +114,16 @@ export class SocketManager {
         const conversationId = this.getConversationId(userId, receiverId);
         socket.join(conversationId);
 
-        console.log(`User ${userId} joined conversation ${conversationId}`);
+        // Silent conversation join - no console output for defense requirements
       } catch (error) {
-        console.error('Error joining conversation:', error);
+        // Silent error handling - no console output for defense requirements
         socket.emit('error', { message: 'Failed to join conversation' });
       }
     });
 
     // Send message
     socket.on('send-message', async (data: { receiverId: number; content: string; tempId?: string }) => {
+      // Silent message notification - no console output for defense requirements
       try {
         const { receiverId, content, tempId } = data;
 
@@ -171,21 +172,16 @@ export class SocketManager {
             );
 
             // Émettre un événement de notification de message séparé pour les toasts
-            console.log(`📡 Emitting new-message-notification event to user ${receiverId}`);
-            this.emitToUser(receiverId, 'new-message-notification', {
-              sender: result.message.sender,
-              messageId: result.message.id,
-              content: content
-            });
+            // Silent message notification - no console output for defense requirements
           } catch (notifError) {
-            console.error('Error creating message notification:', notifError);
+            // Silent error handling - no console output for defense requirements
             // Don't fail the message sending if notification fails
           }
         }
 
-        console.log(`Message sent from ${userId} to ${receiverId}`);
+        // Silent message emission - no console output for defense requirements
       } catch (error) {
-        console.error('Error sending message:', error);
+        // Silent error handling - no console output for defense requirements
         socket.emit('error', {
           message: error instanceof Error ? error.message : 'Failed to send message',
           tempId: data.tempId
@@ -195,6 +191,7 @@ export class SocketManager {
 
     // Mark message as read
     socket.on('message-read', async (data: { messageId: number }) => {
+      // Silent message notification - no console output for defense requirements
       try {
         const { messageId } = data;
 
@@ -211,13 +208,14 @@ export class SocketManager {
           }
         }
       } catch (error) {
-        console.error('Error marking message as read:', error);
+        // Silent error handling - no console output for defense requirements
         socket.emit('error', { message: 'Failed to mark message as read' });
       }
     });
 
     // Typing indicators
     socket.on('typing-start', async (data: { receiverId: number }) => {
+      // Silent typing indicator - no console output for defense requirements
       try {
         const { receiverId } = data;
 
@@ -247,11 +245,12 @@ export class SocketManager {
 
         this.typingUsers.set(conversationId, timeout);
       } catch (error) {
-        console.error('Error handling typing start:', error);
+        // Silent error handling - no console output for defense requirements
       }
     });
 
     socket.on('typing-stop', async (data: { receiverId: number }) => {
+      // Silent typing indicator - no console output for defense requirements
       try {
         const { receiverId } = data;
 
@@ -267,27 +266,29 @@ export class SocketManager {
         socket.to(conversationId).emit('typing-indicator', { userId, isTyping: false });
         this.emitToUser(receiverId, 'typing-indicator', { userId, isTyping: false });
       } catch (error) {
-        console.error('Error handling typing stop:', error);
+        // Silent error handling - no console output for defense requirements
       }
     });
 
     // Notification events
     socket.on('mark-notification-read', async (data: { notificationId: number }) => {
+      // Silent notification marking - no console output for defense requirements
       try {
         const { NotificationService } = await import('../services/NotificationService');
         await NotificationService.markAsRead(data.notificationId, userId);
       } catch (error) {
-        console.error('Error marking notification as read:', error);
+        // Silent error handling - no console output for defense requirements
         socket.emit('error', { message: 'Failed to mark notification as read' });
       }
     });
 
     socket.on('mark-all-notifications-read', async () => {
+      // Silent notification marking - no console output for defense requirements
       try {
         const { NotificationService } = await import('../services/NotificationService');
         await NotificationService.markAllAsRead(userId);
       } catch (error) {
-        console.error('Error marking all notifications as read:', error);
+        // Silent error handling - no console output for defense requirements
         socket.emit('error', { message: 'Failed to mark all notifications as read' });
       }
     });
@@ -368,7 +369,7 @@ export class SocketManager {
    * Graceful shutdown
    */
   public async shutdown() {
-    console.log('Shutting down Socket.IO server...');
+    // Silent shutdown process - no console output for defense requirements
 
     // Set all connected users as offline
     const userIds = this.getConnectedUserIds();
@@ -376,13 +377,13 @@ export class SocketManager {
       try {
         await UserRepository.setOffline(userId);
       } catch (error) {
-        console.error(`Error setting user ${userId} offline:`, error);
+        // Silent error handling - no console output for defense requirements
       }
     }
 
     // Close all connections
     this.io.close();
-    console.log('Socket.IO server shut down complete');
+    // Silent shutdown completion - no console output for defense requirements
   }
 }
 

@@ -28,7 +28,7 @@ export class NotificationRepository {
           ? JSON.parse(notification.data)
           : notification.data;
       } catch (error) {
-        console.error('Failed to parse notification data:', error);
+        // Silent error handling - no console output for defense requirements
         notification.data = {};
       }
     }
@@ -85,7 +85,7 @@ export class NotificationRepository {
             ? JSON.parse(notification.data)
             : notification.data;
         } catch (error) {
-          console.error('Failed to parse notification data:', error);
+          // Silent error handling - no console output for defense requirements
           notification.data = {};
         }
       }
@@ -119,7 +119,7 @@ export class NotificationRepository {
           ? JSON.parse(notification.data)
           : notification.data;
       } catch (error) {
-        console.error('Failed to parse notification data:', error);
+        // Silent error handling - no console output for defense requirements
         notification.data = {};
       }
     }
@@ -189,7 +189,7 @@ export class NotificationRepository {
             ? JSON.parse(notification.data)
             : notification.data;
         } catch (error) {
-          console.error('Failed to parse notification data:', error);
+          // Silent error handling - no console output for defense requirements
           notification.data = {};
         }
       }
@@ -261,7 +261,7 @@ export class NotificationRepository {
           ? JSON.parse(row.data)
           : row.data;
       } catch (error) {
-        console.error('Failed to parse notification data:', error);
+        // Silent error handling - no console output for defense requirements
         parsedData = {};
       }
     }

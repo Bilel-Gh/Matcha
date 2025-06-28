@@ -79,13 +79,23 @@ const ProfilePage: React.FC = () => {
       }
 
       showSuccessMessage('Profile updated successfully!');
-    } catch (error) {
+    } catch (error: any) {
+      // Check if it's a structured error from our profileService
+      if (error.success === false) {
+        // This is a structured error, re-throw it so PersonalInfoForm can handle it
+        throw error;
+      }
+
+      // Handle other errors (network, etc.)
       if (axios.isAxiosError(error)) {
         const errorMsg = error.response?.data?.message || 'Failed to update profile. Please try again.';
         showErrorMessage(Array.isArray(errorMsg) ? errorMsg.join(', ') : errorMsg);
       } else {
         showErrorMessage('Failed to update profile. Please try again.');
       }
+
+      // Re-throw the error so PersonalInfoForm knows the operation failed
+      throw error;
     } finally {
       setIsUpdatingProfile(false);
     }

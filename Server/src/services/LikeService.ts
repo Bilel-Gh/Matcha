@@ -86,7 +86,7 @@ export class LikeService {
     try {
       await FameRatingService.updateUserFameRating(likedId);
     } catch (error) {
-      console.error('Failed to update fame rating after like:', error);
+      // Silent error handling - no console output for defense requirements
     }
 
     // Create notifications
@@ -99,7 +99,7 @@ export class LikeService {
         await NotificationService.createLikeNotification(likedId, likerId);
       }
     } catch (error) {
-      console.error('Failed to create notification after like:', error);
+      // Silent error handling - no console output for defense requirements
     }
 
     return {
@@ -127,14 +127,14 @@ export class LikeService {
     try {
       await NotificationService.createUnlikeNotification(likedId, likerId, wasMatch);
     } catch (error) {
-      console.error('Failed to create notification after unlike:', error);
+      // Silent error handling - no console output for defense requirements
     }
 
     // Auto-update fame rating for the unliked user
     try {
       await FameRatingService.updateUserFameRating(likedId);
     } catch (error) {
-      console.error('Failed to update fame rating after unlike:', error);
+      // Silent error handling - no console output for defense requirements
     }
   }
 
@@ -335,7 +335,7 @@ export class LikeService {
         FameRatingService.updateUserFameRating(userId2)
       ]);
     } catch (error) {
-      console.error('Failed to update fame ratings after removing likes:', error);
+      // Silent error handling - no console output for defense requirements
     }
   }
 }

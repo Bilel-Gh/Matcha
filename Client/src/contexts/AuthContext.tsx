@@ -74,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (username: string, password: string) => {
     try {
       const response = await authService.login({ username, password });
-      const { token: newToken, user: userData } = response.data.data;
+      const { token: newToken, user: userData } = response;
 
       setToken(newToken);
       setUser(userData);

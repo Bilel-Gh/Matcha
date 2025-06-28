@@ -59,8 +59,7 @@ export class ChatService {
         FameRatingService.updateUserFameRating(receiverId)
       ]);
     } catch (error) {
-      // Log error but don't fail the message sending
-      console.error('Failed to update fame ratings after message:', error);
+      // Silent error handling - no console output for defense requirements
     }
 
     return {

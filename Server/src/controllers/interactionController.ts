@@ -324,12 +324,13 @@ export const getInteractionStatus = asyncHandler(async (req: Request, res: Respo
   ]);
 
   res.status(200).json({
-    status: 'success',
+    success: true,
     data: {
       like_status: likeStatus,
       block_status: blockStatus,
       has_reported: hasReported,
     },
+    message: 'Interaction status retrieved successfully'
   });
 });
 

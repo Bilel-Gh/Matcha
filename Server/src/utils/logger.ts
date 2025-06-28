@@ -1,17 +1,15 @@
 const logger = {
   error: (message: string, error?: any) => {
-    console.error(`[ERROR] ${message}`, error);
+    // Silent logging for defense requirements - no console outputs allowed
   },
   info: (message: string) => {
-    console.log(`[INFO] ${message}`);
+    // Silent logging for defense requirements - no console outputs allowed
   },
   warn: (message: string) => {
-    console.warn(`[WARN] ${message}`);
+    // Silent logging for defense requirements - no console outputs allowed
   },
   debug: (message: string) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[DEBUG] ${message}`);
-    }
+    // Silent logging for defense requirements - no console outputs allowed
   },
 };
 

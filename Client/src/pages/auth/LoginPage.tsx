@@ -2,12 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaUser, FaLock, FaSignInAlt } from 'react-icons/fa';
-import axios from 'axios';
+import { getErrorMessage, getSuccessMessage, formatFieldError, ApiError } from '../../utils/errorMessages';
+
+interface FormErrors {
+  [key: string]: string;
+}
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
@@ -19,20 +25,48 @@ const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  const clearErrors = () => {
+    setError('');
+    setFieldErrors({});
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    clearErrors();
+    setSuccess('');
+
+    // Client-side validation
+    const newFieldErrors: FormErrors = {};
+
+    if (!username.trim()) {
+      newFieldErrors.username = 'Email or username is required';
+    }
+
+    if (!password) {
+      newFieldErrors.password = 'Password is required';
+    }
+
+    if (Object.keys(newFieldErrors).length > 0) {
+      setFieldErrors(newFieldErrors);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       await login(username, password);
+      setSuccess(getSuccessMessage('LOGIN_SUCCESS'));
       navigate('/profile');
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || 'Invalid username or password';
-        setError(errorMessage);
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+
+      // Handle field-specific errors
+      if (apiError.field) {
+        const fieldError = formatFieldError(apiError);
+        setFieldErrors({ [fieldError.field!]: fieldError.message });
       } else {
-        setError('An unexpected error occurred. Please try again.');
+        // Handle general errors with user-friendly messages
+        setError(getErrorMessage(apiError));
       }
     } finally {
       setIsLoading(false);
@@ -44,7 +78,16 @@ const LoginPage: React.FC = () => {
       <div className="auth-header">
         <h1>Matcha</h1>
       </div>
+
       {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
+      {Object.keys(fieldErrors).length > 0 && (
+        <div className="error-message">
+          {Object.values(fieldErrors).map((err, idx) => (
+            <div key={idx}>{err}</div>
+          ))}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="form-group">
