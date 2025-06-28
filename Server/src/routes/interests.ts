@@ -1,9 +1,16 @@
 import { Router } from 'express';
 import * as interestController from '../controllers/interestController';
-import { validate } from '../middlewares/validation';
-import { interestCreateSchema, interestSearchSchema } from '../utils/validation';
+import { protect } from '../middlewares/auth';
+import { validateBody, validateQuery } from '../middlewares/validator';
+import {
+  validateInterestCreate,
+  validateInterestSearch,
+} from '../utils/validators';
 
 const router = Router();
+
+// All interest routes require authentication
+router.use(protect);
 
 /**
  * @swagger
@@ -44,6 +51,8 @@ const router = Router();
  *                       type: array
  *                       items:
  *                         $ref: '#/components/schemas/Interest'
+ *       401:
+ *         description: Unauthorized
  */
 router.get('/', interestController.getAllInterests);
 
@@ -81,8 +90,10 @@ router.get('/', interestController.getAllInterests);
  *                         $ref: '#/components/schemas/Interest'
  *       400:
  *         description: Missing or invalid search query
+ *       401:
+ *         description: Unauthorized
  */
-router.get('/search', interestController.searchInterests);
+router.get('/search', validateQuery(validateInterestSearch), interestController.searchInterests);
 
 /**
  * @swagger
@@ -128,7 +139,9 @@ router.get('/search', interestController.searchInterests);
  *         description: Invalid input data
  *       409:
  *         description: Interest already exists
+ *       401:
+ *         description: Unauthorized
  */
-router.post('/', validate(interestCreateSchema), interestController.createInterest);
+router.post('/', validateBody(validateInterestCreate), interestController.createInterest);
 
 export default router;

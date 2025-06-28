@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import * as profileController from '../controllers/profileController';
 import { protect } from '../middlewares/auth';
-import { validate } from '../middlewares/validation';
-import { profileUpdateSchema, passwordChangeSchema } from '../utils/validation';
+import { validateBody } from '../middlewares/validator';
+import { validateProfileUpdate, validatePasswordChange } from '../utils/validators';
 
 const router = Router();
 
@@ -153,12 +153,12 @@ router.get('/', profileController.getProfile);
  *       401:
  *         description: Unauthorized
  */
-router.put('/', validate(profileUpdateSchema), profileController.updateProfile);
+router.put('/', protect, validateBody(validateProfileUpdate), profileController.updateProfile);
 
 /**
  * @swagger
- * /api/profile/password:
- *   put:
+ * /api/profile/change-password:
+ *   post:
  *     summary: Change user password
  *     tags: [Profile]
  *     security:
@@ -199,7 +199,7 @@ router.put('/', validate(profileUpdateSchema), profileController.updateProfile);
  *       401:
  *         description: Unauthorized
  */
-router.put('/password', validate(passwordChangeSchema), profileController.changePassword);
+router.post('/change-password', protect, validateBody(validatePasswordChange), profileController.changePassword);
 
 /**
  * @swagger
@@ -296,6 +296,6 @@ router.put('/password', validate(passwordChangeSchema), profileController.change
  *       404:
  *         description: User not found
  */
-router.get('/user/:userId', profileController.getUserProfile);
+router.get('/user/:userId', protect, profileController.getUserProfile);
 
 export default router;

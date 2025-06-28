@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import * as locationController from '../controllers/locationController';
 import { protect } from '../middlewares/auth';
-import { validate } from '../middlewares/validation';
-import { locationUpdateSchema } from '../utils/validation';
+import { validateBody } from '../middlewares/validator';
+import { validateLocationUpdate } from '../utils/validators';
 
 const router = Router();
 
@@ -147,7 +147,7 @@ router.get('/profile/location', protect, locationController.getUserLocation);
  *       401:
  *         description: Unauthorized
  */
-router.put('/profile/location', protect, validate(locationUpdateSchema), locationController.updateUserLocation);
+router.put('/profile/location', protect, validateBody(validateLocationUpdate), locationController.updateUserLocation);
 
 /**
  * @swagger

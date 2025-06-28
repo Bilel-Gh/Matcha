@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import * as interactionController from '../controllers/interactionController';
 import { protect } from '../middlewares/auth';
-import { validate } from '../middlewares/validation';
-import { reportUserSchema, blockUserSchema } from '../utils/validation';
+import { validateBody } from '../middlewares/validator';
+import { validateReportUser, validateBlockUser } from '../utils/validators';
 
 const router = Router();
 
@@ -419,7 +419,7 @@ router.get('/visits-given', interactionController.getVisitsGiven);
  *       409:
  *         description: User already blocked
  */
-router.post('/block/:userId', interactionController.blockUser);
+router.post('/block/:userId', validateBody(validateBlockUser), interactionController.blockUser);
 
 /**
  * @swagger
@@ -442,7 +442,7 @@ router.post('/block/:userId', interactionController.blockUser);
  *       404:
  *         description: Block not found
  */
-router.delete('/block/:userId', interactionController.unblockUser);
+router.delete('/unblock/:userId', interactionController.unblockUser);
 
 /**
  * @swagger
@@ -491,7 +491,7 @@ router.delete('/block/:userId', interactionController.unblockUser);
  *                     count:
  *                       type: integer
  */
-router.get('/blocked', interactionController.getBlockedUsers);
+router.get('/blocks', interactionController.getBlockedUsers);
 
 /**
  * @swagger
@@ -577,7 +577,7 @@ router.get('/block-status/:userId', interactionController.getBlockStatus);
  *       429:
  *         description: Already reported this user recently
  */
-router.post('/report/:userId', validate(reportUserSchema), interactionController.reportUser);
+router.post('/report/:userId', validateBody(validateReportUser), interactionController.reportUser);
 
 /**
  * @swagger
@@ -629,7 +629,7 @@ router.post('/report/:userId', validate(reportUserSchema), interactionController
  *                     count:
  *                       type: integer
  */
-router.get('/my-reports', interactionController.getMyReports);
+router.get('/reports', interactionController.getMyReports);
 
 /**
  * @swagger

@@ -1,24 +1,13 @@
 import { Router } from 'express';
 import * as chatController from '../controllers/chatController';
 import { protect } from '../middlewares/auth';
-import { validate, validateQuery } from '../middlewares/validation';
-import { z } from 'zod';
+import { validateBody, validateQuery } from '../middlewares/validator';
+import { validateSendMessage, validateSearchConversations } from '../utils/validators';
 
 const router = Router();
 
 // All chat routes require authentication
 router.use(protect);
-
-// Validation schemas
-const sendMessageSchema = z.object({
-  receiverId: z.number().int().positive(),
-  content: z.string().min(1).max(1000),
-  tempId: z.string().optional(),
-});
-
-const searchSchema = z.object({
-  q: z.string().min(2).max(100),
-});
 
 /**
  * @swagger
@@ -158,7 +147,7 @@ router.get('/conversations', chatController.getConversations);
  *       401:
  *         description: Unauthorized
  */
-router.get('/conversations/search', validateQuery(searchSchema), chatController.searchConversations);
+router.get('/conversations/search', validateQuery(validateSearchConversations), chatController.searchConversations);
 
 /**
  * @swagger
@@ -277,7 +266,7 @@ router.get('/messages/:userId', chatController.getMessages);
  *       403:
  *         description: Not matched with this user or user blocked
  */
-router.post('/send', validate(sendMessageSchema), chatController.sendMessage);
+router.post('/send', validateBody(validateSendMessage), chatController.sendMessage);
 
 /**
  * @swagger

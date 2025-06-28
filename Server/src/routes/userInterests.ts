@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import * as interestController from '../controllers/interestController';
 import { protect } from '../middlewares/auth';
-import { validate } from '../middlewares/validation';
-import { userInterestsUpdateSchema, interestAddByNameSchema } from '../utils/validation';
+import { validateBody } from '../middlewares/validator';
+import {
+  validateUserInterestsUpdate,
+  validateInterestAddByName,
+} from '../utils/validators';
 
 const router = Router();
 
@@ -11,33 +14,15 @@ router.use(protect);
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     UserInterest:
- *       type: object
- *       properties:
- *         id:
- *           type: integer
- *         name:
- *           type: string
- *         tag:
- *           type: string
- *         added_at:
- *           type: string
- *           format: date-time
- */
-
-/**
- * @swagger
  * /api/profile/interests:
  *   get:
- *     summary: Get current user's interests
- *     tags: [User Interests]
+ *     summary: Get interests for the currently authenticated user
+ *     tags: [Profile Interests]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User interests retrieved successfully
+ *         description: List of interests for the currently authenticated user
  *         content:
  *           application/json:
  *             schema:
@@ -52,13 +37,7 @@ router.use(protect);
  *                     interests:
  *                       type: array
  *                       items:
- *                         $ref: '#/components/schemas/UserInterest'
- *                     count:
- *                       type: integer
- *                       example: 3
- *                     max_interests:
- *                       type: integer
- *                       example: 10
+ *                         $ref: '#/components/schemas/Interest'
  *       401:
  *         description: Unauthorized
  */
@@ -66,10 +45,58 @@ router.get('/', interestController.getUserInterests);
 
 /**
  * @swagger
- * /api/profile/interests:
+ * /api/profile/interests/add/{id}:
+ *   post:
+ *     summary: Add a user interest by ID
+ *     tags: [Profile Interests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Interest added successfully
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/add/:id', interestController.addUserInterest);
+
+/**
+ * @swagger
+ * /api/profile/interests/remove/{id}:
+ *   delete:
+ *     summary: Remove a user interest by ID
+ *     tags: [Profile Interests]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Interest removed successfully
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized
+ */
+router.delete('/remove/:id', interestController.removeUserInterest);
+
+/**
+ * @swagger
+ * /api/profile/interests/update-all:
  *   put:
- *     summary: Update user's interests (replace all)
- *     tags: [User Interests]
+ *     summary: Update all user interests at once
+ *     tags: [Profile Interests]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -79,97 +106,32 @@ router.get('/', interestController.getUserInterests);
  *           schema:
  *             type: object
  *             required:
- *               - interest_ids
+ *               - interests
  *             properties:
- *               interest_ids:
+ *               interests:
  *                 type: array
  *                 items:
  *                   type: integer
- *                 maxItems: 10
- *                 description: Array of interest IDs (max 10)
  *     responses:
  *       200:
  *         description: User interests updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: success
- *                 data:
- *                   type: object
- *                   properties:
- *                     interests:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/UserInterest'
- *                     count:
- *                       type: integer
- *                     max_interests:
- *                       type: integer
- *                 message:
- *                   type: string
- *                   example: User interests updated successfully
  *       400:
- *         description: Invalid input data or too many interests
+ *         description: Invalid input data
  *       401:
  *         description: Unauthorized
- *       404:
- *         description: One or more interests not found
  */
-router.put('/', validate(userInterestsUpdateSchema), interestController.updateUserInterests);
+router.put(
+  '/update-all',
+  validateBody(validateUserInterestsUpdate),
+  interestController.updateUserInterests
+);
 
-/**
- * @swagger
- * /api/profile/interests/{id}:
- *   post:
- *     summary: Add single interest to user
- *     tags: [User Interests]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Interest ID
- *     responses:
- *       201:
- *         description: Interest added successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: success
- *                 data:
- *                   type: object
- *                   properties:
- *                     interest:
- *                       $ref: '#/components/schemas/UserInterest'
- *                     message:
- *                       type: string
- *                       example: Interest added successfully
- *       400:
- *         description: Invalid interest ID or maximum interests reached
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Interest not found
- *       409:
- *         description: User already has this interest
- */
 /**
  * @swagger
  * /api/profile/interests/add-by-name:
  *   post:
- *     summary: Add interest by name (creates if doesn't exist)
- *     tags: [User Interests]
+ *     summary: Add a user interest by name (creates it if not exists)
+ *     tags: [Profile Interests]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -185,73 +147,19 @@ router.put('/', validate(userInterestsUpdateSchema), interestController.updateUs
  *                 type: string
  *                 minLength: 2
  *                 maxLength: 30
- *                 description: Interest name (will be created if doesn't exist)
- *     responses:
- *       201:
- *         description: Interest added successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: success
- *                 data:
- *                   type: object
- *                   properties:
- *                     interest:
- *                       $ref: '#/components/schemas/UserInterest'
- *                     message:
- *                       type: string
- *                       example: Interest added successfully
- *       400:
- *         description: Invalid interest name or maximum interests reached
- *       401:
- *         description: Unauthorized
- *       409:
- *         description: User already has this interest
- */
-router.post('/add-by-name', validate(interestAddByNameSchema), interestController.addUserInterestByName);
-
-router.post('/:id', interestController.addUserInterest);
-
-/**
- * @swagger
- * /api/profile/interests/{id}:
- *   delete:
- *     summary: Remove interest from user
- *     tags: [User Interests]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Interest ID
+ *                 description: Interest name (2-30 characters, letters and spaces only)
  *     responses:
  *       200:
- *         description: Interest removed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                   example: success
- *                 message:
- *                   type: string
- *                   example: Interest removed successfully
+ *         description: Interest added successfully
  *       400:
- *         description: Invalid interest ID
+ *         description: Invalid input data
  *       401:
  *         description: Unauthorized
- *       404:
- *         description: Interest not found or not associated with user
  */
-router.delete('/:id', interestController.removeUserInterest);
+router.post(
+  '/add-by-name',
+  validateBody(validateInterestAddByName),
+  interestController.addUserInterestByName
+);
 
 export default router;

@@ -2,8 +2,7 @@
 	"dependencies": {
 		"bcrypt": "^6.0.0",
 		"jsonwebtoken": "^9.0.2",
-		"uuid": "^11.1.0",
-		"zod": "^3.25.62"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@types/bcrypt": "^5.0.2",

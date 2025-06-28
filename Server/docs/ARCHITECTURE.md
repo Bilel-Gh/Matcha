@@ -27,7 +27,6 @@ src/
 │   └── express.d.ts # Extension des types Express
 ├── utils/           # Utilitaires
 │   ├── AppError.ts  # Classes d'erreurs personnalisées
-│   └── validation.ts # Schémas de validation Zod
 ├── app.ts           # Configuration de l'application Express
 └── server.ts        # Point d'entrée du serveur
 ```
@@ -69,13 +68,12 @@ Response ← Error Handler ← Controller ← Service ← Repository ← Databas
 ## 🛡️ Gestion des erreurs
 
 - **AppError**: Classe d'erreur personnalisée avec code de statut
-- **Validation Errors**: Gestion automatique des erreurs de validation Zod
 - **Async Handler**: Wrapper pour capturer les erreurs asynchrones
 - **Global Error Handler**: Middleware centralisé pour toutes les erreurs
 
 ## 🔐 Sécurité
 
-- Validation stricte des entrées avec Zod
+- Validation stricte des entrées
 - Hachage des mots de passe avec bcrypt
 - JWT pour l'authentification
 - Middleware de protection des routes
