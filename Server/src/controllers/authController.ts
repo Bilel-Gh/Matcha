@@ -61,6 +61,18 @@ export const login = async (req: Request, res: Response) => {
 export const verifyEmail = async (req: Request, res: Response) => {
   try {
     await AuthService.verifyEmail(req.params.token);
+
+    // Check if request expects JSON (from React app)
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      res.status(200).json({
+        success: true,
+        data: {},
+        message: 'Email verified successfully'
+      });
+      return;
+    }
+
+    // Otherwise return HTML page (for direct browser access)
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -116,6 +128,26 @@ export const verifyEmail = async (req: Request, res: Response) => {
       </html>
     `);
   } catch (error) {
+    // Check if request expects JSON (from React app)
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      if (error instanceof AppError) {
+        res.status(200).json({
+          success: false,
+          message: error.message,
+          code: error.code || 'EMAIL_VERIFICATION_FAILED',
+          error: error.code || 'EMAIL_VERIFICATION_FAILED'
+        });
+      } else {
+        res.status(200).json({
+          success: false,
+          message: 'Internal server error',
+          error: 'INTERNAL_ERROR'
+        });
+      }
+      return;
+    }
+
+    // Otherwise return HTML page (for direct browser access)
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -177,13 +209,13 @@ export const forgotPassword = async (req: Request, res: Response) => {
   try {
     await AuthService.requestPasswordReset(req.body.email);
     res.status(200).json({
-      success: true,
+      status: 'success',
       data: {},
       message: 'If an account with this email exists, a password reset link has been sent.'
     });
   } catch (error) {
     res.status(200).json({
-      success: true,
+      status: 'success',
       data: {},
       message: 'If an account with this email exists, a password reset link has been sent.'
     });
@@ -194,7 +226,7 @@ export const resetPassword = async (req: Request, res: Response) => {
   try {
     await AuthService.resetPassword(req.body.token, req.body.new_password);
     res.status(200).json({
-      success: true,
+      status: 'success',
       data: {},
       message: 'Password has been reset successfully.'
     });
@@ -203,13 +235,15 @@ export const resetPassword = async (req: Request, res: Response) => {
       res.status(200).json({
         success: false,
         message: error.message,
-        error: 'PASSWORD_RESET_FAILED'
+        code: 'PASSWORD_RESET_FAILED',
+        details: [error.message]
       });
     } else {
       res.status(200).json({
         success: false,
         message: 'Internal server error',
-        error: 'INTERNAL_ERROR'
+        code: 'INTERNAL_ERROR',
+        details: ['Internal server error']
       });
     }
   }

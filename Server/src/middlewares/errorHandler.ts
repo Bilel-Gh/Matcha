@@ -28,7 +28,7 @@ export const errorHandler = (
   // Handle AppError instances with specific details
   if (err instanceof AppError) {
     errorResponse.message = err.message;
-    
+
     // Add specific error code for client handling
     if (err.statusCode === 400) {
       errorResponse.code = 'VALIDATION_ERROR';

@@ -11,8 +11,6 @@ interface FilterBarProps {
   currentFilters?: FilterParams;
 }
 
-
-
 const FilterBar: React.FC<FilterBarProps> = ({
   isOpen,
   onClose,
@@ -27,13 +25,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
     max_distance: currentFilters.max_distance || 200,
     fame_min: currentFilters.fame_min || '',
     fame_max: currentFilters.fame_max || '',
-    min_common_interests: currentFilters.min_common_interests || ''
+    min_common_interests: currentFilters.min_common_interests || '',
   });
 
-
+  const [sortBy, setSortBy] = useState(currentFilters.sort || 'distance');
   const [loading, setLoading] = useState(false);
-
-
 
   useEffect(() => {
     // Update filters when currentFilters prop changes
@@ -43,25 +39,23 @@ const FilterBar: React.FC<FilterBarProps> = ({
       max_distance: currentFilters.max_distance || 200,
       fame_min: currentFilters.fame_min || '',
       fame_max: currentFilters.fame_max || '',
-      min_common_interests: currentFilters.min_common_interests || ''
+      min_common_interests: currentFilters.min_common_interests || '',
     });
+    setSortBy(currentFilters.sort || 'distance');
   }, [currentFilters]);
-
-
 
   const updateFilter = (key: string, value: string | number) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
-
-
 
   const applyFilters = async () => {
     if (!token) return;
 
     setLoading(true);
 
-    const filterParams = {
-      ...filters
+    const filterParams: FilterParams = {
+      ...filters,
+      sort: sortBy,
     };
 
     try {
@@ -73,22 +67,25 @@ const FilterBar: React.FC<FilterBarProps> = ({
         }
       });
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/browse?${params.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/browse?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
 
       const data = await response.json();
 
-      if (response.ok) {
-        onFiltersApply(data.data?.users || data.users || [], filterParams);
+      if (response.ok && data.status === 'success') {
+        onFiltersApply(data.data?.users || [], filterParams);
         onClose();
       } else {
         throw new Error(data.message || 'Failed to apply filters');
       }
     } catch (error) {
-      showToastError("Failed to apply filters", error);
+      showToastError('Failed to apply filters', error);
     } finally {
       setLoading(false);
     }
@@ -101,27 +98,33 @@ const FilterBar: React.FC<FilterBarProps> = ({
       max_distance: 200,
       fame_min: '',
       fame_max: '',
-      min_common_interests: ''
+      min_common_interests: '',
     });
+    setSortBy('distance');
   };
 
   const resetAndApply = async () => {
     if (!token) return;
 
     setLoading(true);
+    const clearedSort = 'distance'; // Default sort
+    setSortBy(clearedSort);
     clearFilters();
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/browse`, {
+      const params = new URLSearchParams();
+      params.append('sort', clearedSort);
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/browse?${params.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        onFiltersApply(data.data?.users || data.users || [], {});
+      if (response.ok && data.status === 'success') {
+        onFiltersApply(data.data?.users || [], { sort: clearedSort });
         onClose();
       } else {
         throw new Error(data.message || 'Failed to reset filters');
@@ -134,7 +137,10 @@ const FilterBar: React.FC<FilterBarProps> = ({
   };
 
   const hasActiveFilters = () => {
-    return Object.values(filters).some(value => value && value !== '' && value !== 200);
+    return (
+      Object.values(filters).some(value => value && value !== '' && value !== 200) ||
+      sortBy !== 'distance'
+    );
   };
 
   if (!isOpen) return null;
@@ -142,7 +148,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
   return (
     <div className={`filter-bar ${hasActiveFilters() ? 'has-filters' : ''}`}>
       <div className="filter-header">
-        <h3>🔍 Filter Results</h3>
+        <h3>🔍 Filter & Sort Results</h3>
         <button className="filter-close-btn" onClick={onClose} disabled={loading}>
           ×
         </button>
@@ -150,6 +156,22 @@ const FilterBar: React.FC<FilterBarProps> = ({
 
       <div className="filter-content">
         <div className="filter-row">
+          {/* Sorting */}
+          <div className="filter-group">
+            <label htmlFor="sort_by">Sort By</label>
+            <select
+              id="sort_by"
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              disabled={loading}
+            >
+              <option value="distance">Location</option>
+              <option value="age">Age</option>
+              <option value="fame_rating">Fame Rating</option>
+              <option value="common_interests">Common Tags</option>
+            </select>
+          </div>
+
           {/* Age Filter */}
           <div className="filter-group">
             <label>Age Range</label>
@@ -236,8 +258,6 @@ const FilterBar: React.FC<FilterBarProps> = ({
             />
           </div>
         </div>
-
-
 
         {/* Filter Actions */}
         <div className="filter-actions">

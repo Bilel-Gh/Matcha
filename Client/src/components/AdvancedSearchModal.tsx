@@ -183,10 +183,10 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.status === 'success') {
         setSearchResults(data.data?.users || []);
       } else {
-        showToastError('Search failed', data.message);
+        showToastError('Search failed', data.message || 'Unknown error occurred');
         setSearchResults([]);
       }
     } catch (error) {

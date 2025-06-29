@@ -134,9 +134,9 @@ const profileService = {
         },
       });
 
-      // Le serveur retourne le nouveau format avec success/error
-      if (!response.data.success) {
-        const errorData = response.data as ServerErrorResponse;
+      // Le serveur utilise le format "status"
+      if (response.data.status !== 'success') {
+        const errorData = response.data as any;
         // Si on a des details, utiliser le premier detail comme message principal
         const message = errorData.details && errorData.details.length > 0
           ? errorData.details[0]
@@ -162,14 +162,14 @@ const profileService = {
 
   async changePassword(token: string, data: PasswordChangeData): Promise<void> {
     try {
-      const response = await axios.put<ApiResponse<void>>(`${API_URL}/api/profile/password`, data, {
+      const response = await axios.post<ApiResponse<void>>(`${API_URL}/api/profile/change-password`, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
-      // Le serveur utilise encore l'ancien format "status"
+      // Le serveur utilise le format "status"
       if (response.data.status !== 'success') {
         throw {
           success: false,

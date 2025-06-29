@@ -18,7 +18,7 @@ class EmailService {
   }
 
   async sendVerificationEmail(email: string, token: string): Promise<void> {
-    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3001'}/api/auth/verify/${token}`;
+    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/verify/${token}`;
 
     const mailOptions = {
       from: config.SMTP_USER,

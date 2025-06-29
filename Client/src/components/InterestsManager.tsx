@@ -103,16 +103,8 @@ const InterestsManager: React.FC<InterestsManagerProps> = ({
       setIsAddingInterest(true);
       await interestService.addUserInterest(token, interest.id);
 
-      // Add to local state optimistically
-      const newUserInterest: UserInterest = {
-        id: Date.now(), // Temporary ID
-        user_id: 0, // Will be set by server
-        interest_id: interest.id,
-        interest: interest,
-        created_at: new Date().toISOString(),
-      };
-
-      setUserInterests(prev => [...prev, newUserInterest]);
+      // Reload user interests to get the updated list from server
+      await loadUserInterests();
       onSuccess?.(`Added "${interest.name}" to your interests!`);
       onProfileUpdate?.();
     } catch (error) {

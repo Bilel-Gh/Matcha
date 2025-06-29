@@ -21,4 +21,4 @@ COPY Client .
 EXPOSE 8080
 
 # Commande pour démarrer l'application en développement
-CMD ["pnpm", "run", "dev", "--host", "--port", "8080"]
+CMD ["pnpm", "run", "dev", "--host"]

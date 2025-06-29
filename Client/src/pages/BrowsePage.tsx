@@ -30,7 +30,7 @@ const BrowsePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [matchCount, setMatchCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [appliedFilters, setAppliedFilters] = useState<FilterParams>({});
+  const [appliedFilters, setAppliedFilters] = useState<FilterParams>({ sort: 'distance' });
 
   // Load initial data
   useEffect(() => {
@@ -40,27 +40,33 @@ const BrowsePage: React.FC = () => {
     }
   }, [token]);
 
-  const loadUsers = async () => {
+  const loadUsers = async (filters: FilterParams = appliedFilters) => {
     if (!token) return;
 
     setLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/browse`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        params.append(key, String(value));
       }
+    });
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/browse?${params.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       const data = await response.json();
 
-      if (data.status === 'success') {
+      if (response.ok && data.status === 'success') {
         setUsers(data.data.users || []);
       } else {
         throw new Error(data.message || 'Failed to load users');
@@ -91,7 +97,7 @@ const BrowsePage: React.FC = () => {
 
       const data = await response.json();
 
-      if (data.status === 'success') {
+      if (response.ok && data.status === 'success') {
         setMatchCount(data.data.matches?.length || 0);
       }
     } catch (error) {
@@ -100,7 +106,7 @@ const BrowsePage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    loadUsers();
+    loadUsers(appliedFilters);
     loadMatchCount();
   };
 
@@ -138,6 +144,12 @@ const BrowsePage: React.FC = () => {
     setUsers(filteredUsers);
     setAppliedFilters(filterParams);
     showToastSuccess(`Found ${filteredUsers.length} users matching your filters`);
+  };
+
+  const handleSortChange = (newSort: string) => {
+    const newFilters = { ...appliedFilters, sort: newSort };
+    setAppliedFilters(newFilters);
+    loadUsers(newFilters);
   };
 
   return (
@@ -265,6 +277,8 @@ const BrowsePage: React.FC = () => {
                   onShowMessage={(message, type) => type === 'success' ? showToastSuccess(message) : showToastError(message)}
                   onUserRemoved={handleUserRemoved}
                   onUserLiked={handleUserLiked}
+                  sortBy={appliedFilters.sort || 'distance'}
+                  onSortChange={handleSortChange}
                 />
               ) : (
                 <MatchesMode

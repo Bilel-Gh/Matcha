@@ -6,4 +6,6 @@ export interface FilterParams {
   fame_max?: number | string;
   min_common_interests?: number | string;
   interests?: string[];
+  location?: string;
+  sort?: string;
 }

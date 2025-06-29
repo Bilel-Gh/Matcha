@@ -1613,14 +1613,16 @@
 }
 
 .grid-controls {
+  margin-bottom: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 10px 16px;
+  background-color: var(--background-color-light);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color-secondary);
 }
 
 .results-count {
@@ -4674,4 +4676,73 @@
     padding: 0.5rem 1rem;
     border-radius: 20px;
   }
+}
+
+.filter-group {
+  position: relative;
+}
+
+.filter-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius, 8px); /* Added fallback */
+  background-color: var(--background-color-light);
+  color: var(--text-color-main);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  /* Appearance is kept to show native arrow since custom one is removed */
+  appearance: menulist;
+}
+
+.filter-group select:hover {
+  border-color: var(--primary-color-light);
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color-transparent);
+}
+
+.grid-sort {
+  position: relative;
+}
+
+.grid-sort select {
+  margin-left: 5px;
+  border-radius: 10px;
+  padding: 8px 28px 8px 12px;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color-main);
+  color: var(--text-color-main);
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.grid-sort select:hover {
+  background-color: var(--background-color-light);
+  border-color: var(--primary-color-light);
+}
+
+.grid-sort select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color-transparent);
+}
+
+/* Custom dropdown arrow for grid sort */
+.grid-sort::after {
+  content: '▼';
+  font-size: 0.7rem;
+  color: var(--text-color-secondary);
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
 }

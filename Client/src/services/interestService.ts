@@ -18,7 +18,7 @@ export interface UserInterest {
 }
 
 interface ApiResponse<T> {
-  status: string;
+  status: 'success' | 'error';
   data: T;
   message?: string;
 }
@@ -43,6 +43,10 @@ const interestService = {
         },
       });
 
+      if (response.data.status !== 'success') {
+        throw new Error(response.data.message || 'Failed to get interests');
+      }
+
       // Handle case where data might be an object with interests array
       const data = response.data.data;
       if (Array.isArray(data)) {
@@ -66,6 +70,11 @@ const interestService = {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.data.status !== 'success') {
+        throw new Error(response.data.message || 'Failed to search interests');
+      }
+
       return response.data.data.interests;
     } catch (error) {
       throw error;
@@ -84,6 +93,11 @@ const interestService = {
           },
         }
       );
+
+      if (response.data.status !== 'success') {
+        throw new Error(response.data.message || 'Failed to create interest');
+      }
+
       return response.data.data;
     } catch (error) {
       throw error;
@@ -98,6 +112,10 @@ const interestService = {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.data.status !== 'success') {
+        throw new Error(response.data.message || 'Failed to get user interests');
+      }
 
       const data = response.data.data;
 
@@ -126,6 +144,11 @@ const interestService = {
           },
         }
       );
+
+      if (response.data.status !== 'success') {
+        throw new Error(response.data.message || 'Failed to update user interests');
+      }
+
       return response.data.data.interests;
     } catch (error) {
       throw error;
@@ -135,11 +158,15 @@ const interestService = {
   // Add single interest to user
   async addUserInterest(token: string, interestId: number): Promise<void> {
     try {
-      await axios.post<ApiResponse<void>>(`${API_URL}/api/profile/interests/${interestId}`, {}, {
+      const response = await axios.post<ApiResponse<any>>(`${API_URL}/api/profile/interests/add/${interestId}`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.data.status !== 'success') {
+        throw new Error(response.data.message || 'Failed to add interest');
+      }
     } catch (error) {
       throw error;
     }
@@ -148,11 +175,15 @@ const interestService = {
   // Remove interest from user
   async removeUserInterest(token: string, interestId: number): Promise<void> {
     try {
-      await axios.delete<ApiResponse<void>>(`${API_URL}/api/profile/interests/${interestId}`, {
+      const response = await axios.delete<ApiResponse<any>>(`${API_URL}/api/profile/interests/remove/${interestId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (response.data.status !== 'success') {
+        throw new Error(response.data.message || 'Failed to remove interest');
+      }
     } catch (error) {
       throw error;
     }
@@ -161,7 +192,7 @@ const interestService = {
   // Add interest by name (auto-create if doesn't exist)
   async addInterestByName(token: string, name: string): Promise<void> {
     try {
-      await axios.post<ApiResponse<void>>(`${API_URL}/api/profile/interests/add-by-name`,
+      const response = await axios.post<ApiResponse<any>>(`${API_URL}/api/profile/interests/add-by-name`,
         { name },
         {
           headers: {
@@ -170,6 +201,10 @@ const interestService = {
           },
         }
       );
+
+      if (response.data.status !== 'success') {
+        throw new Error(response.data.message || 'Failed to add interest');
+      }
     } catch (error) {
       throw error;
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaLock, FaCheckCircle, FaArrowLeft } from 'react-icons/fa';
 import authService from '../../services/authService';
@@ -16,11 +16,9 @@ const ResetPasswordPage: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({});
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [searchParams] = useSearchParams();
+  const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-
-  const token = searchParams.get('token');
 
   // Check for token and redirect if authenticated
   useEffect(() => {

@@ -153,7 +153,7 @@ router.get('/', profileController.getProfile);
  *       401:
  *         description: Unauthorized
  */
-router.put('/', protect, validateBody(validateProfileUpdate), profileController.updateProfile);
+router.put('/', validateBody(validateProfileUpdate), profileController.updateProfile);
 
 /**
  * @swagger
@@ -199,7 +199,7 @@ router.put('/', protect, validateBody(validateProfileUpdate), profileController.
  *       401:
  *         description: Unauthorized
  */
-router.post('/change-password', protect, validateBody(validatePasswordChange), profileController.changePassword);
+router.post('/change-password', validateBody(validatePasswordChange), profileController.changePassword);
 
 /**
  * @swagger
@@ -296,6 +296,6 @@ router.post('/change-password', protect, validateBody(validatePasswordChange), p
  *       404:
  *         description: User not found
  */
-router.get('/user/:userId', protect, profileController.getUserProfile);
+router.get('/user/:userId', profileController.getUserProfile);
 
 export default router;

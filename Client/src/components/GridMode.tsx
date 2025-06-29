@@ -16,6 +16,8 @@ interface GridModeProps {
   onShowMessage?: (message: string, type: 'success' | 'error') => void;
   onUserRemoved?: (userId: number) => void;
   onUserLiked?: (userId: number, isMatch: boolean) => void;
+  sortBy: string;
+  onSortChange: (newSort: string) => void;
 }
 
 interface GridUserCardProps {
@@ -335,29 +337,26 @@ const GridUserCard: React.FC<GridUserCardProps> = ({ user, onUserUpdate, onShowM
   );
 };
 
-const GridMode: React.FC<GridModeProps> = ({ users, onUsersUpdate, onShowMessage, onUserRemoved, onUserLiked }) => {
-  const [sortBy, setSortBy] = useState('distance');
-  const [loading, setLoading] = useState(false);
-
+const GridMode: React.FC<GridModeProps> = ({
+  users,
+  onUsersUpdate,
+  onShowMessage,
+  onUserRemoved,
+  onUserLiked,
+  sortBy,
+  onSortChange,
+}) => {
   const handleShowMessage = (message: string, type: 'success' | 'error') => {
     if (onShowMessage) {
       onShowMessage(message, type);
     }
   };
 
-  const handleSortChange = (newSort: string) => {
-    setSortBy(newSort);
-    // TODO: Re-fetch users with new sort in future iteration
-  };
-
   if (users.length === 0) {
     return (
-      <div className="grid-empty-state">
+      <div className="empty-state">
         <h3>No users found</h3>
-        <p>Try adjusting your filters to see more people</p>
-        <button onClick={onUsersUpdate} className="reload-btn">
-          Reload Users
-        </button>
+        <p>Try adjusting your filters or come back later.</p>
       </div>
     );
   }
@@ -365,25 +364,21 @@ const GridMode: React.FC<GridModeProps> = ({ users, onUsersUpdate, onShowMessage
   return (
     <div className="grid-mode">
       <div className="grid-controls">
-        <div className="results-info">
-          <span className="results-count">{users.length} people found</span>
-        </div>
-
-        <div className="sort-controls">
-          <label>Sort by:</label>
+        <span className="grid-count">{users.length} users found</span>
+        <div className="grid-sort">
+          <label htmlFor="grid_sort_by">Sort By:</label>
           <select
+            id="grid_sort_by"
             value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="sort-select"
+            onChange={e => onSortChange(e.target.value)}
           >
-            <option value="distance">📍 Distance</option>
-            <option value="age">🎂 Age</option>
-            <option value="fame_rating">⭐ Fame Rating</option>
-            <option value="common_interests">❤️ Common Interests</option>
+            <option value="distance">Location</option>
+            <option value="age">Age</option>
+            <option value="fame_rating">Fame Rating</option>
+            <option value="common_interests">Common Tags</option>
           </select>
         </div>
       </div>
-
       <div className="users-grid">
         {users.map(user => (
           <GridUserCard
@@ -396,12 +391,6 @@ const GridMode: React.FC<GridModeProps> = ({ users, onUsersUpdate, onShowMessage
           />
         ))}
       </div>
-
-      {loading && (
-        <div className="grid-loading">
-          <p>Loading more users...</p>
-        </div>
-      )}
     </div>
   );
 };
@@ -423,7 +412,5 @@ const calculateAge = (birthDateOrAge?: string | number): string => {
   }
   return String(age);
 };
-
-
 
 export default GridMode;

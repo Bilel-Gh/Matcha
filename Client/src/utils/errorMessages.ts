@@ -45,9 +45,9 @@ export interface ApiError {
 }
 
 export interface ApiSuccess<T = any> {
-  success: true;
+  status: 'success';
   data: T;
-  message: string;
+  message?: string;
 }
 
 export type ApiResponse<T = any> = ApiSuccess<T> | ApiError;

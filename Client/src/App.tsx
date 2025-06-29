@@ -6,6 +6,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import EmailVerificationPage from './pages/auth/EmailVerificationPage';
 import ProfilePage from './pages/ProfilePage';
 import BrowsePage from './pages/BrowsePage';
 import UserProfilePage from './pages/UserProfilePage';
@@ -44,6 +45,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="/verify/:token" element={<EmailVerificationPage />} />
         <Route path="/" element={<HomeRedirect />} />
         <Route
           path="/browse"

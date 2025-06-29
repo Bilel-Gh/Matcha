@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
 import authService from '../../services/authService';
@@ -9,11 +9,10 @@ const EmailVerificationPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [searchParams] = useSearchParams();
+  const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-
-  const token = searchParams.get('token');
+  const hasVerified = useRef(false); // Évite les double appels
 
   useEffect(() => {
     // Redirect if already authenticated
@@ -22,8 +21,14 @@ const EmailVerificationPage: React.FC = () => {
       return;
     }
 
+    // Avoid duplicate calls (React StrictMode issue)
+    if (hasVerified.current) {
+      return;
+    }
+
     // Verify email if token is present
     if (token) {
+      hasVerified.current = true; // Mark as processing
       verifyEmail(token);
     } else {
       setError('Invalid or missing verification token.');
@@ -31,7 +36,7 @@ const EmailVerificationPage: React.FC = () => {
     }
   }, [token, isAuthenticated, navigate]);
 
-  const verifyEmail = async (verificationToken: string) => {
+    const verifyEmail = async (verificationToken: string) => {
     try {
       setIsLoading(true);
       setError('');

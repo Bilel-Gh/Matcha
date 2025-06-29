@@ -79,6 +79,8 @@ const ProfilePage: React.FC = () => {
       }
 
       showSuccessMessage('Profile updated successfully!');
+      // Don't re-throw on success - let PersonalInfoForm know it succeeded
+      return updatedProfile;
     } catch (error: any) {
       // Check if it's a structured error from our profileService
       if (error.success === false) {
