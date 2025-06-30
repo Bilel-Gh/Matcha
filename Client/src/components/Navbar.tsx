@@ -32,8 +32,8 @@ const Navbar: React.FC = () => {
     ? getFullImageUrl(user.profile_picture_url)
     : undefined;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -54,9 +54,7 @@ const Navbar: React.FC = () => {
             <NotificationDropdown
               onViewProfile={(userId) => navigate(`/user/${userId}`)}
               onOpenChat={(conversationId) => {
-                if (chatContext) {
-                  chatContext.openConversation(conversationId);
-                }
+                // TODO: Implement chat opening functionality
               }}
               onShowMessage={(message, type) => {
                 // Handle showing message

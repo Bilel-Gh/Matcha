@@ -1,5 +1,6 @@
 import pool from '../config/database';
 import { FameRatingService } from './FameRatingService';
+import { NotificationService } from './NotificationService';
 import { AppError } from '../utils/AppError';
 
 export interface VisitResponse {
@@ -54,7 +55,6 @@ export class VisitService {
 
     // Create visit notification
     try {
-      const { NotificationService } = await import('./NotificationService');
       await NotificationService.createVisitNotification(visitedId, visitorId);
     } catch (error) {
       // Silent error handling - no console output for defense requirements

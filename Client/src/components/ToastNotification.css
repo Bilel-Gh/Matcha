@@ -66,6 +66,74 @@
   border-left: 4px solid #3498db;
 }
 
+/* 🎨 NOUVEAUX STYLES MODERNES POUR LES TOASTS */
+
+/* Toast moderne - Style épuré et élégant */
+.toast-modern {
+  background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(20px);
+}
+
+.toast-modern .toast-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Toast d'action - Style dynamique pour les actions utilisateur */
+.toast-action {
+  background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(46, 204, 113, 0.1) 100%);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  box-shadow: 0 10px 30px rgba(46, 204, 113, 0.15);
+}
+
+.toast-action .toast-icon {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Toast de feedback - Style informatif et moderne */
+.toast-feedback {
+  background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(52, 152, 219, 0.1) 100%);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  box-shadow: 0 10px 30px rgba(52, 152, 219, 0.15);
+}
+
+.toast-feedback .toast-icon {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+/* Toast système - Style minimaliste et épuré */
+.toast-system {
+  background: linear-gradient(135deg, var(--glass-bg) 0%, rgba(149, 165, 166, 0.1) 100%);
+  border: 1px solid rgba(149, 165, 166, 0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.toast-system .toast-icon {
+  background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+}
+
 .toast-content {
   display: flex;
   align-items: flex-start;

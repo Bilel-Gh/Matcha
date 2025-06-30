@@ -40,17 +40,15 @@ export const useChatSocket = (
   // Initialiser la connexion Socket.IO
   useEffect(() => {
     if (!token) {
-      // Nettoyer la connexion existante si pas de token
       if (socketRef.current) {
-        const socket = socketRef.current;
-        // Fermeture propre pour éviter les warnings
-        if (socket.connected) {
-          socket.removeAllListeners();
-          socket.disconnect();
+        // Force offline status before disconnecting
+        if (socketRef.current.connected) {
+          socketRef.current.emit('user-offline-force');
         }
+        socketRef.current.disconnect();
         socketRef.current = null;
-        setIsConnected(false);
       }
+      setIsConnected(false);
       return;
     }
 
@@ -76,13 +74,42 @@ export const useChatSocket = (
 
     socketRef.current = socket;
 
+    // Store socket reference in window for logout access
+    (window as any).socket = socket;
+
+    // Handle browser close/tab close
+    const handleBeforeUnload = () => {
+      if (socket.connected) {
+        // Force disconnect and mark as offline
+        socket.emit('user-disconnect');
+        socket.emit('user-offline-force');
+        socket.disconnect();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     // Gestionnaires de connexion
     socket.on('connect', () => {
       setIsConnected(true);
+      // Force update current user's online status
+      socket.emit('user-online-update');
     });
 
     socket.on('disconnect', () => {
       setIsConnected(false);
+      // Force offline status when socket disconnects
+      if (token) {
+        socket.emit('user-offline-force');
+      }
+    });
+
+    socket.on('disconnecting', () => {
+      setIsConnected(false);
+      // Force offline status when socket is disconnecting
+      if (token) {
+        socket.emit('user-offline-force');
+      }
     });
 
     socket.on('connect_error', (error) => {
@@ -117,6 +144,12 @@ export const useChatSocket = (
       callbacksRef.current.onUserOffline?.(data.userId);
     });
 
+    // Heartbeat handler to maintain connection
+    socket.on('heartbeat', () => {
+      // Respond to heartbeat to maintain connection
+      socket.emit('heartbeat-ack');
+    });
+
     // Gestionnaires de frappe
     socket.on('typing-indicator', (data) => {
       if (data.typing) {
@@ -133,10 +166,18 @@ export const useChatSocket = (
 
     return () => {
       // Cleanup propre pour éviter les warnings WebSocket
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+
+      // Force offline status before disconnecting
       if (socket && socket.connected) {
+        socket.emit('user-offline-force');
         socket.removeAllListeners();
         socket.disconnect();
       }
+
+      // Clean up window reference
+      delete (window as any).socket;
+
       socketRef.current = null;
       setIsConnected(false);
     };

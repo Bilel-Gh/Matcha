@@ -42,7 +42,19 @@ export const browseUsers = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Invalid sort parameter. Valid options: distance, age, fame_rating, common_interests', 400);
   }
 
-  const result = await BrowsingService.getBrowseResults(req.user.id, filters, sortBy);
+  // Parse pagination parameters
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+
+  // Validate pagination parameters
+  if (page < 1) {
+    throw new AppError('Page must be greater than 0', 400);
+  }
+  if (limit < 1 || limit > 100) {
+    throw new AppError('Limit must be between 1 and 100', 400);
+  }
+
+  const result = await BrowsingService.getBrowseResults(req.user.id, filters, sortBy, page, limit);
 
   res.status(200).json({
     status: 'success',
@@ -64,7 +76,19 @@ export const searchUsers = asyncHandler(async (req: Request, res: Response) => {
       throw new AppError('Search query must be at least 2 characters long', 400);
     }
 
-    const result = await BrowsingService.searchUsersByName(req.user.id, searchQuery.trim());
+    // Parse pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+
+    // Validate pagination parameters
+    if (page < 1) {
+      throw new AppError('Page must be greater than 0', 400);
+    }
+    if (limit < 1 || limit > 100) {
+      throw new AppError('Limit must be between 1 and 100', 400);
+    }
+
+    const result = await BrowsingService.searchUsersByName(req.user.id, searchQuery.trim(), page, limit);
 
     res.status(200).json({
       status: 'success',
@@ -106,7 +130,19 @@ export const searchUsers = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Invalid sort parameter. Valid options: distance, age, fame_rating, common_interests', 400);
   }
 
-  const result = await BrowsingService.getSearchResults(req.user.id, filters, sortBy);
+  // Parse pagination parameters
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+
+  // Validate pagination parameters
+  if (page < 1) {
+    throw new AppError('Page must be greater than 0', 400);
+  }
+  if (limit < 1 || limit > 100) {
+    throw new AppError('Limit must be between 1 and 100', 400);
+  }
+
+  const result = await BrowsingService.getSearchResults(req.user.id, filters, sortBy, page, limit);
 
   res.status(200).json({
     status: 'success',
@@ -133,8 +169,6 @@ export const getUserProfile = asyncHandler(async (req: Request, res: Response) =
   // Auto-record visit (but don't let errors block the response)
   try {
     if (req.user.id !== profileId) {
-      // ✅ SUPPRIMÉ - Enlever la vérification hasRecentlyVisited pour permettre les notifications
-      // Laisser NotificationService gérer l'anti-spam pour les notifications
       await VisitService.recordVisit(req.user.id, profileId);
     }
   } catch (error) {

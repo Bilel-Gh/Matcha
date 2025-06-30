@@ -226,25 +226,57 @@ export const resetPassword = async (req: Request, res: Response) => {
   try {
     await AuthService.resetPassword(req.body.token, req.body.new_password);
     res.status(200).json({
-      status: 'success',
+      success: true,
       data: {},
-      message: 'Password has been reset successfully.'
+      message: 'Password reset successful'
     });
   } catch (error) {
     if (error instanceof AppError) {
       res.status(200).json({
         success: false,
         message: error.message,
-        code: 'PASSWORD_RESET_FAILED',
-        details: [error.message]
+        code: error.code || 'PASSWORD_RESET_FAILED',
+        error: error.code || 'PASSWORD_RESET_FAILED'
       });
     } else {
       res.status(200).json({
         success: false,
         message: 'Internal server error',
-        code: 'INTERNAL_ERROR',
-        details: ['Internal server error']
+        error: 'INTERNAL_ERROR'
       });
     }
+  }
+};
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    // Get user ID from token
+    const userId = (req as any).user?.id;
+
+    if (userId) {
+      // Mark user as offline using SocketManager
+      const { SocketManager } = await import('../config/socket');
+      const socketManager = SocketManager.getInstance();
+      if (socketManager) {
+        await socketManager.forceUserOffline(userId);
+      } else {
+        // Fallback to direct database update
+        const { UserRepository } = await import('../repositories/UserRepository');
+        await UserRepository.setOffline(userId);
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {},
+      message: 'Logout successful'
+    });
+  } catch (error) {
+    // Even if marking offline fails, still allow logout
+    res.status(200).json({
+      success: true,
+      data: {},
+      message: 'Logout successful'
+    });
   }
 };

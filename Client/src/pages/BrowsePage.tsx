@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useTheme from '../hooks/useTheme';
+import { useChatSocket } from '../hooks/useChatSocket';
 import { FaHeart, FaSearch, FaEye, FaFilter, FaTh, FaLayerGroup, FaSync, FaMapMarkerAlt, FaStar, FaTimes } from 'react-icons/fa';
 import SwipeMode from '../components/SwipeMode';
 import GridMode from '../components/GridMode';
@@ -32,6 +33,40 @@ const BrowsePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [appliedFilters, setAppliedFilters] = useState<FilterParams>({ sort: 'distance' });
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrev, setHasPrev] = useState(false);
+  const [usersPerPage] = useState(20);
+
+  // Real-time online status updates
+  const handleUserOnline = (userId: number) => {
+    setUsers(prevUsers => prevUsers.map(user =>
+      user.id === userId
+        ? { ...user, is_online: true }
+        : user
+    ));
+  };
+
+  const handleUserOffline = (userId: number) => {
+    setUsers(prevUsers => prevUsers.map(user =>
+      user.id === userId
+        ? { ...user, is_online: false }
+        : user
+    ));
+  };
+
+  // Socket connection for real-time updates
+  useChatSocket(token, {
+    onUserOnline: handleUserOnline,
+    onUserOffline: handleUserOffline,
+    onError: (error) => {
+      // Silent error handling for defense requirements
+    }
+  });
+
   // Load initial data
   useEffect(() => {
     if (token) {
@@ -40,7 +75,7 @@ const BrowsePage: React.FC = () => {
     }
   }, [token]);
 
-  const loadUsers = async (filters: FilterParams = appliedFilters) => {
+  const loadUsers = async (filters: FilterParams = appliedFilters, page: number = 1) => {
     if (!token) return;
 
     setLoading(true);
@@ -52,6 +87,10 @@ const BrowsePage: React.FC = () => {
         params.append(key, String(value));
       }
     });
+
+    // Add pagination parameters
+    params.append('page', String(page));
+    params.append('limit', String(usersPerPage));
 
     try {
       const response = await fetch(
@@ -68,6 +107,11 @@ const BrowsePage: React.FC = () => {
 
       if (response.ok && data.status === 'success') {
         setUsers(data.data.users || []);
+        setTotalUsers(data.data.total || 0);
+        setTotalPages(data.data.totalPages || 1);
+        setCurrentPage(data.data.page || 1);
+        setHasNext(data.data.hasNext || false);
+        setHasPrev(data.data.hasPrev || false);
       } else {
         throw new Error(data.message || 'Failed to load users');
       }
@@ -106,13 +150,37 @@ const BrowsePage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    loadUsers(appliedFilters);
+    loadUsers(appliedFilters, 1);
     loadMatchCount();
+  };
+
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      loadUsers(appliedFilters, newPage);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasNext) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (hasPrev) {
+      handlePageChange(currentPage - 1);
+    }
   };
 
   // Clear messages when switching modes
   const handleViewModeChange = (mode: 'swipe' | 'grid' | 'matches') => {
     setViewMode(mode);
+    // Reset pagination when switching modes
+    if (mode === 'grid') {
+      setCurrentPage(1);
+    }
   };
 
   // Remove user from local list (for immediate UI update)
@@ -143,13 +211,15 @@ const BrowsePage: React.FC = () => {
   const handleFiltersApply = (filteredUsers: User[], filterParams: FilterParams) => {
     setUsers(filteredUsers);
     setAppliedFilters(filterParams);
+    setCurrentPage(1); // Reset to first page when applying filters
     showToastSuccess(`Found ${filteredUsers.length} users matching your filters`);
   };
 
   const handleSortChange = (newSort: string) => {
     const newFilters = { ...appliedFilters, sort: newSort };
     setAppliedFilters(newFilters);
-    loadUsers(newFilters);
+    setCurrentPage(1); // Reset to first page when changing sort
+    loadUsers(newFilters, 1);
   };
 
   return (
@@ -279,6 +349,14 @@ const BrowsePage: React.FC = () => {
                   onUserLiked={handleUserLiked}
                   sortBy={appliedFilters.sort || 'distance'}
                   onSortChange={handleSortChange}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalUsers={totalUsers}
+                  hasNext={hasNext}
+                  hasPrev={hasPrev}
+                  onPageChange={handlePageChange}
+                  onNextPage={handleNextPage}
+                  onPrevPage={handlePrevPage}
                 />
               ) : (
                 <MatchesMode

@@ -113,6 +113,14 @@ export class UserRepository {
     await pool.query(query, [id]);
   }
 
+  static async resetAllOnlineStatuses(): Promise<void> {
+    const query = `
+      UPDATE users
+      SET is_online = false
+    `;
+    await pool.query(query);
+  }
+
   static async checkEmailExists(email: string, excludeUserId?: number): Promise<boolean> {
     let query = 'SELECT id FROM users WHERE email = $1';
     let params: any[] = [email];

@@ -123,7 +123,6 @@ export class LikeService {
       throw new AppError('Like not found', 404);
     }
 
-    // ✅ NOTIFICATION EN TEMPS RÉEL - Créer notification d'unlike
     try {
       await NotificationService.createUnlikeNotification(likedId, likerId, wasMatch);
     } catch (error) {

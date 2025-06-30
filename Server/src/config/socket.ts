@@ -15,6 +15,8 @@ export class SocketManager {
   private io: SocketIOServer;
   private connectedUsers: ConnectedUsers = {};
   private typingUsers: Map<string, NodeJS.Timeout> = new Map(); // conversationId -> timeout
+  private heartbeatIntervals: Map<string, NodeJS.Timeout> = new Map(); // socketId -> interval
+  private static instance: SocketManager | null = null;
 
   constructor(server: HttpServer) {
     this.io = new SocketIOServer(server, {
@@ -28,6 +30,19 @@ export class SocketManager {
 
     this.setupMiddleware();
     this.setupEventHandlers();
+
+    // Reset all online statuses to offline on server start
+    this.resetOnlineStatuses();
+
+    // Start periodic cleanup of stale connections
+    this.startPeriodicCleanup();
+
+    // Set singleton instance
+    SocketManager.instance = this;
+  }
+
+  public static getInstance(): SocketManager | null {
+    return SocketManager.instance;
   }
 
   private setupMiddleware() {
@@ -57,14 +72,81 @@ export class SocketManager {
       await UserRepository.updateLastConnection(userId);
 
       // Notify other users that this user is online
-      socket.broadcast.emit('user-online', { userId });
+      // Use this.io.emit() to ensure all connected users receive the event
+      this.io.emit('user-online', { userId });
     } catch (error) {
       // Silent error handling - no console output for defense requirements
     }
 
+    // Setup heartbeat for this socket
+    const heartbeatInterval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit('heartbeat');
+      } else {
+        clearInterval(heartbeatInterval);
+        this.heartbeatIntervals.delete(socket.id);
+      }
+    }, 30000); // 30 seconds
+
+    this.heartbeatIntervals.set(socket.id, heartbeatInterval);
+
     // Handle disconnect
     socket.on('disconnect', () => {
       this.handleUserDisconnection(socket);
+    });
+
+    // Handle forced disconnect (browser close, network loss, etc.)
+    socket.on('disconnecting', () => {
+      this.handleUserDisconnection(socket);
+    });
+
+    // Handle manual disconnect
+    socket.on('user-disconnect', async () => {
+      const userId = getUserId(socket);
+      if (userId) {
+        try {
+          // Remove from connected users immediately
+          if (this.connectedUsers[userId]) {
+            delete this.connectedUsers[userId];
+          }
+
+          await UserRepository.setOffline(userId);
+          this.io.emit('user-offline', { userId });
+        } catch (error) {
+          // Silent error handling - no console output for defense requirements
+        }
+      }
+    });
+
+    // Force update current user's online status
+    socket.on('user-online-update', async () => {
+      const userId = getUserId(socket);
+      if (userId) {
+        try {
+          await UserRepository.updateLastConnection(userId);
+          this.io.emit('user-online', { userId });
+        } catch (error) {
+          // Silent error handling - no console output for defense requirements
+        }
+      }
+    });
+
+    // Force user offline (browser close)
+    socket.on('user-offline-force', async () => {
+      const userId = getUserId(socket);
+      if (userId) {
+        try {
+          // Remove from connected users immediately
+          if (this.connectedUsers[userId]) {
+            delete this.connectedUsers[userId];
+          }
+
+          await UserRepository.setOffline(userId);
+          this.io.emit('user-offline', { userId });
+        } catch (error) {
+          // Silent error handling - no console output for defense requirements
+        }
+      }
     });
   }
 
@@ -74,11 +156,17 @@ export class SocketManager {
 
     // Silent user disconnection - no console output for defense requirements
 
+    // Clean up heartbeat interval for this socket
+    if (this.heartbeatIntervals.has(socket.id)) {
+      clearInterval(this.heartbeatIntervals.get(socket.id)!);
+      this.heartbeatIntervals.delete(socket.id);
+    }
+
     // Remove socket from connected users
     if (this.connectedUsers[userId]) {
       this.connectedUsers[userId] = this.connectedUsers[userId].filter(id => id !== socket.id);
 
-      // If no more sockets for this user, mark as offline
+      // If no more sockets for this user, mark as offline immediately
       if (this.connectedUsers[userId].length === 0) {
         delete this.connectedUsers[userId];
 
@@ -86,7 +174,8 @@ export class SocketManager {
           await UserRepository.setOffline(userId);
 
           // Notify other users that this user is offline
-          socket.broadcast.emit('user-offline', { userId });
+          // Use this.io.emit() to ensure all connected users receive the event
+          this.io.emit('user-offline', { userId });
         } catch (error) {
           // Silent error handling - no console output for defense requirements
         }
@@ -292,6 +381,11 @@ export class SocketManager {
         socket.emit('error', { message: 'Failed to mark all notifications as read' });
       }
     });
+
+    // Heartbeat acknowledgment
+    socket.on('heartbeat-ack', () => {
+      // Connection is active, no action needed
+    });
   }
 
   /**
@@ -371,6 +465,12 @@ export class SocketManager {
   public async shutdown() {
     // Silent shutdown process - no console output for defense requirements
 
+    // Clear all heartbeat intervals
+    for (const interval of this.heartbeatIntervals.values()) {
+      clearInterval(interval);
+    }
+    this.heartbeatIntervals.clear();
+
     // Set all connected users as offline
     const userIds = this.getConnectedUserIds();
     for (const userId of userIds) {
@@ -381,9 +481,72 @@ export class SocketManager {
       }
     }
 
+    // Clear connected users
+    this.connectedUsers = {};
+
     // Close all connections
     this.io.close();
     // Silent shutdown completion - no console output for defense requirements
+  }
+
+  private startPeriodicCleanup() {
+    // Check every 30 seconds for stale connections
+    setInterval(async () => {
+      try {
+        const staleUsers: number[] = [];
+
+        for (const [userId, socketIds] of Object.entries(this.connectedUsers)) {
+          const validSockets = socketIds.filter(socketId => {
+            const socket = this.io.sockets.sockets.get(socketId);
+            return socket && socket.connected;
+          });
+
+          if (validSockets.length === 0) {
+            staleUsers.push(parseInt(userId));
+            delete this.connectedUsers[parseInt(userId)];
+          } else if (validSockets.length !== socketIds.length) {
+            // Update with only valid sockets
+            this.connectedUsers[parseInt(userId)] = validSockets;
+          }
+        }
+
+        // Mark stale users as offline
+        for (const userId of staleUsers) {
+          try {
+            await UserRepository.setOffline(userId);
+            this.io.emit('user-offline', { userId });
+          } catch (error) {
+            // Silent error handling - no console output for defense requirements
+          }
+        }
+      } catch (error) {
+        // Silent error handling - no console output for defense requirements
+      }
+    }, 30000);
+  }
+
+  private async resetOnlineStatuses() {
+    try {
+      // Reset all users to offline status on server start
+      await UserRepository.resetAllOnlineStatuses();
+    } catch (error) {
+      // Silent error handling - no console output for defense requirements
+    }
+  }
+
+  // Force disconnect a specific user (for logout)
+  public async forceUserOffline(userId: number) {
+    try {
+      await UserRepository.setOffline(userId);
+      this.io.emit('user-offline', { userId });
+
+      // Remove from connected users
+      if (this.connectedUsers[userId]) {
+        delete this.connectedUsers[userId];
+      }
+    } catch (error) {
+      // Silent error handling - no console output for defense requirements
+    }
   }
 }
 

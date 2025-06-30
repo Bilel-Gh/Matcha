@@ -19,7 +19,6 @@ export const useNotifications = () => {
     onUnlike?: (data: { fromUser: any; timestamp: string; wasMatch: boolean }) => void;
   }>({});
 
-  // ✅ DÉDUPLICATION - Éviter les toasts en double
   const recentEventsRef = useRef<Map<string, number>>(new Map());
 
   // Load notifications from API
@@ -46,7 +45,6 @@ export const useNotifications = () => {
     }
   }, [token]);
 
-  // ✅ NOTIFICATION EN TEMPS RÉEL - Handler ultra-rapide pour tous les types
   const handleNewNotification = useCallback((notification: Notification) => {
     // AJOUT IMMÉDIAT - performance optimisée
     setNotifications(prev => {
@@ -107,7 +105,6 @@ export const useNotifications = () => {
     }
   }, []);
 
-  // ✅ NOTIFICATION EN TEMPS RÉEL - Handler pour les messages avec déduplication
   const handleNewMessage = useCallback((data: any) => {
     // Vérifier si une conversation est ouverte avec cet utilisateur
     const isConversationOpen = (window as any).isConversationOpen?.(data.sender.id) || false;
@@ -117,7 +114,6 @@ export const useNotifications = () => {
       return;
     }
 
-    // ✅ DÉDUPLICATION pour les messages
     const eventKey = `message-${data.sender.id}-${user?.id}-${data.messageId}`;
     const now = Date.now();
     const lastEventTime = recentEventsRef.current.get(eventKey);
@@ -165,7 +161,6 @@ export const useNotifications = () => {
     setTimeout(() => loadNotifications(), 2000);
   }, [user?.id, loadNotifications]);
 
-  // ✅ NOTIFICATION EN TEMPS RÉEL - Configuration des événements socket
   const { socket } = useChatSocket(token, {
     onNewMessage: handleNewMessage
   });
@@ -173,7 +168,6 @@ export const useNotifications = () => {
   useEffect(() => {
     if (!socket || !user) return;
 
-    // ✅ ÉVÉNEMENTS EN TEMPS RÉEL - Configuration des listeners
     const handleNewNotificationEvent = (notification: Notification) => {
       setNotifications(prev => [notification, ...prev]);
       setUnreadCount(prev => prev + 1);
@@ -183,15 +177,13 @@ export const useNotifications = () => {
       setUnreadCount(data.count);
     };
 
-    // ✅ NOUVEAU - Gestionnaire pour les événements de visite de profil avec déduplication
     const handleProfileVisitEvent = (data: any) => {
       // Créer une clé unique pour cet événement
       const eventKey = `visit-${data.visitor.id}-${user?.id}`;
       const now = Date.now();
       const lastEventTime = recentEventsRef.current.get(eventKey);
 
-      // Si un événement similaire s'est produit dans les dernières 2 secondes, l'ignorer
-      if (lastEventTime && (now - lastEventTime) < 2000) {
+      if (lastEventTime && (now - lastEventTime) < 1000) {
         return;
       }
 
@@ -214,7 +206,6 @@ export const useNotifications = () => {
       }
     };
 
-    // ✅ NOUVEAU - Gestionnaire pour les événements d'unlike avec déduplication
     const handleUnlikeEvent = (data: any) => {
       // Déduplication pour les unlikes
       const eventKey = `unlike-${data.fromUser.id}-${user?.id}`;

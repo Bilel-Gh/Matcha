@@ -76,7 +76,7 @@ const profileService = {
       return response.data.data!;
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
-        throw error;
+      throw error;
       }
       throw handleApiError(error);
     }
@@ -119,7 +119,7 @@ const profileService = {
       };
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
-        throw error;
+      throw error;
       }
       throw handleApiError(error);
     }
@@ -154,7 +154,7 @@ const profileService = {
       return response.data.data!;
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
-        throw error;
+      throw error;
       }
       throw handleApiError(error);
     }
@@ -179,7 +179,7 @@ const profileService = {
       }
     } catch (error: unknown) {
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
-        throw error;
+      throw error;
       }
       throw handleApiError(error);
     }

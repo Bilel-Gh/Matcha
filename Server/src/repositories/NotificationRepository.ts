@@ -215,7 +215,6 @@ export class NotificationRepository {
 
     const params: any[] = [userId, type];
 
-    // ✅ CORRECTION - Pour les notifications de visite, vérifier via les données JSON
     if (type === 'visit' && fromUserId) {
       query += ` AND data->'visitor'->>'id' = $3`;
       params.push(fromUserId.toString());

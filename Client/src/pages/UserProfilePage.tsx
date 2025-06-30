@@ -5,7 +5,8 @@ import useTheme from '../hooks/useTheme';
 import { FaArrowLeft, FaHeart, FaBan, FaFlag, FaMapMarkerAlt, FaStar, FaUser, FaGlobe } from 'react-icons/fa';
 import BlockUserModal from '../components/BlockUserModal';
 import ReportUserModal from '../components/ReportUserModal';
-import { showToastError, showToastSuccess } from '../utils/toastUtils';
+import { showActionToast, showFeedbackToast, showToastError, showToastSuccess } from '../utils/toastUtils';
+import { useChatSocket } from '../hooks/useChatSocket';
 import './BrowsePage.css';
 
 interface UserProfile {
@@ -61,6 +62,28 @@ const UserProfilePage: React.FC = () => {
   const [isReporting, setIsReporting] = useState(false);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+
+  // Real-time online status updates
+  const handleUserOnline = (userId: number) => {
+    if (profile && profile.id === userId) {
+      setProfile(prev => prev ? { ...prev, is_online: true } : null);
+    }
+  };
+
+  const handleUserOffline = (userId: number) => {
+    if (profile && profile.id === userId) {
+      setProfile(prev => prev ? { ...prev, is_online: false } : null);
+    }
+  };
+
+  // Socket connection for real-time updates
+  useChatSocket(token, {
+    onUserOnline: handleUserOnline,
+    onUserOffline: handleUserOffline,
+    onError: (error) => {
+      // Silent error handling for defense requirements
+    }
+  });
 
   useEffect(() => {
     if (userId) {
@@ -150,9 +173,9 @@ const UserProfilePage: React.FC = () => {
 
       if (response.ok) {
         if (data.data?.match) {
-          showToastSuccess(`🎉 It's a match with ${profile?.firstname}!`);
+          // Don't show immediate toast for match - let the real-time notification handle it
         } else {
-          showToastSuccess(`❤️ You liked ${profile?.firstname}!`);
+          showToastSuccess(`You liked ${profile?.firstname}!`);
         }
         await loadLikeStatus();
       } else {
@@ -178,7 +201,8 @@ const UserProfilePage: React.FC = () => {
       });
 
       if (response.ok) {
-        showToastSuccess(`You unliked ${profile?.firstname}`);
+        // Don't show immediate toast for unlike - let the real-time notification handle it
+        // showToastSuccess(`You unliked ${profile?.firstname}`);
         await loadLikeStatus();
       } else {
         const data = await response.json();
@@ -206,7 +230,7 @@ const UserProfilePage: React.FC = () => {
       });
 
       if (response.ok) {
-        showToastSuccess(`${profile?.firstname} has been blocked`);
+        showFeedbackToast('success', `${profile?.firstname} has been blocked`);
         setTimeout(() => navigate('/browse'), 2000);
       } else {
         const data = await response.json();
@@ -235,7 +259,7 @@ const UserProfilePage: React.FC = () => {
       });
 
       if (response.ok) {
-        showToastSuccess(`${profile?.firstname} has been reported`);
+        showFeedbackToast('success', `${profile?.firstname} has been reported`);
       } else {
         const data = await response.json();
         showToastError(data.message || 'Failed to report user');
@@ -274,9 +298,9 @@ const UserProfilePage: React.FC = () => {
     const openChatFunction = (window as { openChatWithUser?: (userId: number) => void }).openChatWithUser;
     if (openChatFunction) {
       openChatFunction(profile.id);
-      showToastSuccess('Chat opened!');
+      showFeedbackToast('success', 'Chat opened!');
     } else {
-      showToastError('Chat is not available right now');
+      showFeedbackToast('warning', 'Chat is not available right now');
     }
   };
 

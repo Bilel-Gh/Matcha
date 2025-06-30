@@ -122,15 +122,6 @@ export const recordVisit = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Invalid user ID', 400);
   }
 
-  // Check if user has visited recently to avoid spam
-  const hasRecentlyVisited = await VisitService.hasRecentlyVisited(req.user.id, visitedId);
-  if (hasRecentlyVisited) {
-    return res.status(200).json({
-      status: 'success',
-      message: 'Visit already recorded recently',
-    });
-  }
-
   const visit = await VisitService.recordVisit(req.user.id, visitedId);
 
   res.status(201).json({

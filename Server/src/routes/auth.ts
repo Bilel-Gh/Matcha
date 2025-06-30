@@ -156,4 +156,20 @@ router.post('/forgot-password', authController.forgotPassword);
  */
 router.post('/reset-password', authController.resetPassword);
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user and mark as offline
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/logout', authController.logout);
+
 export default router;

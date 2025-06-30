@@ -33,9 +33,10 @@ const SearchResultCard: React.FC<{ user: User; searchQuery: string }> = ({ user,
 
       if (response.ok) {
         if (data.data?.match) {
-          showToastSuccess(`🎉 It's a match with ${user.firstname}!`);
+          // Don't show immediate toast for match - let the real-time notification handle it
         } else {
-          showToastSuccess('❤️ Like sent!');
+          // Don't show immediate toast for like - let the real-time notification handle it
+          // showToastSuccess(`❤️ You liked ${user.firstname}!`);
         }
       } else {
         showToastError('Failed to like user', data.message);
@@ -142,6 +143,14 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
   const [hasSearched, setHasSearched] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrev, setHasPrev] = useState(false);
+  const [resultsPerPage] = useState(20);
+
   // Auto-search when user types (debounced)
   useEffect(() => {
     if (searchTimeout) {
@@ -165,7 +174,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
     };
   }, [searchQuery]);
 
-  const handleSearch = async () => {
+  const handleSearch = async (page: number = 1) => {
     if (!token || !searchQuery.trim()) return;
 
     setIsSearching(true);
@@ -174,6 +183,8 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
     try {
       const params = new URLSearchParams();
       params.append('search', searchQuery.trim());
+      params.append('page', String(page));
+      params.append('limit', String(resultsPerPage));
 
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/browse/search?${params.toString()}`, {
         headers: {
@@ -185,6 +196,11 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
 
       if (response.ok && data.status === 'success') {
         setSearchResults(data.data?.users || []);
+        setTotalResults(data.data?.total || 0);
+        setTotalPages(data.data?.totalPages || 1);
+        setCurrentPage(data.data?.page || 1);
+        setHasNext(data.data?.hasNext || false);
+        setHasPrev(data.data?.hasPrev || false);
       } else {
         showToastError('Search failed', data.message || 'Unknown error occurred');
         setSearchResults([]);
@@ -214,9 +230,11 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
     setSearchQuery('');
     setSearchResults([]);
     setHasSearched(false);
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
+    setCurrentPage(1);
+    setTotalPages(1);
+    setTotalResults(0);
+    setHasNext(false);
+    setHasPrev(false);
   };
 
   const closeModal = () => {
@@ -224,9 +242,30 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
     onClose();
   };
 
+  // Pagination handlers
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      handleSearch(newPage);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasNext) {
+      handlePageChange(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (hasPrev) {
+      handlePageChange(currentPage - 1);
+    }
+  };
+
   const useSearchResults = () => {
     onSearchResults(searchResults);
-    closeModal();
+    clearSearch();
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -275,15 +314,15 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
             <div className="search-results-section">
             <div className="results-header">
                 <h4>
-                  {searchResults.length > 0
-                    ? `Found ${searchResults.length} user${searchResults.length === 1 ? '' : 's'}`
+                  {totalResults > 0
+                    ? `Found ${totalResults} user${totalResults === 1 ? '' : 's'}`
                     : 'No users found'
                   }
                 </h4>
-                {searchResults.length > 0 && (
+                {totalResults > 0 && (
               <div className="results-actions">
                     <button className="use-results-btn" onClick={useSearchResults}>
-                      Use These Results ({searchResults.length})
+                      Use These Results ({totalResults})
                 </button>
               </div>
                 )}
@@ -304,11 +343,85 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, onSearchResu
                   </div>
               </div>
             ) : (
-              <div className="search-results-grid">
-                {searchResults.map(user => (
-                    <SearchResultCard key={user.id} user={user} searchQuery={searchQuery} />
-                ))}
-              </div>
+              <>
+                <div className="search-results-grid">
+                  {searchResults.map(user => (
+                      <SearchResultCard key={user.id} user={user} searchQuery={searchQuery} />
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="pagination-controls">
+                    <div className="pagination-info">
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <span>Showing {searchResults.length} of {totalResults} users</span>
+                    </div>
+
+                    <div className="pagination-buttons">
+                      <button
+                        className="pagination-btn prev-btn"
+                        onClick={handlePrevPage}
+                        disabled={!hasPrev}
+                      >
+                        ← Previous
+                      </button>
+
+                      <div className="page-numbers">
+                        {/* Show first page */}
+                        {currentPage > 3 && (
+                          <>
+                            <button
+                              className="page-btn"
+                              onClick={() => handlePageChange(1)}
+                            >
+                              1
+                            </button>
+                            {currentPage > 4 && <span className="page-ellipsis">...</span>}
+                          </>
+                        )}
+
+                        {/* Show pages around current page */}
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                          if (pageNum > totalPages) return null;
+
+                          return (
+                            <button
+                              key={pageNum}
+                              className={`page-btn ${pageNum === currentPage ? 'active' : ''}`}
+                              onClick={() => handlePageChange(pageNum)}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+
+                        {/* Show last page */}
+                        {currentPage < totalPages - 2 && (
+                          <>
+                            {currentPage < totalPages - 3 && <span className="page-ellipsis">...</span>}
+                            <button
+                              className="page-btn"
+                              onClick={() => handlePageChange(totalPages)}
+                            >
+                              {totalPages}
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      <button
+                        className="pagination-btn next-btn"
+                        onClick={handleNextPage}
+                        disabled={!hasNext}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

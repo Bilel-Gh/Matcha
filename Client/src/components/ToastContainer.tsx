@@ -15,6 +15,18 @@ interface ToastContainerProps {
   maxToasts?: number;
 }
 
+export interface ToastData {
+  id: string;
+  type: 'like' | 'match' | 'visit' | 'message' | 'success' | 'error' | 'info';
+  title: string;
+  message: string;
+  duration?: number;
+  onClick?: () => void;
+  userAvatar?: string;
+  userName?: string;
+  customStyle?: 'modern' | 'action' | 'feedback' | 'system';
+}
+
 const ToastContainer: React.FC<ToastContainerProps> = ({ maxToasts = 5 }) => {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
@@ -134,30 +146,33 @@ export const showMessageToast = (userName: string, message: string, userAvatar?:
   });
 };
 
-export const showSuccessToast = (title: string, message: string) => {
+export const showSuccessToast = (title: string, message: string = '', duration: number = 4000) => {
   showToast({
     type: 'success',
-    title,
+    title: title,
     message,
-    duration: 4000,
+    duration,
+    customStyle: 'modern'
   });
 };
 
 export const showErrorToast = (title: string, message: string) => {
   showToast({
     type: 'error',
-    title,
+    title: title,
     message,
     duration: 6000,
+    customStyle: 'feedback'
   });
 };
 
 export const showInfoToast = (title: string, message: string) => {
   showToast({
     type: 'info',
-    title,
+    title: title,
     message,
     duration: 5000,
+    customStyle: 'system'
   });
 };
 
@@ -209,9 +224,10 @@ export const showToastError = (title: string, error?: any, duration: number = 60
 
   showToast({
     type: 'error',
-    title: `❌ ${title}`,
+    title: title,
     message: errorMessage,
-    duration
+    duration,
+    customStyle: 'feedback'
   });
 };
 
@@ -226,9 +242,10 @@ export const showToastError = (title: string, error?: any, duration: number = 60
 export const showToastSuccess = (title: string, message: string = '', duration: number = 4000) => {
   showToast({
     type: 'success',
-    title: `✅ ${title}`,
+    title: title,
     message,
-    duration
+    duration,
+    customStyle: 'modern'
   });
 };
 
@@ -242,10 +259,11 @@ export const showToastSuccess = (title: string, message: string = '', duration: 
  */
 export const showToastWarning = (title: string, message: string = '', duration: number = 5000) => {
   showToast({
-    type: 'info', // Utilise le type info avec un style warning
-    title: `⚠️ ${title}`,
+    type: 'info',
+    title: title,
     message,
-    duration
+    duration,
+    customStyle: 'feedback'
   });
 };
 
@@ -260,9 +278,10 @@ export const showToastWarning = (title: string, message: string = '', duration: 
 export const showToastCustomInfo = (title: string, message: string = '', duration: number = 4000) => {
   showToast({
     type: 'info',
-    title: `ℹ️ ${title}`,
+    title: title,
     message,
-    duration
+    duration,
+    customStyle: 'system'
   });
 };
 
@@ -277,8 +296,90 @@ export const showToastCustomInfo = (title: string, message: string = '', duratio
 export const showToastLoading = (title: string, message: string = 'Chargement...', duration: number = 3000) => {
   showToast({
     type: 'info',
-    title: `⏳ ${title}`,
+    title: title,
     message,
-    duration
+    duration,
+    customStyle: 'system'
+  });
+};
+
+// 🎨 NOUVEAUX TOASTS AMÉLIORÉS AVEC STYLE MODERNE
+
+/**
+ * Toast de succès amélioré avec style moderne
+ */
+export const showModernSuccessToast = (title: string, message: string = '', duration: number = 4000) => {
+  showToast({
+    type: 'success',
+    title: title,
+    message: message,
+    duration,
+    // Utilise un style spécial pour les toasts modernes
+    customStyle: 'modern'
+  });
+};
+
+/**
+ * Toast d'action utilisateur amélioré (like, unlike, etc.)
+ */
+export const showActionToast = (action: string, userName: string, duration: number = 3000) => {
+  const icons = {
+    like: '💝',
+    unlike: '💔',
+    match: '🎉',
+    visit: '👀',
+    message: '💬',
+    block: '🚫',
+    report: '🚨'
+  };
+
+  const messages = {
+    like: `${userName} a été liké`,
+    unlike: `Like retiré de ${userName}`,
+    match: `Match avec ${userName} !`,
+    visit: `Profil de ${userName} visité`,
+    message: `Message envoyé à ${userName}`,
+    block: `${userName} a été bloqué`,
+    report: `${userName} a été signalé`
+  };
+
+  showToast({
+    type: 'success',
+    title: `${icons[action as keyof typeof icons]} ${messages[action as keyof typeof messages]}`,
+    message: '',
+    duration,
+    customStyle: 'action'
+  });
+};
+
+/**
+ * Toast de feedback utilisateur avec style moderne
+ */
+export const showFeedbackToast = (type: 'success' | 'info' | 'warning', title: string, message: string = '', duration: number = 4000) => {
+  const icons = {
+    success: '✨',
+    info: '💡',
+    warning: '⚠️'
+  };
+
+  showToast({
+    type: type === 'warning' ? 'info' : type,
+    title: `${icons[type]} ${title}`,
+    message,
+    duration,
+    customStyle: 'feedback'
+  });
+};
+
+/**
+ * Toast de notification système avec style épuré
+ */
+export const showSystemToast = (title: string, message: string = '', duration: number = 3500) => {
+  showToast({
+    type: 'info',
+    title: `🔔 ${title}`,
+    message,
+    duration,
+    customStyle: 'system'
   });
 };

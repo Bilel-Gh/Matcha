@@ -18,6 +18,14 @@ interface GridModeProps {
   onUserLiked?: (userId: number, isMatch: boolean) => void;
   sortBy: string;
   onSortChange: (newSort: string) => void;
+  currentPage: number;
+  totalPages: number;
+  totalUsers: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  onPageChange: (page: number) => void;
+  onNextPage: () => void;
+  onPrevPage: () => void;
 }
 
 interface GridUserCardProps {
@@ -345,6 +353,14 @@ const GridMode: React.FC<GridModeProps> = ({
   onUserLiked,
   sortBy,
   onSortChange,
+  currentPage,
+  totalPages,
+  totalUsers,
+  hasNext,
+  hasPrev,
+  onPageChange,
+  onNextPage,
+  onPrevPage,
 }) => {
   const handleShowMessage = (message: string, type: 'success' | 'error') => {
     if (onShowMessage) {
@@ -364,7 +380,7 @@ const GridMode: React.FC<GridModeProps> = ({
   return (
     <div className="grid-mode">
       <div className="grid-controls">
-        <span className="grid-count">{users.length} users found</span>
+        <span className="grid-count">{totalUsers} users found</span>
         <div className="grid-sort">
           <label htmlFor="grid_sort_by">Sort By:</label>
           <select
@@ -379,6 +395,7 @@ const GridMode: React.FC<GridModeProps> = ({
           </select>
         </div>
       </div>
+
       <div className="users-grid">
         {users.map(user => (
           <GridUserCard
@@ -391,6 +408,78 @@ const GridMode: React.FC<GridModeProps> = ({
           />
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <div className="pagination-info">
+            <span>Page {currentPage} of {totalPages}</span>
+            <span>Showing {users.length} of {totalUsers} users</span>
+          </div>
+
+          <div className="pagination-buttons">
+            <button
+              className="pagination-btn prev-btn"
+              onClick={onPrevPage}
+              disabled={!hasPrev}
+            >
+              ← Previous
+            </button>
+
+            <div className="page-numbers">
+              {/* Show first page */}
+              {currentPage > 3 && (
+                <>
+                  <button
+                    className="page-btn"
+                    onClick={() => onPageChange(1)}
+                  >
+                    1
+                  </button>
+                  {currentPage > 4 && <span className="page-ellipsis">...</span>}
+                </>
+              )}
+
+              {/* Show pages around current page */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                if (pageNum > totalPages) return null;
+
+                return (
+                  <button
+                    key={pageNum}
+                    className={`page-btn ${pageNum === currentPage ? 'active' : ''}`}
+                    onClick={() => onPageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              {/* Show last page */}
+              {currentPage < totalPages - 2 && (
+                <>
+                  {currentPage < totalPages - 3 && <span className="page-ellipsis">...</span>}
+                  <button
+                    className="page-btn"
+                    onClick={() => onPageChange(totalPages)}
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+            </div>
+
+            <button
+              className="pagination-btn next-btn"
+              onClick={onNextPage}
+              disabled={!hasNext}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -23,15 +23,15 @@ export class NotificationService {
       const likerUser = await UserRepository.findById(likerUserId);
       if (!likerUser) return null;
 
-      // Check if notification already exists recently (prevent spam)
-      const exists = await NotificationRepository.notificationExists(
-        likedUserId,
-        'like',
-        likerUserId,
-        3600 // 1 hour
-      );
+      // Remove anti-spam check for likes to ensure they are always displayed
+      // const exists = await NotificationRepository.notificationExists(
+      //   likedUserId,
+      //   'like',
+      //   likerUserId,
+      //   60 // 1 minute instead of 1 hour
+      // );
 
-      if (exists) return null;
+      // if (exists) return null;
 
       const notification = await NotificationRepository.createNotification({
         user_id: likedUserId,
@@ -50,7 +50,7 @@ export class NotificationService {
 
       // Send real-time notification
       if (this.socketManager) {
-        // ✅ ÉVÉNEMENT SPÉCIALISÉ - Pour les toasts
+        // Always emit the socket event, even if notification creation fails
         this.socketManager.emitToUser(likedUserId, 'new-like', {
           fromUser: {
             id: likerUser.id,
@@ -137,7 +137,6 @@ export class NotificationService {
 
       // Send real-time notifications
       if (this.socketManager) {
-        // ✅ ÉVÉNEMENTS SPÉCIALISÉS - Pour les toasts de match
         this.socketManager.emitToUser(userId1, 'new-match', {
           matchedUser: {
             id: user2.id,
@@ -221,7 +220,7 @@ export class NotificationService {
         visitedUserId,
         'visit',
         visitorUserId,
-        600 // ✅ 10 minutes au lieu d'1 heure pour faciliter les tests
+        30 // 30 secondes au lieu de 10 minutes pour permettre les notifications à chaque visite
       );
 
       if (exists) return null;
@@ -247,7 +246,6 @@ export class NotificationService {
 
       // Send real-time notification
       if (this.socketManager) {
-        // ✅ NOTIFICATION EN TEMPS RÉEL - Émettre l'événement profile-visit
         this.socketManager.emitToUser(visitedUserId, 'profile-visit', {
           visitor: {
             id: visitorUser.id,
@@ -461,7 +459,6 @@ export class NotificationService {
 
       // Send real-time notification
       if (this.socketManager) {
-        // ✅ NOTIFICATION EN TEMPS RÉEL - Émettre l'événement unlike
         this.socketManager.emitToUser(unlikedUserId, 'unlike', {
           fromUser: {
             id: unlikerUser.id,

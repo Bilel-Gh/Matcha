@@ -1,13 +1,14 @@
-// ✅ UTILITAIRES TOAST - Importation facile pour toute l'application
-// Utilisable partout avec : import { showToastError, showToastSuccess } from '../utils/toastUtils';
-
 export {
   showToastError,
   showToastSuccess,
   showToastWarning,
   showToastCustomInfo,
   showToastLoading,
-  showToast
+  showToast,
+  showModernSuccessToast,
+  showActionToast,
+  showFeedbackToast,
+  showSystemToast
 } from '../components/ToastContainer';
 
 // Types utiles pour TypeScript
@@ -40,8 +41,6 @@ export interface ToastLoadingOptions {
   message?: string;
   duration?: number;
 }
-
-// ✅ EXEMPLES D'UTILISATION DANS LES COMMENTAIRES :
 
 /**
  * EXEMPLES D'UTILISATION :

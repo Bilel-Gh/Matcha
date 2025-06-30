@@ -18,7 +18,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string, firstName: string, lastName: string, birthDate: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   refreshUser: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
@@ -105,7 +105,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Mark user as offline before clearing auth state
+    if (token) {
+      try {
+        // Also emit socket event to force offline status first
+        const socket = (window as any).socket;
+        if (socket && socket.connected) {
+          socket.emit('user-offline-force');
+          // Wait a bit for the event to be processed
+          await new Promise(resolve => setTimeout(resolve, 100));
+          socket.disconnect();
+        }
+
+        // Send offline status to server
+        await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (error) {
+        // Silent error handling - don't block logout
+      }
+    }
+
+    // Clear auth state
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');

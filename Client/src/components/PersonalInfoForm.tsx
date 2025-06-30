@@ -138,8 +138,8 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
     }
 
     try {
-      await onUpdate(formData);
-      setIsDirty(false);
+    await onUpdate(formData);
+    setIsDirty(false);
       clearErrors();
     } catch (error: any) {
       // Handle server errors

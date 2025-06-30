@@ -232,9 +232,10 @@ const ActivityModal: React.FC<ActivityModalProps> = ({ isOpen, onClose }) => {
 
       if (response.ok) {
         if (data.data?.match) {
-          showToastSuccess(`🎉 It's a match with ${user.firstname}!`);
+          // Don't show immediate toast for match - let the real-time notification handle it
         } else {
-          showToastSuccess('❤️ Like sent!');
+          // Don't show immediate toast for like - let the real-time notification handle it
+          // showToastSuccess(`❤️ You liked ${user.firstname}!`);
         }
 
         loadActivityData(); // Reload to update status

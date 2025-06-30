@@ -131,7 +131,7 @@ export class AuthService {
       }
     }
 
-    // Generate JWT token
+        // Generate JWT token
     const signOptions: SignOptions = {
       expiresIn: config.JWT_EXPIRES_IN as any
     };
@@ -182,7 +182,7 @@ export class AuthService {
       throw new AuthenticationError('Invalid email or password', 'INVALID_CREDENTIALS');
     }
 
-    // Generate JWT token
+        // Generate JWT token
     const signOptions: SignOptions = {
       expiresIn: config.JWT_EXPIRES_IN as any
     };

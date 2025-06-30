@@ -35,6 +35,11 @@ export interface BrowseUser {
 export interface BrowseResponse {
   users: BrowseUser[];
   total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
 export class BrowsingService {
@@ -155,7 +160,12 @@ export class BrowsingService {
   /**
    * Core browsing logic (mandatory requirements)
    */
-  static async getBrowseResults(userId: number, filters: BrowseFilters = {}, sortBy: string = 'distance'): Promise<BrowseResponse> {
+  static async getBrowseResults(userId: number, filters: BrowseFilters = {}, sortBy: string = 'distance', page: number = 1, limit: number = 20): Promise<BrowseResponse> {
+    // Validate pagination parameters
+    if (page < 1) page = 1;
+    if (limit < 1) limit = 20;
+    if (limit > 100) limit = 100; // Prevent excessive load
+
     // Get current user
     const currentUserQuery = 'SELECT * FROM users WHERE id = $1';
     const currentUserResult = await pool.query(currentUserQuery, [userId]);
@@ -171,6 +181,97 @@ export class BrowsingService {
       throw new AppError('Location required for browsing', 400);
     }
 
+    // First, get total count for pagination
+    let countQuery = `
+      WITH user_data AS (
+        SELECT u.id,
+               COUNT(DISTINCT common_interests.interest_id) as common_interests_count,
+               ROUND(
+                 6371 * acos(
+                   cos(radians($1)) * cos(radians(u.latitude)) *
+                   cos(radians(u.longitude) - radians($2)) +
+                   sin(radians($3)) * sin(radians(u.latitude))
+                 )::numeric, 1
+               ) as distance_km
+        FROM users u
+        LEFT JOIN user_interests common_interests ON common_interests.user_id = u.id
+          AND common_interests.interest_id IN (
+            SELECT interest_id FROM user_interests WHERE user_id = $4
+          )
+    `;
+
+    // Apply filters for count query
+    const { whereClause: countWhereClause, havingClause: countHavingClause, joinClause: countJoinClause, params: countFilterParams } = this.applyFilters(filters);
+    countQuery += countJoinClause;
+
+    countQuery += `
+        WHERE u.id != $5
+        AND u.email_verified = true
+        AND u.profile_picture_url IS NOT NULL
+        AND u.latitude IS NOT NULL
+        AND u.longitude IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM blocks
+          WHERE (blocker_id = $6 AND blocked_id = u.id)
+          OR (blocker_id = u.id AND blocked_id = $7)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM likes
+          WHERE liker_id = $8 AND liked_id = u.id
+        )
+    `;
+
+    // Sexual orientation compatibility (mandatory)
+    countQuery += this.getOrientationFilter(currentUser);
+
+    // Apply additional WHERE filters
+    countQuery += countWhereClause;
+
+    countQuery += ` GROUP BY u.id
+      )
+      SELECT COUNT(*) as total FROM user_data`;
+
+    // Apply HAVING clause if needed
+    if (countHavingClause) {
+      countQuery += countHavingClause.replace('HAVING', ' WHERE');
+    }
+
+    // Get total count
+    const countQueryParams = [
+      currentUser.latitude,
+      currentUser.longitude,
+      currentUser.latitude,
+      userId,
+      userId,
+      userId,
+      userId,
+      userId,
+      ...countFilterParams
+    ];
+
+    const countResult = await pool.query(countQuery, countQueryParams);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    // If no results, return empty response
+    if (total === 0) {
+      return {
+        users: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false
+      };
+    }
+
+    // Main query with pagination
     let query = `
       WITH user_data AS (
         SELECT u.*,
@@ -231,7 +332,10 @@ export class BrowsingService {
     // Geographic priority (mandatory)
     query += ` ORDER BY ${this.getSortClause(sortBy)}`;
 
-    // Combine base parameters with filter parameters
+    // Add pagination
+    query += ` LIMIT $${params.length + 9} OFFSET $${params.length + 10}`;
+
+    // Combine base parameters with filter parameters and pagination
     const queryParams = [
       currentUser.latitude,
       currentUser.longitude,
@@ -241,10 +345,12 @@ export class BrowsingService {
       userId,
       userId,
       userId,
-      ...params
+      ...params,
+      limit,
+      offset
     ];
 
-        const result = await pool.query(query, queryParams);
+    const result = await pool.query(query, queryParams);
 
     const users: BrowseUser[] = result.rows.map(row => ({
       id: row.id,
@@ -268,14 +374,24 @@ export class BrowsingService {
 
     return {
       users,
-      total: users.length
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext,
+      hasPrev
     };
   }
 
   /**
    * Search users by name, firstname, or username
    */
-  static async searchUsersByName(userId: number, searchQuery: string): Promise<BrowseResponse> {
+  static async searchUsersByName(userId: number, searchQuery: string, page: number = 1, limit: number = 20): Promise<BrowseResponse> {
+    // Validate pagination parameters
+    if (page < 1) page = 1;
+    if (limit < 1) limit = 20;
+    if (limit > 100) limit = 100;
+
     // Get current user info for distance calculation and compatibility
     const userQuery = 'SELECT * FROM users WHERE id = $1';
     const userResult = await pool.query(userQuery, [userId]);
@@ -292,6 +408,72 @@ export class BrowsingService {
 
     // Prepare search terms for ILIKE matching
     const searchTerm = `%${searchQuery.toLowerCase()}%`;
+
+    // First, get total count for pagination
+    let countQuery = `
+      WITH user_data AS (
+        SELECT u.id
+        FROM users u
+        WHERE u.id != $1
+        AND u.email_verified = true
+        AND u.profile_picture_url IS NOT NULL
+        AND u.latitude IS NOT NULL
+        AND u.longitude IS NOT NULL
+        AND (
+          LOWER(u.firstname) LIKE $2
+          OR LOWER(u.lastname) LIKE $3
+          OR LOWER(u.username) LIKE $4
+          OR LOWER(CONCAT(u.firstname, ' ', u.lastname)) LIKE $5
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM blocks
+          WHERE (blocker_id = $6 AND blocked_id = u.id)
+          OR (blocker_id = u.id AND blocked_id = $7)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM likes
+          WHERE liker_id = $8 AND liked_id = u.id
+        )
+    `;
+
+    // Sexual orientation compatibility (mandatory)
+    countQuery += this.getOrientationFilter(currentUser);
+
+    countQuery += `)
+      SELECT COUNT(*) as total FROM user_data`;
+
+    const countParams = [
+      userId,                  // $1 - exclude self
+      searchTerm,              // $2 - firstname like
+      searchTerm,              // $3 - lastname like
+      searchTerm,              // $4 - username like
+      searchTerm,              // $5 - full name like
+      userId,                  // $6 - blocks check
+      userId,                  // $7 - blocks check
+      userId                   // $8 - likes check
+    ];
+
+    const countResult = await pool.query(countQuery, countParams);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    // If no results, return empty response
+    if (total === 0) {
+      return {
+        users: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false
+      };
+    }
 
     let query = `
       WITH user_data AS (
@@ -354,7 +536,7 @@ export class BrowsingService {
       )
       SELECT * FROM user_data
       ORDER BY relevance_score DESC, distance_km ASC
-      LIMIT 50`; // Limit results for performance
+      LIMIT $20 OFFSET $21`;
 
     const queryParams = [
       currentUser.latitude,    // $1
@@ -375,7 +557,9 @@ export class BrowsingService {
       searchTerm,              // $16 - full name like (WHERE clause)
       userId,                  // $17 - blocks check
       userId,                  // $18 - blocks check
-      userId                   // $19 - likes check
+      userId,                  // $19 - likes check
+      limit,                   // $20 - limit
+      offset                   // $21 - offset
     ];
 
     const result = await pool.query(query, queryParams);
@@ -402,16 +586,20 @@ export class BrowsingService {
 
     return {
       users,
-      total: users.length
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext,
+      hasPrev
     };
   }
 
   /**
    * Advanced search (same logic as browse)
    */
-  static async getSearchResults(userId: number, filters: BrowseFilters = {}, sortBy: string = 'distance'): Promise<BrowseResponse> {
-    // Same logic as browse - this satisfies the "advanced search" requirement
-    return this.getBrowseResults(userId, filters, sortBy);
+  static async getSearchResults(userId: number, filters: BrowseFilters = {}, sortBy: string = 'distance', page: number = 1, limit: number = 20): Promise<BrowseResponse> {
+    return this.getBrowseResults(userId, filters, sortBy, page, limit);
   }
 
   /**

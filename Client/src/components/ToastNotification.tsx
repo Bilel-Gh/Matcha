@@ -10,6 +10,7 @@ export interface ToastData {
   onClick?: () => void;
   userAvatar?: string;
   userName?: string;
+  customStyle?: 'modern' | 'action' | 'feedback' | 'system';
 }
 
 interface ToastNotificationProps {
@@ -72,7 +73,7 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({ toast, onRemove }
 
   return (
     <div
-      className={`toast-notification toast-${toast.type} ${isVisible ? 'visible' : ''} ${isRemoving ? 'removing' : ''} ${toast.onClick ? 'clickable' : ''}`}
+      className={`toast-notification toast-${toast.type} ${toast.customStyle ? `toast-${toast.customStyle}` : ''} ${isVisible ? 'visible' : ''} ${isRemoving ? 'removing' : ''} ${toast.onClick ? 'clickable' : ''}`}
       onClick={toast.onClick ? handleClick : undefined}
     >
       <div className="toast-content">
@@ -99,9 +100,11 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({ toast, onRemove }
           <div className="toast-title">
             {toast.title}
           </div>
-          <div className="toast-message">
-            {toast.message}
-          </div>
+          {toast.message && (
+            <div className="toast-message">
+              {toast.message}
+            </div>
+          )}
         </div>
 
         <button

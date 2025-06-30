@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useChatSocket } from '../hooks/useChatSocket';
 
 interface MatchUser {
   id: number;
@@ -45,6 +46,62 @@ const MatchesMode: React.FC<MatchesModeProps> = ({ onShowMessage, onMatchCountCh
   const [visitsReceived, setVisitsReceived] = useState<ActivityUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Real-time online status updates
+  const handleUserOnline = (userId: number) => {
+    setMatches(prevMatches => prevMatches.map(user =>
+      user.id === userId
+        ? { ...user, is_online: true }
+        : user
+    ));
+    setLikesGiven(prevLikes => prevLikes.map(user =>
+      user.id === userId
+        ? { ...user, is_online: true }
+        : user
+    ));
+    setLikesReceived(prevLikes => prevLikes.map(user =>
+      user.id === userId
+        ? { ...user, is_online: true }
+        : user
+    ));
+    setVisitsReceived(prevVisits => prevVisits.map(user =>
+      user.id === userId
+        ? { ...user, is_online: true }
+        : user
+    ));
+  };
+
+  const handleUserOffline = (userId: number) => {
+    setMatches(prevMatches => prevMatches.map(user =>
+      user.id === userId
+        ? { ...user, is_online: false }
+        : user
+    ));
+    setLikesGiven(prevLikes => prevLikes.map(user =>
+      user.id === userId
+        ? { ...user, is_online: false }
+        : user
+    ));
+    setLikesReceived(prevLikes => prevLikes.map(user =>
+      user.id === userId
+        ? { ...user, is_online: false }
+        : user
+    ));
+    setVisitsReceived(prevVisits => prevVisits.map(user =>
+      user.id === userId
+        ? { ...user, is_online: false }
+        : user
+    ));
+  };
+
+  // Socket connection for real-time updates
+  useChatSocket(token, {
+    onUserOnline: handleUserOnline,
+    onUserOffline: handleUserOffline,
+    onError: (error) => {
+      // Silent error handling for defense requirements
+    }
+  });
 
   useEffect(() => {
     loadData();
