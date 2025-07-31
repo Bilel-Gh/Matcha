@@ -1,0 +1,264 @@
+.sound-settings {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.sound-settings-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.sound-settings-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.sound-settings-description {
+  color: #666;
+  margin: 0;
+  font-size: 14px;
+}
+
+.sound-setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sound-setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-info {
+  flex: 1;
+}
+
+.setting-label {
+  font-weight: 500;
+  color: #333;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.setting-description {
+  color: #666;
+  font-size: 12px;
+  margin: 0;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+}
+
+.switch input:checked + .slider {
+  background-color: #fd297b;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 24px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* Volume Control */
+.volume-control {
+  gap: 10px;
+  align-items: center;
+}
+
+.volume-slider {
+  width: 120px;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+  background: #ddd;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fd297b;
+  cursor: pointer;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fd297b;
+  cursor: pointer;
+  border: none;
+}
+
+.volume-label {
+  font-size: 14px;
+}
+
+.volume-value {
+  font-size: 12px;
+  color: #666;
+  min-width: 35px;
+  text-align: right;
+}
+
+/* Sound Tests */
+.sound-tests {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.test-section-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  margin: 0 0 16px 0;
+}
+
+.test-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.test-sound-btn {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.test-sound-btn:hover:not(:disabled) {
+  border-color: #fd297b;
+  color: #fd297b;
+}
+
+.test-sound-btn.testing {
+  background: #fd297b;
+  color: white;
+  border-color: #fd297b;
+}
+
+.test-sound-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.testing-indicator {
+  animation: pulse 1s infinite;
+}
+
+.test-all-btn {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #fd297b;
+  border-radius: 6px;
+  background: white;
+  color: #fd297b;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.test-all-btn:hover:not(:disabled) {
+  background: #fd297b;
+  color: white;
+}
+
+.test-all-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 768px) {
+  .sound-setting-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .volume-control {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .test-buttons-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -26,7 +26,7 @@ export interface IPLocationResponse {
 export interface LocationUpdateData {
   latitude: number;
   longitude: number;
-  source: 'gps' | 'ip' | 'manual';
+  source: 'gps' | 'ip' | 'manual' | 'search';
   city?: string;
   country?: string;
 }
@@ -82,6 +82,7 @@ export class LocationService {
       const response = await fetch(`https://ipapi.co/${ip}/json/`);
 
       if (!response.ok) {
+        console.warn(`IP API request failed: ${response.status}`);
         throw new Error(`IP API request failed: ${response.status}`);
       }
 
@@ -89,15 +90,17 @@ export class LocationService {
 
       // Check for API error
       if (data.error) {
+        console.warn(`IP API error: ${data.reason || 'Unknown error'}`);
         throw new Error(`IP API error: ${data.reason || 'Unknown error'}`);
       }
 
       // Validate required fields
       if (!data.latitude || !data.longitude) {
+        console.warn(`Invalid location data from IP API:`, data);
         throw new Error('Invalid location data from IP API');
       }
 
-      return {
+      const result = {
         latitude: parseFloat(data.latitude),
         longitude: parseFloat(data.longitude),
         city: data.city || 'Unknown',
@@ -105,9 +108,16 @@ export class LocationService {
         country: data.country_name || 'Unknown',
         ip: ip
       };
-    } catch (error) {
-      // Silent error handling - no console output for defense requirements
-      return null;
+
+      return result;
+    } catch (error: any) {
+      console.warn(`IP location failed for ${ip}:`, error.message);
+      // Return default location instead of null for better UX
+      return {
+        ...this.DEFAULT_LOCATION,
+        region: 'Île-de-France',
+        ip: ip
+      };
     }
   }
 
@@ -289,5 +299,178 @@ export class LocationService {
       // Silent error handling - no console output for defense requirements
       return null;
     }
+  }
+
+    /**
+   * Fallback cities data for development/testing
+   */
+  private static readonly FALLBACK_CITIES = [
+    { id: '1', name: 'Paris', country: 'France', display_name: 'Paris, France', latitude: 48.8566, longitude: 2.3522, type: 'city', importance: 0.9 },
+    { id: '2', name: 'London', country: 'United Kingdom', display_name: 'London, United Kingdom', latitude: 51.5074, longitude: -0.1278, type: 'city', importance: 0.9 },
+    { id: '3', name: 'New York', country: 'United States', display_name: 'New York, United States', latitude: 40.7128, longitude: -74.0060, type: 'city', importance: 0.9 },
+    { id: '4', name: 'Tokyo', country: 'Japan', display_name: 'Tokyo, Japan', latitude: 35.6762, longitude: 139.6503, type: 'city', importance: 0.9 },
+    { id: '5', name: 'Berlin', country: 'Germany', display_name: 'Berlin, Germany', latitude: 52.5200, longitude: 13.4050, type: 'city', importance: 0.8 },
+    { id: '6', name: 'Madrid', country: 'Spain', display_name: 'Madrid, Spain', latitude: 40.4168, longitude: -3.7038, type: 'city', importance: 0.8 },
+    { id: '7', name: 'Rome', country: 'Italy', display_name: 'Rome, Italy', latitude: 41.9028, longitude: 12.4964, type: 'city', importance: 0.8 },
+    { id: '8', name: 'Amsterdam', country: 'Netherlands', display_name: 'Amsterdam, Netherlands', latitude: 52.3676, longitude: 4.9041, type: 'city', importance: 0.7 },
+    { id: '9', name: 'Barcelona', country: 'Spain', display_name: 'Barcelona, Spain', latitude: 41.3851, longitude: 2.1734, type: 'city', importance: 0.7 },
+    { id: '10', name: 'Munich', country: 'Germany', display_name: 'Munich, Germany', latitude: 48.1351, longitude: 11.5820, type: 'city', importance: 0.7 }
+  ];
+
+  /**
+   * Search cities using Nominatim geocoding service
+   */
+  static async searchCities(query: string, limit: number = 10): Promise<any[]> {
+    try {
+      // Use Nominatim service for city search with proper User-Agent
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=${Math.min(limit, 50)}&addressdetails=1&extratags=1&accept-language=en`,
+        {
+          headers: {
+            'User-Agent': 'Matcha-Dating-App/1.0',
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        console.warn(`Nominatim API error: ${response.status} ${response.statusText}`);
+        return [];
+      }
+
+      const data = await response.json();
+
+      if (!Array.isArray(data)) {
+        console.warn('Invalid response format from Nominatim API');
+        return [];
+      }
+
+
+
+      // Filter and format results to include places (more permissive filtering)
+      const cities = data
+        .filter((place: any) => {
+          if (!place || !place.lat || !place.lon) {
+            return false;
+          }
+
+          const type = place.type;
+          const category = place.category;
+          const placeClass = place.class;
+
+          // More permissive filtering - include more place types
+          const isValidPlace = (
+            (category === 'place') ||
+            (category === 'boundary' && type === 'administrative') ||
+            (placeClass === 'place') ||
+            (placeClass === 'boundary' && type === 'administrative') || // Major cities fix
+            (placeClass === 'boundary' && type === 'ceremonial') || // London-type cities
+            (place.addresstype === 'city') || // Explicit city addresstype
+            (type && ['city', 'town', 'village', 'suburb', 'hamlet', 'neighbourhood', 'quarter', 'state', 'county'].includes(type)) ||
+            // High importance places (major cities/towns)
+            (place.importance && parseFloat(place.importance) > 0.5)
+          );
+          return isValidPlace;
+        })
+        .map((place: any) => {
+          const addressParts = place.display_name.split(',');
+          const mainName = place.address?.city ||
+                          place.address?.town ||
+                          place.address?.village ||
+                          place.address?.suburb ||
+                          place.address?.hamlet ||
+                          addressParts[0]?.trim();
+
+          return {
+            id: place.place_id.toString(),
+            name: mainName,
+            country: place.address?.country || addressParts[addressParts.length - 1]?.trim() || 'Unknown',
+            display_name: place.display_name,
+            latitude: parseFloat(place.lat),
+            longitude: parseFloat(place.lon),
+            type: place.type,
+            importance: parseFloat(place.importance || '0')
+          };
+        })
+        .filter((city: any) => city.name && city.name.length > 0) // Remove entries without valid names
+        .sort((a: any, b: any) => b.importance - a.importance) // Sort by importance
+        .slice(0, limit);
+
+                  // Always search in fallback and merge results for better coverage
+      const fallbackResults = this.searchFallbackCities(query, limit);
+
+      // Merge and deduplicate results, prioritizing fallback cities (they're more important)
+      const mergedResults = [...fallbackResults];
+
+      // Add Nominatim results that aren't already covered by fallback
+      cities.forEach(city => {
+        const isDuplicate = fallbackResults.some(fallback =>
+          fallback.name.toLowerCase() === city.name.toLowerCase() &&
+          fallback.country.toLowerCase() === city.country.toLowerCase()
+        );
+        if (!isDuplicate && mergedResults.length < limit) {
+          mergedResults.push(city);
+        }
+      });
+
+      return mergedResults.slice(0, limit);
+    } catch (error: any) {
+      console.warn(`Nominatim API failed for "${query}":`, error.message);
+      // Fallback to local search in predefined cities
+      return this.searchFallbackCities(query, limit);
+    }
+  }
+
+    /**
+   * Search in fallback cities when external API fails
+   */
+  private static searchFallbackCities(query: string, limit: number): any[] {
+    const queryLower = query.toLowerCase().trim();
+
+    const matchedCities = this.FALLBACK_CITIES
+      .filter(city => {
+        const cityName = city.name.toLowerCase();
+        const cityCountry = city.country.toLowerCase();
+        const cityDisplay = city.display_name.toLowerCase();
+
+        // Enhanced matching logic
+        return (
+          cityName.includes(queryLower) ||
+          cityCountry.includes(queryLower) ||
+          cityDisplay.includes(queryLower) ||
+          // Special cases for common searches
+          (queryLower === 'ny' && cityName.includes('new york')) ||
+          (queryLower === 'nyc' && cityName.includes('new york')) ||
+          (queryLower.includes('new') && cityName.includes('new york')) ||
+          (queryLower.includes('york') && cityName.includes('new york')) ||
+          // Split city names for multi-word searches
+          cityName.split(' ').some(word => word.startsWith(queryLower)) ||
+          queryLower.split(' ').every(queryWord =>
+            cityName.includes(queryWord) || cityCountry.includes(queryWord)
+          )
+        );
+      })
+      .sort((a, b) => {
+        // Prioritize exact matches
+        const aExact = a.name.toLowerCase() === queryLower ? 10 : 0;
+        const bExact = b.name.toLowerCase() === queryLower ? 10 : 0;
+        if (aExact !== bExact) return bExact - aExact;
+
+        // Then prioritize starts with
+        const aStarts = a.name.toLowerCase().startsWith(queryLower) ? 5 : 0;
+        const bStarts = b.name.toLowerCase().startsWith(queryLower) ? 5 : 0;
+        if (aStarts !== bStarts) return bStarts - aStarts;
+
+        // Prioritize by word matches
+        const aWordMatch = a.name.toLowerCase().split(' ').some(word => word === queryLower) ? 3 : 0;
+        const bWordMatch = b.name.toLowerCase().split(' ').some(word => word === queryLower) ? 3 : 0;
+        if (aWordMatch !== bWordMatch) return bWordMatch - aWordMatch;
+
+        // Finally by importance
+        return b.importance - a.importance;
+      })
+      .slice(0, limit);
+
+        return matchedCities;
   }
 }

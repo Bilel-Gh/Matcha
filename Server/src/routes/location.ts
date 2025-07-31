@@ -337,4 +337,75 @@ router.get('/location/reverse-geocode', locationController.reverseGeocode);
  */
 router.get('/location/distance', locationController.calculateDistance);
 
+/**
+ * @swagger
+ * /api/location/search-cities:
+ *   get:
+ *     summary: Search cities and places by name
+ *     tags: [Location]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *         description: Search query (city or place name)
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 20
+ *           default: 10
+ *         description: Maximum number of results to return
+ *     responses:
+ *       200:
+ *         description: City search successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Unique place identifier
+ *                       name:
+ *                         type: string
+ *                         description: City/place name
+ *                       country:
+ *                         type: string
+ *                         description: Country name
+ *                       display_name:
+ *                         type: string
+ *                         description: Full formatted address
+ *                       latitude:
+ *                         type: number
+ *                         format: float
+ *                         description: Latitude coordinate
+ *                       longitude:
+ *                         type: number
+ *                         format: float
+ *                         description: Longitude coordinate
+ *                       type:
+ *                         type: string
+ *                         description: Place type (city, town, village, etc.)
+ *       400:
+ *         description: Invalid search query
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/location/search-cities', protect, locationController.searchCities);
+
 export default router;

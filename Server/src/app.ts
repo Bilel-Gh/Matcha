@@ -52,6 +52,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Test 500 error endpoint (TEMPORARY)
+app.get('/test-500', (req, res) => {
+  throw new Error('Test 500 error - This is intentional for testing!');
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
@@ -81,7 +86,7 @@ app.get('/api/protected', protect, (req, res) => {
 
 // Handle 404 errors
 app.all('*', (req, res) => {
-  res.status(200).json({
+  res.status(404).json({
     success: false,
     message: `Route ${req.originalUrl} not found`,
     error: 'ROUTE_NOT_FOUND'

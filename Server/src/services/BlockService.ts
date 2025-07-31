@@ -1,6 +1,7 @@
 import pool from '../config/database';
 import { LikeService } from './LikeService';
 import { AppError } from '../utils/AppError';
+import { UserRepository } from '../repositories/UserRepository';
 
 export interface BlockResponse {
   blocker_id: number;
@@ -14,7 +15,6 @@ export interface BlockedUserInfo {
   username: string;
   firstname: string;
   lastname: string;
-  age: number;
   profile_picture_url: string;
   reason?: string;
   blocked_at: string;
@@ -27,6 +27,12 @@ export class BlockService {
   static async blockUser(blockerId: number, blockedId: number, reason?: string): Promise<BlockResponse> {
     if (blockerId === blockedId) {
       throw new AppError('Cannot block yourself', 400);
+    }
+
+    // Check if blocked user exists
+    const blockedUser = await UserRepository.findById(blockedId);
+    if (!blockedUser) {
+      throw new AppError('User not found', 404);
     }
 
     // Check if block already exists

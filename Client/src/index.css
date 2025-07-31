@@ -2644,6 +2644,276 @@ body::before {
 }
 
 /* ===============================
+   SMART LOCATION STYLES
+   =============================== */
+
+/* Smart Location Manager */
+.smart-location-manager {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.location-loading {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.location-indicator .status-icon {
+  margin-right: 0.5rem;
+}
+
+/* Location Setup */
+.location-setup {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.setup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.auto-setup-btn {
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(253, 41, 123, 0.3);
+  transition: all 0.3s ease;
+}
+
+.manual-setup-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.setup-note {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+/* Location Search Modal */
+.location-search-modal {
+  max-width: 550px;
+  width: 90%;
+}
+
+.auto-detect-section {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.auto-detect-btn {
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.auto-detect-note {
+  color: #666;
+  font-size: 0.875rem;
+  display: block;
+}
+
+.or-divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.or-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.or-divider span {
+  background: white;
+  padding: 0 1rem;
+  color: #666;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.search-section {
+  margin-bottom: 1.5rem;
+}
+
+.search-section label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.search-input-container {
+  position: relative;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  color: #666;
+  z-index: 2;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 2.5rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(253, 41, 123, 0.1);
+}
+
+.search-loading {
+  position: absolute;
+  right: 1rem;
+  color: var(--primary-color);
+}
+
+/* Search Suggestions */
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.suggestion-item:hover:not(:disabled) {
+  background-color: #f8f9fa;
+}
+
+.suggestion-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.suggestion-icon {
+  color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.suggestion-content {
+  flex: 1;
+}
+
+.suggestion-name {
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+}
+
+.suggestion-country {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.no-results {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: #666;
+  font-style: italic;
+}
+
+.no-results-icon {
+  color: #ccc;
+}
+
+.search-tips {
+  background-color: rgba(253, 41, 123, 0.05);
+  border: 1px solid rgba(253, 41, 123, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.search-tips small {
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Responsive Design for Smart Location */
+@media (max-width: 768px) {
+  .setup-actions {
+    gap: 0.75rem;
+  }
+
+  .search-suggestions {
+    max-height: 250px;
+  }
+
+  .suggestion-item {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .location-search-modal {
+    margin: 1rem;
+    width: calc(100% - 2rem);
+  }
+
+  .search-input {
+    padding: 0.75rem 1rem 0.75rem 2.25rem;
+    font-size: 0.95rem;
+  }
+
+  .search-icon {
+    left: 0.75rem;
+  }
+}
+
+/* ===============================
    FAME RATING STYLES
    =============================== */
 

@@ -1,5 +1,6 @@
 import pool from '../config/database';
 import { AppError } from '../utils/AppError';
+import emailService from './EmailService';
 
 export interface ReportResponse {
   reporter_id: number;
@@ -46,6 +47,22 @@ export class ReportService {
       throw new AppError('You have already reported this user recently', 429);
     }
 
+    // Get user information for email
+    const getUserQuery = `
+      SELECT username, firstname, lastname, email
+      FROM users
+      WHERE id = $1
+    `;
+    const reporterResult = await pool.query(getUserQuery, [reporterId]);
+    const reportedResult = await pool.query(getUserQuery, [reportedId]);
+
+    if (reporterResult.rows.length === 0 || reportedResult.rows.length === 0) {
+      throw new AppError('User not found', 404);
+    }
+
+    const reporter = reporterResult.rows[0];
+    const reported = reportedResult.rows[0];
+
     // Insert report
     const insertQuery = `
       INSERT INTO reports (reporter_id, reported_id, reason, created_at)
@@ -53,6 +70,18 @@ export class ReportService {
       RETURNING reporter_id, reported_id, reason, created_at
     `;
     const result = await pool.query(insertQuery, [reporterId, reportedId, reason.trim()]);
+
+    // Send email notification to the reported user
+    try {
+      await emailService.sendReportNotificationEmail(
+        reporter.username,
+        reported.firstname || reported.username,
+        reported.email,
+        reason.trim()
+      );
+    } catch (error) {
+      // Silent error handling - email failure shouldn't prevent report from being created
+    }
 
     return {
       reporter_id: result.rows[0].reporter_id,

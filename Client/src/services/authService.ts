@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { handleApiError } from '../utils/errorMessages';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -28,33 +27,32 @@ interface AuthResponse {
   user: User;
 }
 
-// Interface pour les erreurs du serveur (format différent de nos types clients)
-interface ServerErrorResponse {
-  success: false;
-  message: string;
-  error?: string;
-  field?: string;
-}
-
 const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response = await axios.post<any>(`${API_URL}/api/auth/login`, credentials);
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
 
-      if (!response.data.success) {
-        // Retourner directement l'erreur du serveur sans double traitement
-        const errorData = response.data as ServerErrorResponse;
+      const data = await response.json();
+
+      if (!data.success) {
+        // Le serveur retourne maintenant toujours 200, même pour les erreurs d'auth
         throw {
           success: false,
-          message: errorData.message || 'Login failed',
-          code: errorData.error,
-          field: errorData.field
+          message: data.message || 'Login failed',
+          code: data.error,
+          field: data.field
         };
       }
 
-      return response.data.data!;
+      return data.data!;
     } catch (error: unknown) {
-      // Ne traiter par handleApiError que les vraies erreurs d'axios
+      // Ne traiter par handleApiError que les vraies erreurs de fetch
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
         throw error; // C'est déjà notre format d'erreur
       }
@@ -64,22 +62,29 @@ const authService = {
 
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await axios.post<any>(`${API_URL}/api/auth/register`, data);
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
 
-      if (!response.data.success) {
-        // Retourner directement l'erreur du serveur sans double traitement
-        const errorData = response.data as ServerErrorResponse;
+      const responseData = await response.json();
+
+      if (!responseData.success) {
+        // Le serveur retourne maintenant toujours 200, même pour les erreurs
         throw {
           success: false,
-          message: errorData.message || 'Registration failed',
-          code: errorData.error,
-          field: errorData.field
+          message: responseData.message || 'Registration failed',
+          code: responseData.error,
+          field: responseData.field
         };
       }
 
-      return response.data.data!;
+      return responseData.data!;
     } catch (error: unknown) {
-      // Ne traiter par handleApiError que les vraies erreurs d'axios
+      // Ne traiter par handleApiError que les vraies erreurs de fetch
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
         throw error; // C'est déjà notre format d'erreur
       }
@@ -89,20 +94,28 @@ const authService = {
 
   async forgotPassword(email: string): Promise<void> {
     try {
-      const response = await axios.post<any>(`${API_URL}/api/auth/forgot-password`, { email });
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
 
-      if (response.data.status !== 'success') {
-        // Retourner directement l'erreur du serveur sans double traitement
-        const errorData = response.data;
+      const data = await response.json();
+
+      // Nouveau format : toujours 200, vérifier success
+      if (!data.success && data.status !== 'success') {
+        // Gérer les erreurs de manière silencieuse (toujours 200 maintenant)
         throw {
           success: false,
-          message: errorData.message || 'Password reset failed',
-          code: errorData.code || errorData.error,
-          field: errorData.field
+          message: data.message || 'Password reset failed',
+          code: data.code || data.error,
+          field: data.field
         };
       }
     } catch (error: unknown) {
-      // Ne traiter par handleApiError que les vraies erreurs d'axios
+      // Ne traiter par handleApiError que les vraies erreurs de fetch
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
         throw error; // C'est déjà notre format d'erreur
       }
@@ -112,20 +125,28 @@ const authService = {
 
   async resetPassword(password: string, token: string): Promise<void> {
     try {
-      const response = await axios.post<any>(`${API_URL}/api/auth/reset-password`, { new_password: password, token });
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ new_password: password, token }),
+      });
 
-      if (response.data.status !== 'success') {
-        // Retourner directement l'erreur du serveur sans double traitement
-        const errorData = response.data;
+      const data = await response.json();
+
+      // Nouveau format : toujours 200, vérifier success
+      if (!data.success && data.status !== 'success') {
+        // Gérer les erreurs de manière silencieuse (toujours 200 maintenant)
         throw {
           success: false,
-          message: errorData.message || 'Password reset failed',
-          code: errorData.code || errorData.error,
-          field: errorData.field
+          message: data.message || 'Password reset failed',
+          code: data.code || data.error,
+          field: data.field
         };
       }
     } catch (error: unknown) {
-      // Ne traiter par handleApiError que les vraies erreurs d'axios
+      // Ne traiter par handleApiError que les vraies erreurs de fetch
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
         throw error; // C'est déjà notre format d'erreur
       }
@@ -135,20 +156,28 @@ const authService = {
 
     async verify(token: string): Promise<void> {
     try {
-      const response = await axios.get<any>(`${API_URL}/api/auth/verify/${token}`);
+      const response = await fetch(`${API_URL}/api/auth/verify/${token}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json', // Important : indique au serveur qu'on veut du JSON
+        },
+      });
 
-      if (!response.data.success) {
-        // Retourner directement l'erreur du serveur sans double traitement
-        const errorData = response.data as ServerErrorResponse;
+      const data = await response.json();
+
+      // Nouveau format : toujours 200, vérifier success
+      if (!data.success) {
+        // Gérer les erreurs de manière silencieuse (toujours 200 maintenant)
         throw {
           success: false,
-          message: errorData.message || 'Email verification failed',
-          code: errorData.error,
-          field: errorData.field
+          message: data.message || 'Email verification failed',
+          code: data.error,
+          field: data.field
         };
       }
     } catch (error: unknown) {
-      // Ne traiter par handleApiError que les vraies erreurs d'axios
+      // Ne traiter par handleApiError que les vraies erreurs de fetch
       if (typeof error === 'object' && error !== null && 'success' in error && error.success === false) {
         throw error; // C'est déjà notre format d'erreur
       }

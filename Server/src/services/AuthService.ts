@@ -217,8 +217,15 @@ export class AuthService {
     const user = await UserRepository.findByVerificationToken(token);
     // Silent user check - no console output for defense requirements
 
-    if (!user || user.email_verified) {
+    if (!user) {
       throw new ValidationError('Invalid or expired verification token');
+    }
+
+    // Si l'email est déjà vérifié, on considère ça comme un succès
+    // (évite l'erreur quand l'utilisateur clique plusieurs fois sur le lien)
+    if (user.email_verified) {
+      // Email déjà vérifié - retourner silencieusement un succès
+      return;
     }
 
     // Silent user verification - no console output for defense requirements

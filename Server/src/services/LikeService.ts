@@ -54,7 +54,13 @@ export class LikeService {
     // Check if liker has profile picture (mandatory requirement)
     const liker = await UserRepository.findById(likerId);
     if (!liker?.profile_picture_url) {
-      throw new AppError('Profile picture required to like other users', 400);
+      throw new AppError('You must have a profile picture to like other users. Please upload a photo in your profile settings.', 400);
+    }
+
+    // Check if liked user exists
+    const likedUser = await UserRepository.findById(likedId);
+    if (!likedUser) {
+      throw new AppError('User not found', 404);
     }
 
     // Check if users are blocked

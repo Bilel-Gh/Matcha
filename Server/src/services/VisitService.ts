@@ -2,6 +2,7 @@ import pool from '../config/database';
 import { FameRatingService } from './FameRatingService';
 import { NotificationService } from './NotificationService';
 import { AppError } from '../utils/AppError';
+import { UserRepository } from '../repositories/UserRepository';
 
 export interface VisitResponse {
   visitor_id: number;
@@ -30,6 +31,12 @@ export class VisitService {
   static async recordVisit(visitorId: number, visitedId: number): Promise<VisitResponse> {
     if (visitorId === visitedId) {
       throw new AppError('Cannot visit own profile', 400);
+    }
+
+    // Check if visited user exists
+    const visitedUser = await UserRepository.findById(visitedId);
+    if (!visitedUser) {
+      throw new AppError('User not found', 404);
     }
 
     // Check if users are blocked

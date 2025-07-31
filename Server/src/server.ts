@@ -2,6 +2,7 @@ import http from 'http';
 import app from './app';
 import config from './config/config';
 import { SocketManager } from './config/socket';
+import logger from './utils/logger';
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -51,11 +52,16 @@ process.on('SIGINT', signal => {
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  // Silent error handling - no console output for defense requirements
+  // Log SEULEMENT les erreurs critiques 500+ - nécessaire pour le debug
+  logger.error('💥 UNCAUGHT EXCEPTION - Server shutting down', error);
   gracefulShutdown('UNCAUGHT_EXCEPTION');
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  // Silent error handling - no console output for defense requirements
+  // Log SEULEMENT les erreurs critiques 500+ - nécessaire pour le debug
+  logger.error('💥 UNHANDLED REJECTION - Server shutting down', {
+    reason,
+    promise: promise.toString()
+  });
   gracefulShutdown('UNHANDLED_REJECTION');
 });

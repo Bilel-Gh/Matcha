@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart, FaMapMarkerAlt, FaTachometerAlt, FaPalette } from 'react-icons/fa';
+import { FaSignInAlt, FaUser, FaLock, FaCamera, FaHeart, FaMapMarkerAlt, FaTachometerAlt, FaPalette, FaBell } from 'react-icons/fa';
 import axios from 'axios';
 import PersonalInfoForm from '../components/PersonalInfoForm';
 import PasswordChangeForm from '../components/PasswordChangeForm';
 import PhotoManagement from '../components/PhotoManagement';
 import InterestsManager from '../components/InterestsManager';
-import LocationManager from '../components/LocationManager';
+import SmartLocationManager from '../components/SmartLocationManager';
 import FameRatingCard from '../components/FameRatingCard';
 import ThemeSelector from '../components/ThemeSelector';
+import SoundSettings from '../components/SoundSettings';
 import profileService, { ProfileData, ProfileUpdateData, PasswordChangeData } from '../services/profileService';
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser, refreshUser } = useAuth();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'location' | 'security' | 'overview' | 'theme'>('overview');
+  const [activeTab, setActiveTab] = useState<'personal' | 'photos' | 'interests' | 'location' | 'security' | 'overview' | 'theme' | 'notifications'>('overview');
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -216,6 +217,13 @@ const ProfilePage: React.FC = () => {
           <FaPalette style={{ marginRight: '8px' }} />
           Theme
         </button>
+        <button
+          className={`tab-button ${activeTab === 'notifications' ? 'active' : ''}`}
+          onClick={() => setActiveTab('notifications')}
+        >
+          <FaBell style={{ marginRight: '8px' }} />
+          Notifications
+        </button>
       </div>
 
       <div className="profile-content">
@@ -253,11 +261,11 @@ const ProfilePage: React.FC = () => {
         )}
 
         {activeTab === 'location' && token && (
-          <LocationManager
+          <SmartLocationManager
             token={token}
             onSuccess={showSuccessMessage}
             onError={showErrorMessage}
-            showInitialSetup={!profile?.profile_completed}
+            autoSetupOnMount={!profile?.profile_completed}
             onProfileUpdate={handleProfileUpdate}
           />
         )}
@@ -271,6 +279,10 @@ const ProfilePage: React.FC = () => {
 
         {activeTab === 'theme' && (
           <ThemeSelector />
+        )}
+
+        {activeTab === 'notifications' && (
+          <SoundSettings />
         )}
 
         {activeTab === 'overview' && profile && (

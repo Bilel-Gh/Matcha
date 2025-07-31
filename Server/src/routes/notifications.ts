@@ -1,5 +1,13 @@
 import express from 'express';
-import { NotificationController } from '../controllers/notificationController';
+import {
+  getNotifications,
+  getRecentNotifications,
+  getUnreadCount,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  cleanOldNotifications
+} from '../controllers/notificationController';
 import { authenticateToken } from '../middlewares/auth';
 
 const router = express.Router();
@@ -40,7 +48,7 @@ router.use(authenticateToken);
  *       401:
  *         description: Unauthorized
  */
-router.get('/', NotificationController.getNotifications);
+router.get('/', getNotifications);
 
 /**
  * @swagger
@@ -56,7 +64,7 @@ router.get('/', NotificationController.getNotifications);
  *       401:
  *         description: Unauthorized
  */
-router.get('/recent', NotificationController.getRecentNotifications);
+router.get('/recent', getRecentNotifications);
 
 /**
  * @swagger
@@ -72,7 +80,7 @@ router.get('/recent', NotificationController.getRecentNotifications);
  *       401:
  *         description: Unauthorized
  */
-router.get('/unread-count', NotificationController.getUnreadCount);
+router.get('/unread-count', getUnreadCount);
 
 /**
  * @swagger
@@ -97,7 +105,7 @@ router.get('/unread-count', NotificationController.getUnreadCount);
  *       401:
  *         description: Unauthorized
  */
-router.put('/read/:id', NotificationController.markAsRead);
+router.put('/read/:id', markAsRead);
 
 /**
  * @swagger
@@ -113,7 +121,7 @@ router.put('/read/:id', NotificationController.markAsRead);
  *       401:
  *         description: Unauthorized
  */
-router.put('/read-all', NotificationController.markAllAsRead);
+router.put('/read-all', markAllAsRead);
 
 /**
  * @swagger
@@ -138,7 +146,7 @@ router.put('/read-all', NotificationController.markAllAsRead);
  *       401:
  *         description: Unauthorized
  */
-router.delete('/:id', NotificationController.deleteNotification);
+router.delete('/:id', deleteNotification);
 
 /**
  * @swagger
@@ -161,6 +169,6 @@ router.delete('/:id', NotificationController.deleteNotification);
  *       401:
  *         description: Unauthorized
  */
-router.delete('/clean', NotificationController.cleanOldNotifications);
+router.delete('/clean', cleanOldNotifications);
 
 export default router;

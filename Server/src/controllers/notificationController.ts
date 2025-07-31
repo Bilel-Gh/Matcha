@@ -1,202 +1,166 @@
 import { Request, Response } from 'express';
 import { NotificationService } from '../services/NotificationService';
 import { AppError } from '../utils/AppError';
+import { asyncHandler } from '../middlewares/errorHandler';
 
-export class NotificationController {
-  /**
-   * Get notifications for authenticated user
-   */
-  static async getNotifications(req: Request, res: Response) {
-    try {
-      const userId = req.user!.id;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 20;
-      const type = req.query.type as string;
-      const offset = (page - 1) * limit;
-
-      const result = await NotificationService.getNotifications(userId, limit, offset, type);
-
-      res.json({
-        success: true,
-        data: {
-          notifications: result.notifications,
-          pagination: {
-            current_page: page,
-            total_pages: Math.ceil(result.total / limit),
-            total_items: result.total,
-            items_per_page: limit
-          },
-          unread_count: result.unread_count
-        }
-      });
-    } catch (error) {
-      res.status(200).json({
-        success: false,
-        message: 'Failed to get notifications',
-        error: 'NOTIFICATIONS_FETCH_ERROR'
-      });
-    }
+/**
+ * Get notifications for authenticated user
+ */
+export const getNotifications = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    throw new AppError('User not authenticated', 401);
   }
 
-  /**
-   * Get recent notifications (last 10) for dropdown
-   */
-  static async getRecentNotifications(req: Request, res: Response) {
-    try {
-      const userId = req.user!.id;
-      const notifications = await NotificationService.getRecentNotifications(userId);
-      const unreadCount = await NotificationService.getUnreadCount(userId);
+  const userId = req.user.id;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const type = req.query.type as string;
 
-      res.json({
-        success: true,
-        data: {
-          notifications,
-          unread_count: unreadCount
-        }
-      });
-    } catch (error) {
-      res.status(200).json({
-        success: false,
-        message: 'Failed to get recent notifications',
-        error: 'RECENT_NOTIFICATIONS_ERROR'
-      });
-    }
+  // Validate pagination parameters
+  if (page < 1) {
+    throw new AppError('Page must be greater than 0', 400);
+  }
+  if (limit < 1 || limit > 100) {
+    throw new AppError('Limit must be between 1 and 100', 400);
   }
 
-  /**
-   * Mark notification as read
-   */
-  static async markAsRead(req: Request, res: Response) {
-    try {
-      const userId = req.user!.id;
-      const notificationId = parseInt(req.params.id);
+  const offset = (page - 1) * limit;
+  const result = await NotificationService.getNotifications(userId, limit, offset, type);
 
-      if (!notificationId) {
-        throw new AppError('Notification ID is required', 400);
-      }
-
-      const notification = await NotificationService.markAsRead(notificationId, userId);
-
-      if (!notification) {
-        throw new AppError('Notification not found', 404);
-      }
-
-      res.json({
-        success: true,
-        data: { notification }
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        res.status(200).json({
-          success: false,
-          message: error.message,
-          error: 'VALIDATION_ERROR'
-        });
-      } else {
-        res.status(200).json({
-          success: false,
-          message: 'Failed to mark notification as read',
-          error: 'MARK_READ_ERROR'
-        });
-      }
+  res.json({
+    success: true,
+    data: {
+      notifications: result.notifications,
+      pagination: {
+        current_page: page,
+        total_pages: Math.ceil(result.total / limit),
+        total_items: result.total,
+        items_per_page: limit
+      },
+      unread_count: result.unread_count
     }
+  });
+});
+
+/**
+ * Get recent notifications (last 10) for dropdown
+ */
+export const getRecentNotifications = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    throw new AppError('User not authenticated', 401);
   }
 
-  /**
-   * Mark all notifications as read
-   */
-  static async markAllAsRead(req: Request, res: Response) {
-    try {
-      const userId = req.user!.id;
-      const count = await NotificationService.markAllAsRead(userId);
+  const userId = req.user.id;
+  const notifications = await NotificationService.getRecentNotifications(userId);
+  const unreadCount = await NotificationService.getUnreadCount(userId);
 
-      res.json({
-        success: true,
-        data: { marked_count: count }
-      });
-    } catch (error) {
-      res.status(200).json({
-        success: false,
-        message: 'Failed to mark all notifications as read',
-        error: 'MARK_ALL_READ_ERROR'
-      });
+  res.json({
+    success: true,
+    data: {
+      notifications,
+      unread_count: unreadCount
     }
+  });
+});
+
+/**
+ * Mark notification as read
+ */
+export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    throw new AppError('User not authenticated', 401);
   }
 
-  /**
-   * Get unread count
-   */
-  static async getUnreadCount(req: Request, res: Response) {
-    try {
-      const userId = req.user!.id;
-      const count = await NotificationService.getUnreadCount(userId);
+  const userId = req.user.id;
+  const notificationId = parseInt(req.params.id);
 
-      res.json({
-        success: true,
-        data: { unread_count: count }
-      });
-    } catch (error) {
-      res.status(200).json({
-        success: false,
-        message: 'Failed to get unread count',
-        error: 'UNREAD_COUNT_ERROR'
-      });
-    }
+  if (!notificationId || isNaN(notificationId)) {
+    throw new AppError('Valid notification ID is required', 400);
   }
 
-  /**
-   * Delete old notifications (admin only)
-   */
-  static async cleanOldNotifications(req: Request, res: Response) {
-    try {
-      const daysOld = parseInt(req.query.days as string) || 30;
-      const count = await NotificationService.cleanOldNotifications(daysOld);
+  const notification = await NotificationService.markAsRead(notificationId, userId);
 
-      res.json({
-        success: true,
-        data: { deleted_count: count }
-      });
-    } catch (error) {
-      res.status(200).json({
-        success: false,
-        message: 'Failed to clean old notifications',
-        error: 'CLEAN_NOTIFICATIONS_ERROR'
-      });
-    }
+  if (!notification) {
+    throw new AppError('Notification not found', 404);
   }
 
-  /**
-   * Delete a specific notification
-   */
-  static async deleteNotification(req: Request, res: Response) {
-    try {
-      const userId = req.user!.id;
-      const notificationId = parseInt(req.params.id);
+  res.json({
+    success: true,
+    data: { notification }
+  });
+});
 
-      if (!notificationId) {
-        throw new AppError('Notification ID is required', 400);
-      }
-
-      await NotificationService.deleteNotification(notificationId, userId);
-
-      res.json({
-        success: true,
-        message: 'Notification deleted successfully'
-      });
-    } catch (error) {
-      if (error instanceof AppError) {
-        res.status(200).json({
-          success: false,
-          message: error.message,
-          error: 'VALIDATION_ERROR'
-        });
-      } else {
-        res.status(200).json({
-          success: false,
-          message: 'Failed to delete notification',
-          error: 'DELETE_NOTIFICATION_ERROR'
-        });
-      }
-    }
+/**
+ * Mark all notifications as read
+ */
+export const markAllAsRead = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    throw new AppError('User not authenticated', 401);
   }
-}
+
+  const userId = req.user.id;
+  const count = await NotificationService.markAllAsRead(userId);
+
+  res.json({
+    success: true,
+    data: { marked_count: count }
+  });
+});
+
+/**
+ * Get unread count
+ */
+export const getUnreadCount = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    throw new AppError('User not authenticated', 401);
+  }
+
+  const userId = req.user.id;
+  const count = await NotificationService.getUnreadCount(userId);
+
+  res.json({
+    success: true,
+    data: { unread_count: count }
+  });
+});
+
+/**
+ * Delete old notifications (admin only)
+ */
+export const cleanOldNotifications = asyncHandler(async (req: Request, res: Response) => {
+  const daysOld = parseInt(req.query.days as string) || 30;
+
+  if (daysOld < 1) {
+    throw new AppError('Days must be greater than 0', 400);
+  }
+
+  const count = await NotificationService.cleanOldNotifications(daysOld);
+
+  res.json({
+    success: true,
+    data: { deleted_count: count }
+  });
+});
+
+/**
+ * Delete a specific notification
+ */
+export const deleteNotification = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    throw new AppError('User not authenticated', 401);
+  }
+
+  const userId = req.user.id;
+  const notificationId = parseInt(req.params.id);
+
+  if (!notificationId || isNaN(notificationId)) {
+    throw new AppError('Valid notification ID is required', 400);
+  }
+
+  await NotificationService.deleteNotification(notificationId, userId);
+
+  res.json({
+    success: true,
+    message: 'Notification deleted successfully'
+  });
+});

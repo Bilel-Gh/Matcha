@@ -163,7 +163,9 @@ export const getConversationPartner = asyncHandler(async (req: Request, res: Res
 
   res.status(200).json({
     status: 'success',
-    data: partner,
+    data: {
+      user: partner
+    },
   });
 });
 

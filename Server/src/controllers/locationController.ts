@@ -27,8 +27,8 @@ export const updateUserLocation = asyncHandler(async (req: Request, res: Respons
     throw new AppError('Latitude, longitude, and source are required', 400);
   }
 
-  if (!['gps', 'manual', 'ip'].includes(source)) {
-    throw new AppError('Invalid source. Must be gps, manual, or ip', 400);
+  if (!['gps', 'manual', 'ip', 'search'].includes(source)) {
+    throw new AppError('Invalid source. Must be gps, manual, ip, or search', 400);
   }
 
   const location = await LocationService.updateUserLocation(req.user.id, {
@@ -121,5 +121,25 @@ export const calculateDistance = asyncHandler(async (req: Request, res: Response
         point2: { latitude: latitude2, longitude: longitude2 }
       }
     },
+  });
+});
+
+export const searchCities = asyncHandler(async (req: Request, res: Response) => {
+  const { q, limit } = req.query;
+
+  if (!q || typeof q !== 'string') {
+    throw new AppError('Search query is required', 400);
+  }
+
+  if (q.length < 2) {
+    throw new AppError('Search query must be at least 2 characters', 400);
+  }
+
+  const searchLimit = limit ? Math.min(parseInt(limit as string), 20) : 10;
+  const cities = await LocationService.searchCities(q, searchLimit);
+
+  res.status(200).json({
+    status: 'success',
+    data: cities,
   });
 });

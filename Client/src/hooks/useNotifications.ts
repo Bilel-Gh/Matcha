@@ -3,6 +3,7 @@ import { Notification } from '../types/notifications';
 import notificationService from '../services/notificationService';
 import { useAuth } from './useAuth';
 import { useChatSocket } from './useChatSocket';
+import soundService from '../services/soundService';
 
 export const useNotifications = () => {
   const { user, token } = useAuth();
@@ -67,6 +68,8 @@ export const useNotifications = () => {
 
     switch (notification.type) {
       case 'like':
+        // Play like sound
+        soundService.playLikeSound();
         if (callbacksRef.current.onNewLike && notification.data?.from_user) {
           callbacksRef.current.onNewLike({
             fromUser: notification.data.from_user,
@@ -76,6 +79,8 @@ export const useNotifications = () => {
         break;
 
       case 'match':
+        // Play match sound
+        soundService.playMatchSound();
         if (callbacksRef.current.onNewMatch && notification.data?.match_user) {
           callbacksRef.current.onNewMatch({
             matchedUser: notification.data.match_user,
@@ -85,6 +90,8 @@ export const useNotifications = () => {
         break;
 
       case 'visit':
+        // Play visit sound
+        soundService.playVisitSound();
         if (callbacksRef.current.onProfileVisit && notification.data?.visitor) {
           callbacksRef.current.onProfileVisit({
             visitor: notification.data.visitor,
@@ -152,6 +159,9 @@ export const useNotifications = () => {
     setNotifications(prev => [newNotification, ...prev]);
     setUnreadCount(prev => prev + 1);
 
+    // Play message sound
+    soundService.playMessageSound();
+
     // Déclencher le callback pour les toasts
     if (callbacksRef.current.onNewMessage) {
       callbacksRef.current.onNewMessage(data);
@@ -171,6 +181,25 @@ export const useNotifications = () => {
     const handleNewNotificationEvent = (notification: Notification) => {
       setNotifications(prev => [notification, ...prev]);
       setUnreadCount(prev => prev + 1);
+
+      // Play sound based on notification type
+      switch (notification.type) {
+        case 'like':
+          soundService.playLikeSound();
+          break;
+        case 'match':
+          soundService.playMatchSound();
+          break;
+        case 'visit':
+          soundService.playVisitSound();
+          break;
+        case 'unlike':
+          // No sound for unlike notifications
+          break;
+        case 'message':
+          // Messages are handled separately in handleNewMessage
+          break;
+      }
     };
 
     const handleUnreadCountUpdate = (data: { count: number }) => {
@@ -196,6 +225,9 @@ export const useNotifications = () => {
           recentEventsRef.current.delete(key);
         }
       }
+
+      // Play visit sound
+      soundService.playVisitSound();
 
       // Appeler le callback si défini
       if (callbacksRef.current.onProfileVisit) {
@@ -240,6 +272,9 @@ export const useNotifications = () => {
 
       recentEventsRef.current.set(eventKey, now);
 
+      // Play like sound
+      soundService.playLikeSound();
+
       if (callbacksRef.current.onNewLike) {
         callbacksRef.current.onNewLike({
           fromUser: data.fromUser,
@@ -259,6 +294,9 @@ export const useNotifications = () => {
       }
 
       recentEventsRef.current.set(eventKey, now);
+
+      // Play match sound
+      soundService.playMatchSound();
 
       if (callbacksRef.current.onNewMatch) {
         callbacksRef.current.onNewMatch({

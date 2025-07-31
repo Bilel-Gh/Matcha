@@ -367,8 +367,8 @@ export const validateLocationUpdate = (data: any) => {
     validateNumber(data.longitude, 'longitude', { min: -180, max: 180 });
     validateString(data.source, 'source');
 
-    if (data.source && !['gps', 'ip', 'manual'].includes(data.source)) {
-      errors.push('La source doit être gps, ip ou manual.');
+    if (data.source && !['gps', 'ip', 'manual', 'search'].includes(data.source)) {
+      errors.push('La source doit être gps, ip, manual ou search.');
     }
 
     if (data.city !== undefined) {

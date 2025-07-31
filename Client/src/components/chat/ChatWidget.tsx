@@ -208,11 +208,14 @@ const ChatWidget: React.FC = () => {
 
   // Ouvrir une conversation par ID utilisateur (pour les notifications)
   const openConversationByUserId = useCallback(async (userId: number) => {
-    if (!token) return;
+    if (!token || !userId) {
+      showToastError('Cannot open chat', 'Missing authentication or user ID');
+      return;
+    }
 
     try {
       // Chercher d'abord dans les conversations existantes
-      const existingConversation = conversations.find(conv => conv.user.id === userId);
+      const existingConversation = conversations.find(conv => conv?.user?.id === userId);
 
       if (existingConversation) {
         openConversation(existingConversation);
@@ -228,18 +231,28 @@ const ChatWidget: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const userInfo = data.data.user;
 
-        // Créer une conversation temporaire
-        const tempConversation: Conversation = {
-          user: userInfo,
-          unread_count: 0
-        };
+        // Gérer différents formats de réponse pour plus de robustesse
+        let userInfo = data?.data?.user || data?.data || null;
 
-        openConversation(tempConversation);
+        // Valider que userInfo contient les données nécessaires
+        if (userInfo && userInfo.id && userInfo.username) {
+          // Créer une conversation temporaire
+          const tempConversation: Conversation = {
+            user: userInfo,
+            unread_count: 0
+          };
 
-        // Recharger les conversations pour mettre à jour
-        loadConversations();
+          openConversation(tempConversation);
+
+          // Recharger les conversations pour mettre à jour
+          loadConversations();
+        } else {
+          showToastError('Failed to load user information', 'User data is incomplete');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        showToastError('Failed to load user information', errorData.message || 'Server response error');
       }
     } catch (error) {
       showToastError('Failed to open conversation', error);
@@ -248,6 +261,12 @@ const ChatWidget: React.FC = () => {
 
   // Ouvrir une conversation
   const openConversation = (conversation: Conversation) => {
+    // Valider les données de la conversation
+    if (!conversation || !conversation.user || !conversation.user.id) {
+      showToastError('Cannot open conversation', 'Invalid conversation data');
+      return;
+    }
+
     const existingTab = openTabs.find(tab => tab.userId === conversation.user.id);
 
     if (existingTab) {
@@ -327,8 +346,9 @@ const ChatWidget: React.FC = () => {
     return hasOpenTab;
   }, [openTabs]);
 
-  // Exposer la fonction globalement pour useNotifications
+  // Exposer les fonctions globalement
   useEffect(() => {
+    // Exposer les fonctions pour useNotifications et autres composants
     (window as any).isConversationOpen = isConversationOpen;
     (window as any).openChatWithUser = openConversationByUserId;
 

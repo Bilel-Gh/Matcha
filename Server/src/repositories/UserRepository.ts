@@ -16,14 +16,20 @@ export class UserRepository {
   static async create(userData: CreateUserData): Promise<User> {
     const { email, username, firstname, lastname, password, verification_token, birth_date, email_verified = false } = userData;
 
+    // Assigner une photo de profil par défaut de manière aléatoire pour plus de diversité
+    const defaultProfilePicture ='/uploads/default/ppDEFAULT.jpg'
+
+    // Utiliser une sélection pseudo-aléatoire basée sur l'email pour la cohérence
+    const emailHash = email.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
+
     const query = `
-      INSERT INTO users (email, username, firstname, lastname, password, verification_token, birth_date, email_verified)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO users (email, username, firstname, lastname, password, verification_token, birth_date, email_verified, profile_picture_url)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING *
     `;
 
     const result = await pool.query(query, [
-      email, username, firstname, lastname, password, verification_token, birth_date, email_verified
+      email, username, firstname, lastname, password, verification_token, birth_date, email_verified, defaultProfilePicture
     ]);
 
     return result.rows[0];

@@ -75,13 +75,32 @@ export const errorHandler = (
     errorResponse.code = 'TOKEN_EXPIRED';
   }
 
-  // Never include stack traces in production
-  // Only log errors server-side for debugging
-  if (process.env.NODE_ENV === 'development') {
-    // Silent logging - no console output for defense requirements
+  const originalStatusCode = err instanceof AppError ? err.statusCode : 500;
+
+  // Log les erreurs 500+ pour le debug serveur
+  if (originalStatusCode >= 500) {
+    logger.error(`Error ${originalStatusCode} on ${req.method} ${req.url}`, {
+      message: err.message,
+      stack: err.stack,
+      body: req.body,
+      user: (req as any).user?.id || 'Anonymous'
+    });
   }
 
-  res.status(200).json(errorResponse);
+  // STRATÉGIE DOUBLE :
+  // - Erreurs < 500 : Retourner 200 pour console propre côté client
+  // - Erreurs >= 500 : Retourner le vrai code pour visibilité serveur
+  if (originalStatusCode < 500) {
+    // Console navigateur propre : toutes les erreurs client en 200
+    res.status(200).json(errorResponse);
+  } else {
+    // Console serveur : garder les vrais codes 500+ pour visibilité
+    res.status(originalStatusCode).json(errorResponse);
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    // En développement, on peut ajouter plus d'infos si nécessaire
+  }
 };
 
 // Async error handler wrapper
