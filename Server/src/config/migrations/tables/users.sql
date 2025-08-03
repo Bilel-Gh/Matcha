@@ -6,7 +6,7 @@ CREATE TABLE "users" (
  "lastname" varchar NOT NULL,
  "password" varchar NOT NULL,
  "gender" varchar,
- "sexual_preferences" varchar,
+ "sexual_preferences" varchar DEFAULT 'both',
  "biography" text,
  "latitude" float,
  "longitude" float,

@@ -70,8 +70,16 @@ export class LocationService {
    */
   static async getLocationFromIP(ip: string): Promise<IPLocationResponse> {
     try {
-      // Handle localhost/development IPs
-      if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+      // Handle localhost/development IPs (including Docker IPs)
+      if (ip === '127.0.0.1' ||
+          ip === '::1' ||
+          ip.startsWith('192.168.') ||
+          ip.startsWith('10.') ||
+          ip.startsWith('172.') ||  // Docker network range
+          ip.startsWith('::ffff:172.') ||  // IPv6-mapped Docker IP
+          ip.startsWith('::ffff:192.168.') ||  // IPv6-mapped private IP
+          ip.startsWith('::ffff:10.') ||  // IPv6-mapped private IP
+          ip.startsWith('::ffff:127.')) {  // IPv6-mapped localhost
         return {
           ...this.DEFAULT_LOCATION,
           region: 'Île-de-France',
