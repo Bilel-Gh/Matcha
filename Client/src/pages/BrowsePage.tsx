@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import useTheme from '../hooks/useTheme';
 import { useChatSocket } from '../hooks/useChatSocket';
-import { FaHeart, FaSearch, FaEye, FaFilter, FaTh, FaLayerGroup, FaSync, FaMapMarkerAlt, FaStar, FaTimes } from 'react-icons/fa';
+import { FaHeart, FaSearch, FaEye, FaFilter, FaTh, FaLayerGroup, FaSync, FaMapMarkerAlt, FaStar, FaTimes, FaUserEdit, FaExclamationTriangle } from 'react-icons/fa';
 import SwipeMode from '../components/SwipeMode';
 import GridMode from '../components/GridMode';
 import MatchesMode from '../components/MatchesMode';
@@ -11,6 +11,7 @@ import FilterBar from '../components/FilterBar';
 import MatchesModal from '../components/MatchesModal';
 import ActivityModal from '../components/ActivityModal';
 import { showToastError, showToastSuccess } from '../utils/toastUtils';
+import profileService, { ProfileData } from '../services/profileService';
 import './BrowsePage.css';
 import { User } from '../types/user';
 import { FilterParams } from '../types/filter';
@@ -18,6 +19,11 @@ import { FilterParams } from '../types/filter';
 const BrowsePage: React.FC = () => {
   const { token } = useAuth();
   useTheme(); // Initialize theme hook to ensure theme persistence
+
+  // Profile completion state
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // View mode state
   const [viewMode, setViewMode] = useState<'swipe' | 'grid' | 'matches'>('swipe');
@@ -67,13 +73,73 @@ const BrowsePage: React.FC = () => {
     }
   });
 
-  // Load initial data
+  // Load profile data on component mount
   useEffect(() => {
     if (token) {
+      loadProfile();
+    }
+  }, [token]);
+
+  // Load initial data only when profile is complete
+  useEffect(() => {
+    if (token && profile && isProfileComplete(profile)) {
       loadUsers();
       loadMatchCount();
     }
-  }, [token]);
+  }, [token, profile]);
+
+  const loadProfile = async () => {
+    if (!token) return;
+
+    setProfileLoading(true);
+    setProfileError(null);
+
+    try {
+      const profileData = await profileService.getProfile(token);
+      setProfile(profileData);
+    } catch (error: any) {
+      setProfileError('Failed to load profile');
+      console.error('Error loading profile:', error);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // Check if profile is complete using the same logic as ProfilePage
+  const isProfileComplete = (profile: ProfileData): boolean => {
+    return !!(
+      profile.has_profile_picture &&
+      profile.biography &&
+      profile.has_location &&
+      profile.gender &&
+      profile.sexual_preferences
+    );
+  };
+
+  // Get incomplete profile sections
+  const getIncompleteProfileSections = (profile: ProfileData) => {
+    const incomplete = [];
+
+    if (!profile.has_profile_picture) {
+      incomplete.push({ icon: '📸', label: 'Profile Picture', action: 'photos' });
+    }
+    if (!profile.biography) {
+      incomplete.push({ icon: '✍️', label: 'Biography', action: 'personal' });
+    }
+    if (!profile.has_location) {
+      incomplete.push({ icon: '📍', label: 'Location', action: 'location' });
+    }
+    if (!profile.gender || !profile.sexual_preferences) {
+      incomplete.push({ icon: '⚥', label: 'Gender & Preferences', action: 'personal' });
+    }
+
+    return incomplete;
+  };
+
+  // Navigate to profile page with specific tab
+  const handleGoToProfile = (tabName: string = 'personal') => {
+    window.location.href = `/profile?tab=${tabName}`;
+  };
 
   const loadUsers = async (filters: FilterParams = appliedFilters, page: number = 1) => {
     if (!token) return;
@@ -221,6 +287,104 @@ const BrowsePage: React.FC = () => {
     setCurrentPage(1); // Reset to first page when changing sort
     loadUsers(newFilters, 1);
   };
+
+  // Show loading state while checking profile
+  if (profileLoading) {
+    return (
+      <div className="browse-page">
+        <div className="browse-container">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if profile couldn't be loaded
+  if (profileError || !profile) {
+    return (
+      <div className="browse-page">
+        <div className="browse-container">
+          <div className="error-state">
+            <FaExclamationTriangle style={{ fontSize: '2rem', color: 'var(--error-color)' }} />
+            <h2>Unable to Load Profile</h2>
+            <p>Please refresh the page and try again.</p>
+            <button className="refresh-btn" onClick={loadProfile}>
+              <FaSync style={{ marginRight: '8px' }} />
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show profile completion requirements if profile is incomplete
+  if (!isProfileComplete(profile)) {
+    const incompleteSections = getIncompleteProfileSections(profile);
+
+    return (
+      <div className="browse-page">
+        <div className="browse-container">
+          <div className="profile-completion-required">
+            <div className="completion-header">
+              <FaExclamationTriangle className="warning-icon" />
+              <h2>Complete Your Profile to Start Browsing</h2>
+              <p>You need to complete your profile before you can discover and connect with other users.</p>
+            </div>
+
+            <div className="completion-stats">
+              <h3>Missing Information</h3>
+              <div className="completion-grid">
+                {incompleteSections.map((section, index) => (
+                  <div key={index} className="completion-item incomplete">
+                    <span className="completion-icon">{section.icon}</span>
+                    <span className="completion-label">{section.label}</span>
+                    <button
+                      className="completion-action-btn"
+                      onClick={() => handleGoToProfile(section.action)}
+                    >
+                      <FaUserEdit style={{ marginRight: '4px' }} />
+                      Complete
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="completion-actions">
+              <button
+                className="complete-profile-btn primary"
+                onClick={() => handleGoToProfile('personal')}
+              >
+                <FaUserEdit style={{ marginRight: '8px' }} />
+                Complete Profile Now
+              </button>
+              <button
+                className="complete-profile-btn secondary"
+                onClick={loadProfile}
+              >
+                <FaSync style={{ marginRight: '8px' }} />
+                Check Again
+              </button>
+            </div>
+
+            <div className="completion-help">
+              <h4>Why is this required?</h4>
+              <ul>
+                <li>A complete profile helps others get to know you better</li>
+                <li>Your location helps us find matches near you</li>
+                <li>Profile photos increase your chances of matching</li>
+                <li>Preferences help us show you compatible people</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="browse-page">

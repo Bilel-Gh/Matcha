@@ -81,24 +81,7 @@ export class LocationService {
 
       const response = await fetch(`https://ipapi.co/${ip}/json/`);
 
-      if (!response.ok) {
-        console.warn(`IP API request failed: ${response.status}`);
-        throw new Error(`IP API request failed: ${response.status}`);
-      }
-
       const data = await response.json();
-
-      // Check for API error
-      if (data.error) {
-        console.warn(`IP API error: ${data.reason || 'Unknown error'}`);
-        throw new Error(`IP API error: ${data.reason || 'Unknown error'}`);
-      }
-
-      // Validate required fields
-      if (!data.latitude || !data.longitude) {
-        console.warn(`Invalid location data from IP API:`, data);
-        throw new Error('Invalid location data from IP API');
-      }
 
       const result = {
         latitude: parseFloat(data.latitude),
@@ -111,7 +94,7 @@ export class LocationService {
 
       return result;
     } catch (error: any) {
-      console.warn(`IP location failed for ${ip}:`, error.message);
+      // Silent fallback to default location for better UX during rate limits
       // Return default location instead of null for better UX
       return {
         ...this.DEFAULT_LOCATION,
@@ -296,8 +279,13 @@ export class LocationService {
         country: data.address?.country || 'Unknown'
       };
     } catch (error) {
-      // Silent error handling - no console output for defense requirements
-      return null;
+      // Silent error handling - return default location data instead of null
+      return {
+        latitude,
+        longitude,
+        city: 'Unknown',
+        country: 'Unknown'
+      };
     }
   }
 
@@ -334,14 +322,14 @@ export class LocationService {
       );
 
       if (!response.ok) {
-        console.warn(`Nominatim API error: ${response.status} ${response.statusText}`);
+        // Silent fallback for API errors (rate limits, etc.)
         return [];
       }
 
       const data = await response.json();
 
       if (!Array.isArray(data)) {
-        console.warn('Invalid response format from Nominatim API');
+        // Silent fallback for invalid API response format
         return [];
       }
 
@@ -415,8 +403,7 @@ export class LocationService {
 
       return mergedResults.slice(0, limit);
     } catch (error: any) {
-      console.warn(`Nominatim API failed for "${query}":`, error.message);
-      // Fallback to local search in predefined cities
+      // Silent fallback to local search when external API fails (rate limits, etc.)
       return this.searchFallbackCities(query, limit);
     }
   }

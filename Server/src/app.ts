@@ -53,9 +53,9 @@ app.get('/health', (req, res) => {
 });
 
 // Test 500 error endpoint (TEMPORARY)
-app.get('/test-500', (req, res) => {
-  throw new Error('Test 500 error - This is intentional for testing!');
-});
+// app.get('/test-500', (req, res) => {
+//   throw new Error('Test 500 error - This is intentional for testing!');
+// });
 
 // API routes
 app.use('/api/auth', authRoutes);

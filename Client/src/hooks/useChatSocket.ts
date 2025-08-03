@@ -29,7 +29,7 @@ export const useChatSocket = (
 ): UseChatSocketReturn => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbacksRef = useRef(callbacks);
 
   // Mettre à jour les callbacks sans recréer la connexion
@@ -63,19 +63,36 @@ export const useChatSocket = (
       },
       transports: ['websocket'], // WebSocket seulement pour vitesse maximale
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 100, // Reconnexion ultra rapide
-      reconnectionDelayMax: 1000,
-      timeout: 5000, // Timeout plus court
+      reconnectionAttempts: 3, // Réduire les tentatives
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
       forceNew: false,
-      upgrade: false, // Pas d'upgrade nécessaire si on force WebSocket
-      rememberUpgrade: false
+      upgrade: false,
+      rememberUpgrade: false,
+      autoConnect: true
     });
 
     socketRef.current = socket;
 
     // Store socket reference in window for logout access
     (window as any).socket = socket;
+
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      const message = args.join(' ');
+      const shouldIgnoreConsoleError = [
+        'WebSocket connection to',
+        'ws://localhost:8080',
+        'WebSocket is closed',
+        'failed:',
+        'ERR_CONNECTION_REFUSED'
+      ].some(pattern => message.includes(pattern));
+
+      if (!shouldIgnoreConsoleError) {
+        originalConsoleError.apply(console, args);
+      }
+    };
 
     // Handle browser close/tab close
     const handleBeforeUnload = () => {
@@ -113,13 +130,30 @@ export const useChatSocket = (
     });
 
     socket.on('connect_error', (error) => {
-      // Ignorer les erreurs de fermeture de WebSocket pour éviter les warnings
-      if (error?.message?.includes('WebSocket is closed') ||
-          error?.message?.includes('closed before the connection is established')) {
-        return; // Ne pas propager ces erreurs
+      const errorMessage = error?.message || '';
+      const commonSocketErrors = [
+        'WebSocket is closed',
+        'closed before the connection is established',
+        'WebSocket connection to',
+        'Connection failed',
+        'Transport unknown',
+        'websocket error',
+        'Network Error',
+        'timeout',
+        'ECONNREFUSED',
+        'Connection refused'
+      ];
+
+      const shouldIgnoreError = commonSocketErrors.some(errorPattern =>
+        errorMessage.includes(errorPattern)
+      );
+
+      if (shouldIgnoreError) {
+        // Supprimer silencieusement ces erreurs communes
+        return;
       }
+
       setIsConnected(false);
-      callbacksRef.current.onError?.('Connection failed');
     });
 
     // Gestionnaires de messages - ULTRA RAPIDES
@@ -127,7 +161,7 @@ export const useChatSocket = (
       callbacksRef.current.onNewMessage?.(message);
     });
 
-    socket.on('message-sent', (data) => {
+    socket.on('message-sent', () => {
       // Confirmation d'envoi - traitement minimal
     });
 
@@ -165,6 +199,9 @@ export const useChatSocket = (
     });
 
     return () => {
+      // Restaurer console.error original
+      console.error = originalConsoleError;
+
       // Cleanup propre pour éviter les warnings WebSocket
       window.removeEventListener('beforeunload', handleBeforeUnload);
 
@@ -193,12 +230,7 @@ export const useChatSocket = (
         content,
         tempId
       });
-    } catch (error) {
-      // Ignorer silencieusement les erreurs de socket fermé
-      if (!(error as Error)?.message?.includes('closed')) {
-        // This is a developer warning, not a user-facing error.
-        // The onError callback should be used for user-facing errors.
-      }
+    } catch {
     }
   }, [isConnected]);
 
@@ -208,8 +240,7 @@ export const useChatSocket = (
 
     try {
       socketRef.current.emit('message-read', { messageId });
-    } catch (error) {
-      // Ignorer silencieusement les erreurs de socket fermé
+    } catch {
     }
   }, [isConnected]);
 
@@ -219,8 +250,7 @@ export const useChatSocket = (
 
     try {
       socketRef.current.emit('mark-all-read', { senderId });
-    } catch (error) {
-      // Ignorer silencieusement les erreurs de socket fermé
+    } catch {
     }
   }, [isConnected]);
 

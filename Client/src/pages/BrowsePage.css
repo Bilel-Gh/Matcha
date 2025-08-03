@@ -4929,3 +4929,458 @@
     font-size: 12px;
   }
 }
+
+/* Profile Completion Required Styles */
+.profile-completion-required {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  padding: 2rem;
+  text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border-radius: 24px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  margin: 2rem auto;
+  max-width: 800px;
+}
+
+.completion-header {
+  margin-bottom: 2.5rem;
+}
+
+.completion-header .warning-icon {
+  font-size: 4rem;
+  color: var(--warning-color, #f59e0b);
+  margin-bottom: 1.5rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.completion-header h2 {
+  color: var(--text-primary);
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  background: var(--bg-gradient-secondary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.completion-header p {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 600px;
+}
+
+.completion-stats {
+  width: 100%;
+  margin-bottom: 2.5rem;
+}
+
+.completion-stats h3 {
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.completion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.completion-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--surface-primary);
+  border: 2px solid var(--error-color);
+  border-radius: 16px;
+  transition: var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.completion-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--error-color);
+}
+
+.completion-item.completed {
+  border-color: var(--success-color);
+  background: var(--success-light);
+}
+
+.completion-item.completed::before {
+  background: var(--success-color);
+}
+
+.completion-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.completion-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.completion-label {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.completion-action-btn {
+  background: var(--error-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.completion-action-btn:hover {
+  background: var(--error-color-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.completion-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.complete-profile-btn {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 200px;
+  justify-content: center;
+  box-shadow: var(--shadow-md);
+}
+
+.complete-profile-btn.primary {
+  background: var(--bg-gradient-secondary);
+  color: white;
+  border: 2px solid transparent;
+}
+
+.complete-profile-btn.primary:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  filter: brightness(1.1);
+}
+
+.complete-profile-btn.secondary {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  border: 2px solid var(--border-primary);
+}
+
+.complete-profile-btn.secondary:hover {
+  background: var(--surface-tertiary);
+  border-color: var(--border-secondary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.completion-help {
+  background: var(--surface-secondary);
+  border-radius: 16px;
+  padding: 2rem;
+  border: 1px solid var(--border-primary);
+  max-width: 600px;
+  text-align: left;
+}
+
+.completion-help h4 {
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.completion-help h4::before {
+  content: '💡';
+  font-size: 1.2rem;
+}
+
+.completion-help ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.completion-help li {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.completion-help li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+.completion-help li:last-child {
+  margin-bottom: 0;
+}
+
+/* Error State Styles */
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+  text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  border-radius: 24px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  margin: 2rem auto;
+  max-width: 600px;
+}
+
+.error-state h2 {
+  color: var(--text-primary);
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.error-state p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+.error-state .refresh-btn {
+  background: var(--interactive-primary);
+  color: var(--button-primary-text);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-md);
+}
+
+.error-state .refresh-btn:hover {
+  background: var(--interactive-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .profile-completion-required {
+    padding: 1.5rem;
+    margin: 1rem auto;
+    border-radius: 20px;
+  }
+
+  .completion-header h2 {
+    font-size: 2rem;
+  }
+
+  .completion-header p {
+    font-size: 1.1rem;
+  }
+
+  .completion-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .completion-item {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+
+  .completion-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .complete-profile-btn {
+    width: 100%;
+    max-width: 300px;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .completion-help {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .completion-help h4 {
+    font-size: 1.2rem;
+  }
+
+  .completion-help li {
+    font-size: 0.95rem;
+  }
+
+  .error-state {
+    padding: 1.5rem;
+    margin: 1rem auto;
+    min-height: 300px;
+  }
+
+  .error-state h2 {
+    font-size: 1.75rem;
+  }
+
+  .error-state p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-completion-required {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .completion-header .warning-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .completion-header h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .completion-header p {
+    font-size: 1rem;
+  }
+
+  .completion-stats h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .completion-item {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .completion-icon {
+    font-size: 1.5rem;
+  }
+
+  .completion-label {
+    font-size: 1rem;
+  }
+
+  .completion-action-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .complete-profile-btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    min-width: auto;
+  }
+
+  .completion-help {
+    padding: 1.25rem;
+  }
+
+  .completion-help h4 {
+    font-size: 1.1rem;
+  }
+
+  .completion-help li {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .error-state {
+    padding: 1.25rem;
+    min-height: 250px;
+  }
+
+  .error-state h2 {
+    font-size: 1.5rem;
+  }
+
+  .error-state p {
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .error-state .refresh-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+  }
+}

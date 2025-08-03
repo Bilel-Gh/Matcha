@@ -84,13 +84,14 @@ const SmartLocationManager: React.FC<SmartLocationManagerProps> = ({
     setLocation(newLocation);
     setShowSearchModal(false);
 
-    const sourceMessages = {
+    const sourceMessages: Record<string, string> = {
       gps: '🎯 GPS location set',
       ip: '🌐 Location detected automatically',
-      search: '✅ Location selected'
+      search: '✅ Location selected',
+      manual: '📍 Location set manually'
     };
 
-    const message = sourceMessages[newLocation.location_source] || 'Location updated';
+    const message = (newLocation.location_source && sourceMessages[newLocation.location_source]) || 'Location updated';
     onSuccess?.(`${message}: ${smartLocationService.formatLocationDisplay(newLocation)}`);
     onProfileUpdate?.();
   };

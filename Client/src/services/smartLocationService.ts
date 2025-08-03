@@ -3,12 +3,12 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export interface LocationData {
-  latitude: number;
-  longitude: number;
+  latitude?: number;
+  longitude?: number;
   city?: string;
   country?: string;
-  location_source: 'gps' | 'ip' | 'search';
-  location_updated_at: string;
+  location_source?: 'gps' | 'ip' | 'search' | 'manual';
+  location_updated_at?: string;
 }
 
 export interface CitySearchResult {
@@ -219,21 +219,26 @@ const smartLocationService = {
     if (location.city && location.country) {
       return `${location.city}, ${location.country}`;
     }
-    return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+    if (location.latitude !== undefined && location.longitude !== undefined) {
+      return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+    }
+    return 'No location set';
   },
 
   // Format location source
-  formatLocationSource(source: string): string {
+  formatLocationSource(source?: string): string {
+    if (!source) return 'Unknown';
     switch (source) {
       case 'gps': return 'GPS';
       case 'ip': return 'Approximate';
       case 'search': return 'Selected';
+      case 'manual': return 'Manual';
       default: return 'Unknown';
     }
   },
 
   // Format time ago
-  formatTimeAgo(dateString: string): string {
+  formatTimeAgo(dateString?: string): string {
     if (!dateString) return 'never';
 
     const date = new Date(dateString);

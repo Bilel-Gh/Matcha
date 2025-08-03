@@ -19,7 +19,6 @@ export const errorHandler = (
   let error = { ...err } as AppError;
   error.message = err.message;
 
-  // Default error response
   const errorResponse: StandardErrorResponse = {
     success: false,
     message: 'An unexpected error occurred',
@@ -29,7 +28,6 @@ export const errorHandler = (
   if (err instanceof AppError) {
     errorResponse.message = err.message;
 
-    // Add specific error code for client handling
     if (err.statusCode === 400) {
       errorResponse.code = 'VALIDATION_ERROR';
     } else if (err.statusCode === 401) {
@@ -64,18 +62,22 @@ export const errorHandler = (
     }
   }
 
-  // JWT errors
+  // JWT errors - return 401 instead of 500
+  let statusCode = err instanceof AppError ? err.statusCode : 500;
+
   if (err.name === 'JsonWebTokenError') {
     errorResponse.message = 'Invalid authentication token';
     errorResponse.code = 'INVALID_TOKEN';
+    statusCode = 401;
   }
 
   if (err.name === 'TokenExpiredError') {
     errorResponse.message = 'Authentication token expired';
     errorResponse.code = 'TOKEN_EXPIRED';
+    statusCode = 401;
   }
 
-  const originalStatusCode = err instanceof AppError ? err.statusCode : 500;
+  const originalStatusCode = statusCode;
 
   // Log les erreurs 500+ pour le debug serveur
   if (originalStatusCode >= 500) {
@@ -87,19 +89,10 @@ export const errorHandler = (
     });
   }
 
-  // STRATÉGIE DOUBLE :
-  // - Erreurs < 500 : Retourner 200 pour console propre côté client
-  // - Erreurs >= 500 : Retourner le vrai code pour visibilité serveur
   if (originalStatusCode < 500) {
-    // Console navigateur propre : toutes les erreurs client en 200
     res.status(200).json(errorResponse);
   } else {
-    // Console serveur : garder les vrais codes 500+ pour visibilité
     res.status(originalStatusCode).json(errorResponse);
-  }
-
-  if (process.env.NODE_ENV === 'development') {
-    // En développement, on peut ajouter plus d'infos si nécessaire
   }
 };
 
