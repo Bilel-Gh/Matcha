@@ -80,16 +80,19 @@ export const validateRegister = (data: any) => {
       }
     }
 
-    // Validation du mot de passe
+    // Validation du mot de passe - Enhanced security requirements
     if (data.password) {
       if (!/[A-Z]/.test(data.password)) {
-        errors.push('Le mot de passe doit contenir au moins une lettre majuscule.');
+        errors.push('Password must contain at least one uppercase letter.');
       }
       if (!/[a-z]/.test(data.password)) {
-        errors.push('Le mot de passe doit contenir au moins une lettre minuscule.');
+        errors.push('Password must contain at least one lowercase letter.');
       }
       if (!/[0-9]/.test(data.password)) {
-        errors.push('Le mot de passe doit contenir au moins un chiffre.');
+        errors.push('Password must contain at least one number.');
+      }
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(data.password)) {
+        errors.push('Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?~`).');
       }
     }
   } catch (error) {
@@ -245,16 +248,19 @@ export const validatePasswordChange = (data: any) => {
     validateString(data.current_password, 'current_password', { minLength: 1 });
     validateString(data.new_password, 'new_password', { minLength: 8, maxLength: 100 });
 
-    // Validation du nouveau mot de passe
+    // Validation du nouveau mot de passe - Enhanced security requirements
     if (data.new_password) {
       if (!/[A-Z]/.test(data.new_password)) {
-        errors.push('Le mot de passe doit contenir au moins une lettre majuscule.');
+        errors.push('New password must contain at least one uppercase letter.');
       }
       if (!/[a-z]/.test(data.new_password)) {
-        errors.push('Le mot de passe doit contenir au moins une lettre minuscule.');
+        errors.push('New password must contain at least one lowercase letter.');
       }
       if (!/[0-9]/.test(data.new_password)) {
-        errors.push('Le mot de passe doit contenir au moins un chiffre.');
+        errors.push('New password must contain at least one number.');
+      }
+      if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(data.new_password)) {
+        errors.push('New password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?~`).');
       }
     }
   } catch (error) {

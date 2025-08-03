@@ -58,6 +58,10 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({
       errors.push('Password must contain at least one number');
     }
 
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
+      errors.push('Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?~`)');
+    }
+
     return errors;
   };
 
@@ -177,7 +181,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({
           </div>
           <div className="password-requirements">
             <small>
-              Password must be at least 8 characters with uppercase, lowercase, and number.
+              Password must be at least 8 characters with uppercase, lowercase, number, and special character.
             </small>
           </div>
         </div>

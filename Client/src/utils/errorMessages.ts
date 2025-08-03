@@ -10,7 +10,7 @@ export const ERROR_MESSAGES = {
   'EMAIL_EXISTS': 'This email is already registered. Try logging in instead.',
   'USERNAME_TAKEN': 'This username is taken. Please choose another one.',
   'VALIDATION_ERROR': 'Please check your input and try again.',
-  'WEAK_PASSWORD': 'Password must be at least 8 characters long and contain letters and numbers.',
+  'WEAK_PASSWORD': 'Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters.',
 
   // Profile Errors
   'PROFILE_INCOMPLETE': 'Please complete your profile before continuing.',

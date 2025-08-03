@@ -31,12 +31,17 @@ const SmartLocationManager: React.FC<SmartLocationManagerProps> = ({
   const initializeLocation = async () => {
     setIsLoading(true);
     try {
-      // Try to get existing location first
+      // Try to get existing location first (now with enhanced reverse geocoding)
       const existingLocation = await smartLocationService.getCurrentLocation(token);
 
       if (existingLocation) {
         setLocation(existingLocation);
         setAutoSetupAttempted(true); // Mark as already setup
+
+        // Show success message with readable location if we have city/country
+        if (existingLocation.city && existingLocation.country) {
+          onSuccess?.(`📍 Location loaded: ${smartLocationService.formatLocationDisplay(existingLocation)}`);
+        }
       } else if (autoSetupOnMount && !autoSetupAttempted) {
         // Auto-setup for new users
         await handleAutoSetup();

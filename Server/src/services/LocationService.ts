@@ -150,7 +150,7 @@ export class LocationService {
    * Update user's location
    */
   static async updateUserLocation(userId: number, locationData: LocationUpdateData): Promise<UserLocationResponse> {
-    const { latitude, longitude, source, city, country } = locationData;
+    let { latitude, longitude, source, city, country } = locationData;
 
     // Validate coordinates
     if (!this.validateCoordinates(latitude, longitude)) {
@@ -159,6 +159,17 @@ export class LocationService {
 
     // Round coordinates for privacy
     const roundedCoords = this.roundToNeighborhood(latitude, longitude);
+
+    // If city/country are not provided, try to reverse geocode for better UX
+    if (!city || !country) {
+      try {
+        const geocodedLocation = await this.reverseGeocode(roundedCoords.latitude, roundedCoords.longitude);
+        city = city || geocodedLocation.city;
+        country = country || geocodedLocation.country;
+      } catch (error) {
+        // Silent fallback - continue without city/country if reverse geocoding fails
+      }
+    }
 
     // Update user in database
     const updatedUser = await UserRepository.updateLocation(userId, {

@@ -35,6 +35,32 @@ const RegisterPage: React.FC = () => {
     setFieldErrors({});
   };
 
+  const validatePassword = (password: string): string[] => {
+    const errors: string[] = [];
+
+    if (password.length < 8) {
+      errors.push('Password must be at least 8 characters long');
+    }
+
+    if (!/(?=.*[a-z])/.test(password)) {
+      errors.push('Password must contain at least one lowercase letter');
+    }
+
+    if (!/(?=.*[A-Z])/.test(password)) {
+      errors.push('Password must contain at least one uppercase letter');
+    }
+
+    if (!/(?=.*\d)/.test(password)) {
+      errors.push('Password must contain at least one number');
+    }
+
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {
+      errors.push('Password must contain at least one special character (!@#$%^&*()_+-=[]{}|;:,.<>?~`)');
+    }
+
+    return errors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
@@ -57,8 +83,11 @@ const RegisterPage: React.FC = () => {
 
     if (!password) {
       newFieldErrors.password = 'Password is required';
-    } else if (password.length < 8) {
-      newFieldErrors.password = 'Password must be at least 8 characters long';
+    } else {
+      const passwordErrors = validatePassword(password);
+      if (passwordErrors.length > 0) {
+        newFieldErrors.password = passwordErrors[0]; // Show the first error
+      }
     }
 
     if (password !== confirmPassword) {

@@ -91,7 +91,23 @@ const smartLocationService = {
       const response = await axios.get<ApiResponse<LocationData>>(`${API_URL}/api/profile/location`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.data;
+      let locationData = response.data.data;
+
+      // If we have coordinates but no city/country, try to reverse geocode
+      if (locationData && locationData.latitude && locationData.longitude && (!locationData.city || !locationData.country)) {
+        try {
+          const geocoded = await this.reverseGeocode(locationData.latitude, locationData.longitude);
+          locationData = {
+            ...locationData,
+            city: geocoded.city || locationData.city,
+            country: geocoded.country || locationData.country
+          };
+        } catch (error) {
+          // Silent fallback - keep original data if reverse geocoding fails
+        }
+      }
+
+      return locationData;
     } catch (error) {
       return null; // Return null instead of throwing for missing location
     }
@@ -107,10 +123,22 @@ const smartLocationService = {
 
   // Update location with coordinates
   async updateLocationCoords(token: string, latitude: number, longitude: number, source: 'gps' | 'ip' | 'search'): Promise<LocationData> {
+    // Try to get city/country names for better UX
+    let city, country;
+    try {
+      const geocoded = await this.reverseGeocode(latitude, longitude);
+      city = geocoded.city;
+      country = geocoded.country;
+    } catch (error) {
+      // Silent fallback - send without city/country if reverse geocoding fails
+    }
+
     const response = await axios.put<ApiResponse<LocationData>>(`${API_URL}/api/profile/location`, {
       latitude,
       longitude,
-      source
+      source,
+      city,
+      country
     }, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -216,12 +244,27 @@ const smartLocationService = {
 
   // Format location display
   formatLocationDisplay(location: LocationData): string {
+    // Priority 1: Full city and country
     if (location.city && location.country) {
       return `${location.city}, ${location.country}`;
     }
-    if (location.latitude !== undefined && location.longitude !== undefined) {
-      return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+
+    // Priority 2: City only (with generic country indicator)
+    if (location.city) {
+      return location.city;
     }
+
+    // Priority 3: Country only
+    if (location.country) {
+      return location.country;
+    }
+
+    // Priority 4: Coordinates as fallback (should rarely happen now)
+    if (location.latitude !== undefined && location.longitude !== undefined) {
+      return `${location.latitude.toFixed(3)}°, ${location.longitude.toFixed(3)}°`;
+    }
+
+    // Priority 5: No location data
     return 'No location set';
   },
 
@@ -251,6 +294,42 @@ const smartLocationService = {
     if (diffMinutes < 60) return `${diffMinutes}m ago`;
     if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}h ago`;
     return `${Math.floor(diffMinutes / 1440)}d ago`;
+  },
+
+  // Reverse geocode coordinates to get city/country
+  async reverseGeocode(latitude: number, longitude: number): Promise<{ city: string; country: string }> {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
+        {
+          headers: {
+            'User-Agent': 'Matcha-Dating-App/1.0'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Reverse geocoding failed');
+      }
+
+      const data = await response.json();
+
+      return {
+        city: data.address?.city ||
+              data.address?.town ||
+              data.address?.village ||
+              data.address?.suburb ||
+              data.address?.hamlet ||
+              'Unknown City',
+        country: data.address?.country || 'Unknown Country'
+      };
+    } catch (error) {
+      // Fallback for when reverse geocoding fails
+      return {
+        city: 'Unknown City',
+        country: 'Unknown Country'
+      };
+    }
   },
 
   // Check if location needs setup
